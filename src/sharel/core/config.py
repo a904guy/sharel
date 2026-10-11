@@ -781,7 +781,7 @@ class ConfigStore:
         with self._lock:
             save_json(self.app, self.directory / "ApplicationConfig.json")
             save_json(self.hotkeys, self.directory / "HotkeysConfig.json")
-            save_json(self.uploaders, self.directory / "UploadersConfig.json")
+        self.save_uploaders()
 
     def save_app(self) -> None:
         with self._lock:
@@ -792,8 +792,13 @@ class ConfigStore:
             save_json(self.hotkeys, self.directory / "HotkeysConfig.json")
 
     def save_uploaders(self) -> None:
+        """Secrets go to the libsecret keyring when one is running (and allowed); the JSON then
+        holds "@secret" placeholders."""
+        from ..uploaders.config import jsonable_with_secrets_hidden, store_secrets
         with self._lock:
-            save_json(self.uploaders, self.directory / "UploadersConfig.json")
+            keyring_ok = self.app.use_libsecret and store_secrets(self.uploaders)
+            save_json(jsonable_with_secrets_hidden(self.uploaders, keyring_ok),
+                      self.directory / "UploadersConfig.json")
 
     # -- workflows --
 

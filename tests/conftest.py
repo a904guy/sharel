@@ -13,6 +13,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 @pytest.fixture(autouse=True)
 def isolated_dirs(tmp_path, monkeypatch):
+    # Never write test secrets into the user's real keyring.
+    monkeypatch.setenv("SHAREL_NO_KEYRING", "1")
     for var, sub in (("SHAREL_CONFIG_DIR", "config"), ("SHAREL_DATA_DIR", "data"),
                      ("SHAREL_PICTURES_DIR", "pictures"), ("XDG_CACHE_HOME", "cache")):
         d = tmp_path / sub

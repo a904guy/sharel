@@ -32,6 +32,7 @@ class UploadersConfig:
         if isinstance(cur, settings_cls):
             return cur
         obj = from_jsonable(settings_cls, cur if isinstance(cur, dict) else {})
+        resolve_secrets(self, key, obj)
         self.services[key] = obj
         return obj
 
@@ -58,8 +59,29 @@ class UploadersConfig:
 _SCHEMA = None
 
 
+def keyring_available() -> bool:
+    """A Secret Service is already running (never auto-activate one: in a headless or
+    minimal session that can block for the D-Bus activation timeout)."""
+    import os
+    if os.environ.get("SHAREL_NO_KEYRING"):
+        return False
+    try:
+        import gi
+        gi.require_version("Gio", "2.0")
+        from gi.repository import Gio, GLib
+        conn = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        (has,) = conn.call_sync("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus",
+                                "NameHasOwner", GLib.Variant("(s)", ("org.freedesktop.secrets",)), None,
+                                Gio.DBusCallFlags.NONE, 2000, None).unpack()
+        return bool(has)
+    except Exception:
+        return False
+
+
 def _secret():
     global _SCHEMA
+    if not keyring_available():
+        return None, None
     try:
         import gi
         gi.require_version("Secret", "1")

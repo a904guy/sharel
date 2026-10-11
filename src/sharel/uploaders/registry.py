@@ -44,9 +44,10 @@ def setting(default: Any = dataclasses.MISSING, *, label: str = "", help: str = 
 
 @dataclass
 class OAuth2Info:
-    """Tokens from an OAuth 2 flow (stored in the service settings)."""
-    access_token: str = ""
-    refresh_token: str = ""
+    """Tokens from an OAuth 2 flow (stored in the service settings; the tokens themselves go to
+    the libsecret keyring when one is available, see uploaders/config.py)."""
+    access_token: str = field(default="", metadata={"secret": True})
+    refresh_token: str = field(default="", metadata={"secret": True})
     token_type: str = "Bearer"
     expires_at: float = 0.0
     scope: str = ""
