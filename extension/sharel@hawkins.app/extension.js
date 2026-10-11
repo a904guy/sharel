@@ -428,6 +428,17 @@ class ShareLService {
         return true;
     }
 
+    GetClipboardAsync([mime], invocation) {
+        const clip = St.Clipboard.get_default();
+        const reply = bytes => invocation.return_value(new GLib.Variant('(ay)', [bytes]));
+        if (mime.startsWith('text/plain')) {
+            clip.get_text(St.ClipboardType.CLIPBOARD, (_c, text) => reply(new TextEncoder().encode(text ?? '')));
+            return;
+        }
+        clip.get_content(St.ClipboardType.CLIPBOARD, mime, (_c, bytes) =>
+            reply(bytes ? bytes.toArray() : new Uint8Array(0)));
+    }
+
     GetClipboardMimetypes() {
         return St.Clipboard.get_default().get_mimetypes(St.ClipboardType.CLIPBOARD);
     }

@@ -237,6 +237,9 @@ class ShellClient:
     def set_clipboard(self, mime: str, data: bytes) -> bool:
         return self._call("SetClipboard", "(say)", (mime, data))
 
+    def get_clipboard(self, mime: str) -> bytes:
+        return bytes(self._call("GetClipboard", "(s)", (mime,)))
+
     def clipboard_mimetypes(self) -> list[str]:
         return list(self._call("GetClipboardMimetypes"))
 

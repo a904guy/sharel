@@ -100,6 +100,10 @@ export const INTERFACE_XML = `
       <arg type="ay" direction="in" name="data"/>
       <arg type="b" direction="out" name="ok"/>
     </method>
+    <method name="GetClipboard">
+      <arg type="s" direction="in" name="mime"/>
+      <arg type="ay" direction="out" name="data"/>
+    </method>
     <method name="GetClipboardMimetypes">
       <arg type="as" direction="out" name="mimetypes"/>
     </method>
