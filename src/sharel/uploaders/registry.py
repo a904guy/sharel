@@ -72,6 +72,8 @@ class OAuth2Spec:
     scope_separator: str = " "
     # Some services want the client credentials as HTTP basic auth on the token endpoint
     token_auth_basic: bool = False
+    # Fixed loopback port for services that match the registered callback exactly (0 = any free port)
+    redirect_port: int = 0
 
 
 @dataclass
