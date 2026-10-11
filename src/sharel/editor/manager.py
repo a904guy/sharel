@@ -1948,6 +1948,7 @@ class ShapeManager:
         if not self.is_editor_mode:
             method = ImageInsertMethod.Center
         c = self.canvas_rect
+        expanded = method in (ImageInsertMethod.CanvasExpandDown, ImageInsertMethod.CanvasExpandRight)
         if method == ImageInsertMethod.CanvasExpandDown:
             self._expand_canvas(0, 0, max(0, img.width - self.canvas.width), img.height)
             pos, center = (c.x, c.bottom), False
@@ -1962,7 +1963,7 @@ class ShapeManager:
         shape.rect = S.Rect(pos[0], pos[1], 1, 1)
         shape.set_image(img, center)
         shape.on_created()
-        self._add_shape(shape)
+        self._add_shape(shape, checkpoint=not expanded)  # one undo step for expand + insert
         self._select(shape)
         self._on_image_modified()
         return shape
