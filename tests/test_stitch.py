@@ -126,6 +126,5 @@ def test_end_detection_can_be_disabled_and_limits():
     assert lim.add(img(page[100:400])) == StitchStatus.Added
     assert lim.add(img(page[200:500])) == StitchStatus.LimitReached
     assert lim.finished
-    with pytest.raises(ValueError):
-        Stitcher().add(img(page[0:300])) and None
+    with pytest.raises(ValueError):  # every frame must have the first frame's size
         st.add(img(page[0:200]))
