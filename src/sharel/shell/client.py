@@ -255,6 +255,14 @@ class ShellClient:
     def hide_border(self, tag: str) -> bool:
         return self._call("HideBorder", "(s)", (tag,))
 
+    # -- tray --
+
+    def configure_tray(self, indicator_id: str, left_opens_menu: bool) -> bool:
+        return self._call("ConfigureTray", "(sb)", (indicator_id, left_opens_menu))
+
+    def toggle_tray_menu(self, indicator_id: str) -> bool:
+        return self._call("ToggleTrayMenu", "(s)", (indicator_id,))
+
     # -- hotkeys --
 
     def grab_accelerator(self, accel: str, name: str) -> int:

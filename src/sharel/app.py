@@ -218,7 +218,41 @@ class ShareLApp(AllJobs, Adw.Application):
         add("quit", lambda *_: self.quit_app())
         add("open-recent", lambda _a, p: self._open_recent(p.unpack()), "s")
         add("tray-click", lambda _a, p: self.on_tray_click(p.unpack()), "s")
+        add("toggle-ac", lambda _a, p: self._toggle_flag("ac", p.unpack()), "s")
+        add("toggle-au", lambda _a, p: self._toggle_flag("au", p.unpack()), "s")
+        add("set-dest", lambda _a, p: self._set_destination(p.unpack()), "s")
+        from .ui.windows import open_named
+        add("open-window", lambda _a, p: open_named(self, p.unpack()), "s")
         self.set_accels_for_action("app.quit", ["<Control>q"])
+
+    def _toggle_flag(self, kind: str, name: str) -> None:
+        from .core.enums import AfterCaptureTasks, AfterUploadTasks
+        ts = self.store.app.default_task_settings
+        if kind == "ac" and name in AfterCaptureTasks.__members__:
+            ts.after_capture_job ^= AfterCaptureTasks[name]
+        elif kind == "au" and name in AfterUploadTasks.__members__:
+            ts.after_upload_job ^= AfterUploadTasks[name]
+        self.store.save_app()
+        self.settings_changed()
+
+    def _set_destination(self, spec: str) -> None:
+        import typing
+
+        from .core.config import TaskSettings
+        attr, _, value = spec.partition("=")
+        enum_cls = typing.get_type_hints(TaskSettings).get(attr)
+        if enum_cls is None or value not in enum_cls.__members__:
+            return
+        setattr(self.store.app.default_task_settings, attr, enum_cls[value])
+        self.store.save_app()
+        self.settings_changed()
+
+    def settings_changed(self) -> None:
+        """Config edited somewhere (settings window, tray, main window): refresh what shows it."""
+        if self.tray:
+            self.tray.send_menu()
+        if self.main_window is not None:
+            self.main_window._sync_flag_states()
 
     def _run_workflow_index(self, idx: int) -> None:
         hks = self.store.hotkeys.hotkeys

@@ -132,6 +132,10 @@ class ShareLService {
         this._grabRetry = 0;
         this.UngrabAll();
         this._stopHighlighter();
+        if (this._trayActor && this._trayHandler)
+            this._trayActor.disconnect(this._trayHandler);
+        this._trayActor = null;
+        this._trayWatch = 0;
         for (const actor of this._borders.values())
             actor.destroy();
         this._borders.clear();
@@ -504,6 +508,83 @@ class ShareLService {
             return false;
         actor.destroy();
         this._borders.delete(tag);
+        return true;
+    }
+
+    // ---- tray -----------------------------------------------------------------------------
+    // The ubuntu-appindicators extension opens an indicator's menu on every left click. ShareX
+    // runs a configurable action instead, so ShareL's indicator gets its button presses here first:
+    // left / double / middle click are reported as TrayClicked (left passes through to the menu when
+    // the configured action is "open tray menu"; right click always opens the menu).
+
+    _findIndicator(id) {
+        for (const actor of Object.values(Main.panel.statusArea)) {
+            const ind = actor?._indicator;
+            if (ind && (ind.id === id || ind._id === id))
+                return actor;
+        }
+        return null;
+    }
+
+    ConfigureTray(id, leftOpensMenu) {
+        this._trayId = id;
+        this._trayLeftOpensMenu = leftOpensMenu;
+        this._hookTray();
+        if (!this._trayWatch) {
+            // The indicator appears asynchronously (and again after the helper restarts).
+            this._trayWatch = GLib.timeout_add(GLib.PRIORITY_DEFAULT, 1000, () => {
+                this._hookTray();
+                return GLib.SOURCE_CONTINUE;
+            });
+            this._timeouts.add(this._trayWatch);
+        }
+        return this._findIndicator(id) !== null;
+    }
+
+    _hookTray() {
+        const actor = this._trayId ? this._findIndicator(this._trayId) : null;
+        if (!actor || actor === this._trayActor)
+            return;
+        if (this._trayActor && this._trayHandler)
+            this._trayActor.disconnect(this._trayHandler);
+        this._trayActor = actor;
+        let pendingLeft = 0;
+        this._trayHandler = actor.connect('button-press-event', (_a, event) => {
+            const button = event.get_button();
+            const emit = which => this._dbus?.emit_signal('TrayClicked', new GLib.Variant('(s)', [which]));
+            if (button === Clutter.BUTTON_MIDDLE) {
+                emit('middle');
+                return Clutter.EVENT_STOP;
+            }
+            if (button !== Clutter.BUTTON_PRIMARY || this._trayLeftOpensMenu)
+                return Clutter.EVENT_PROPAGATE;
+            if (pendingLeft) {
+                GLib.source_remove(pendingLeft);
+                this._timeouts.delete(pendingLeft);
+                pendingLeft = 0;
+                emit('double');
+                return Clutter.EVENT_STOP;
+            }
+            const {doubleClickTime} = Clutter.Settings.get_default();
+            pendingLeft = this._timeout(doubleClickTime, () => {
+                pendingLeft = 0;
+                emit('left');
+            });
+            return Clutter.EVENT_STOP;
+        });
+        actor.connect('destroy', () => {
+            if (this._trayActor === actor) {
+                this._trayActor = null;
+                this._trayHandler = 0;
+            }
+        });
+    }
+
+    ToggleTrayMenu(id) {
+        const actor = this._findIndicator(id);
+        if (!actor?.menu)
+            return false;
+        actor.menu.toggle();
         return true;
     }
 

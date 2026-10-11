@@ -37,7 +37,7 @@ def test_every_dbus_method_is_implemented():
     src = (EXT / "extension.js").read_text()
     for m in methods:
         assert re.search(rf"\n    (async )?{m}(Async)?\(", src), f"{m} not implemented in extension.js"
-    assert signals == {"AcceleratorActivated"}
+    assert signals == {"AcceleratorActivated", "TrayClicked"}
 
 
 @pytest.mark.parametrize("name", ["GetMonitors", "GetWindows", "GetActiveWindow", "GetPointer", "SetAbove",
