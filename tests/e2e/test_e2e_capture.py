@@ -54,7 +54,7 @@ async def test_s2_region_hotkey_on_monitor_2_and_s3_clipboard(app):
         # the task is in history and the toast was posted
         hist = wait_for(lambda: [h for h in s.history() if h["file_path"] == str(files[0])], what="history")
         assert hist[0]["type"] == "Image"
-        text, data, _imgs, _err = await call("notifications")
+        text, _data, _imgs, _err = await call("notifications")
         assert "Capture saved" in text and files[0].name in text, text
         # scenario 3: no ShareL window is focused, yet the clipboard holds the image
         assert not any(w["focus"] for w in s.windows() if w["pid"] == s.app_proc.pid)
@@ -90,7 +90,7 @@ async def test_s4_fullscreen_monitor_window_custom_last(app):
         with Image.open(f) as im:
             assert im.size == (1600, 900)
         # active window: gnome-text-editor
-        text, data, _i, _e = await call("app_launch", app="org.gnome.TextEditor", args=["--standalone"])
+        _text, _data, _i, _e = await call("app_launch", app="org.gnome.TextEditor", args=["--standalone"])
         win = wait_for(lambda: next((w for w in s.windows() if w["wm_class"] == "org.gnome.TextEditor"), None),
                        what="text editor")
         s.ext("Activate", f"uint64 {win['id']}")
