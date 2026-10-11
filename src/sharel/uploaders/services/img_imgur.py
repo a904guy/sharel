@@ -55,7 +55,11 @@ def authorize(settings: ImgurSettings, ctx: UploadContext) -> OAuth2Info:
     """Settings page "Authorize": log in to Imgur in the browser and store the tokens."""
     if not settings.client_secret:
         raise UploaderError("Enter the Client ID and Client secret of your Imgur app first")
-    info = oauth.authorize(_spec(settings), settings.client_id, settings.client_secret, ctx)
+    try:
+        info = oauth.authorize(_spec(settings), settings.client_id, settings.client_secret, ctx)
+    except OSError as e:
+        raise UploaderError(f"Callback port {settings.redirect_port} is in use ({e.strerror}); close the program "
+                            "using it or pick another port (and register it with your Imgur app)") from e
     settings.oauth2 = info
     settings.account_type = "User"
     ctx.save_settings()

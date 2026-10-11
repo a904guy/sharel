@@ -343,7 +343,7 @@ def test_image_services_registered():
     for name in ("Imgur", "ImageShack", "Flickr", "Chevereto", "Vgyme"):
         assert reg[f"image/{name}"].available and ImageDestination[name].value == name
     pb = reg["image/Photobucket"]
-    assert not pb.available and pb.defunct == "https://developer.photobucket.com/"
+    assert not pb.available and pb.defunct == "https://web.archive.org/web/20260516202928/http://developer.photobucket.com/"
     for mod in (img_imgur, img_flickr, img_imageshack):
         assert callable(mod.authorize)
 
@@ -384,3 +384,13 @@ def test_settings_round_trip_through_uploaders_config():
         assert cfg.settings_for(info.key, cls) == obj
     s = from_jsonable(img_imgur.ImgurSettings, {"client_id": "C", "oauth2": {"access_token": "A", "expires_at": 5.0}})
     assert isinstance(s.oauth2, OAuth2Info) and s.oauth2.access_token == "A"
+
+
+def test_imgur_authorize_port_in_use():
+    import socket
+    with socket.socket() as busy:
+        busy.bind(("127.0.0.1", 0))
+        busy.listen()
+        s = img_imgur.ImgurSettings(client_id="C", client_secret="S", redirect_port=busy.getsockname()[1])
+        with pytest.raises(UploaderError, match="in use"):
+            img_imgur.authorize(s, ctx(open_url=lambda u: None))
