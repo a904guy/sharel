@@ -124,6 +124,7 @@ def test_remove_duplicate_reorder_rename_reset(monkeypatch):
         first = win.selected_row().hk
         dup = win.duplicate_selected()
         assert hks[1] is dup and dup.job == first.job and dup is not first
+        assert dup.hotkey_info.hotkey == "" and first.hotkey_info.hotkey == "<Control>Print"
         assert dup.task_settings is not first.task_settings
         assert dup.task_settings.watch_folder_enabled is False and first.task_settings.watch_folder_enabled
         assert len(saved_hotkeys(app)) == 6

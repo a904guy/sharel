@@ -237,6 +237,7 @@ class AppSettingsWindow(SectionedWindow):
         if "upload_limit" in diff and self.app.tasks is not None:
             self.app.tasks.set_upload_limit(new["upload_limit"])
         if "use_libsecret" in diff:
+            _load_all_services(store.uploaders)  # real values, not keyring placeholders
             store.save_uploaders()  # moves secrets into (or keeps them out of) the keyring
         if "dev_mode" in diff:
             logging.getLogger().setLevel(logging.DEBUG if new["dev_mode"] else logging.INFO)

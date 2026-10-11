@@ -274,6 +274,10 @@ def test_advanced_backends_and_gsettings_opt_in(monkeypatch):
         find_row(page, "Developer mode (debug logging)", Adw.SwitchRow).set_active(False)
         find_row(page, "Keep uploader secrets in the GNOME keyring", Adw.SwitchRow).set_active(False)
         assert saved(app)["use_libsecret"] is False
+        retry = find_row(win.pages["upload"], "Retries when an upload fails", Adw.SpinRow)
+        retry.set_value(3)
+        find_row(win.pages["upload"], "Request timeout (seconds)", Adw.SpinRow).set_value(30)
+        assert saved(app)["max_upload_fail_retry"] == 3 and saved(app)["request_timeout_seconds"] == 30
         from sharel.uploaders.services import _file_helpers
         emoji = find_row(win.pages["upload"], "Don't URL-encode emoji", Adw.SwitchRow)
         emoji.set_active(False)

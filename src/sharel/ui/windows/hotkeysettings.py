@@ -306,6 +306,7 @@ class HotkeySettingsWindow(Adw.Window):
         self.rebuild()
         self._timer = GLib.timeout_add_seconds(2, self._tick)
         self.connect("close-request", self._on_close)
+        self.connect("destroy", self._on_close)
 
     # -- list --
 
@@ -444,7 +445,8 @@ class HotkeySettingsWindow(Adw.Window):
         ts = copy.deepcopy(row.hk.task_settings)
         ts.watch_folder_enabled = False  # like ShareX: a copy never watches the same folders
         ts.watch_folder_list = []
-        hk = HotkeySettings(copy.deepcopy(row.hk.hotkey_info), ts)
+        # Like ShareX only the task settings are copied: the copy starts without a hotkey.
+        hk = HotkeySettings(HotkeyInfo("", row.hk.hotkey_info.enabled), ts)
         self.hotkeys.insert(self.hotkeys.index(row.hk) + 1, hk)
         self.rebuild(select=hk)
         self.commit()

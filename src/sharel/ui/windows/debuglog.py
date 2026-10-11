@@ -123,6 +123,7 @@ class DebugLogWindow(Adw.Window):
         self._render()
         MEMORY_HANDLER.listeners.append(self._on_record)
         self.connect("close-request", self._on_close)
+        self.connect("destroy", self._on_close)
 
     # -- info --
 
