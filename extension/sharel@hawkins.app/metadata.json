@@ -1,0 +1,8 @@
+{
+  "uuid": "sharel@hawkins.app",
+  "name": "ShareL",
+  "description": "Companion for the ShareL screenshot and sharing app. Exposes window geometry, in-shell screenshots, global hotkeys, the clipboard, window placement and the mouse highlighter on the session bus as app.sharel.Shell.",
+  "shell-version": ["48", "49", "50"],
+  "version-name": "0.1.0",
+  "url": "https://github.com/a904guy/ShareL"
+}
