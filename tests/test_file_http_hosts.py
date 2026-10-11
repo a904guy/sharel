@@ -254,3 +254,45 @@ def test_transfersh_put_headers_and_delete_url():
     assert req["headers"]["X-Encrypt-Password"] == "enc"
     assert res.url == f"{base}/Ab12/my%20file.txt" and res.deletion_url == f"{base}/Ab12/my%20file.txt/DeLeTe"
     assert progress[-1] == (5, 5)
+
+
+# ---- settings-page Test buttons and registration -------------------------------------------------
+
+@responses.activate
+def test_connection_checks_for_http_services():
+    from sharel.uploaders.services import file_b2, file_immich, file_plik, file_seafile
+
+    responses.get(f"{IMMICH}/api/users/me", json={"email": "me@example.com"})
+    responses.get(f"{IMMICH}/api/server/version", json={"major": 3})
+    assert "me@example.com" in file_immich.test_connection(ImmichSettings(url=IMMICH, api_key="K"), UploadContext())
+    assert responses.calls[0].request.headers["x-api-key"] == "K"
+
+    responses.get(f"{SEA}/api2/auth/ping/", body='"pong"')
+    responses.get(f"{SEA}/api2/account/info/", json={"email": "me@x", "usage": 1048576})
+    msg = file_seafile.test_connection(SeafileSettings(api_url=f"{SEA}/api2/", auth_token="T", repo_id="R"),
+                                       UploadContext())
+    assert msg == "Logged in as me@x; library R; used 1.0 MiB"
+
+    responses.get("https://plik.example/config", json={"maxFileSize": 10485760})
+    assert "10 MiB" in file_plik.test_connection(PlikSettings(url="https://plik.example"), UploadContext())
+
+    responses.get(file_b2.AUTHORIZE_URL, json={"accountId": "a", "authorizationToken": "T", "apiInfo": {
+        "storageApi": {"apiUrl": "https://api.b2", "downloadUrl": "https://f.b2",
+                       "allowed": {"buckets": [{"id": "B", "name": "bk"}], "capabilities": ["writeFiles"]}}}})
+    responses.post("https://api.b2/b2api/v4/b2_get_upload_url",
+                   json={"uploadUrl": "https://u", "authorizationToken": "t"})
+    assert "bucket bk (B) accepts uploads" in file_b2.test_connection(
+        file_b2.BackblazeB2Settings(application_key_id="k", application_key="s", bucket_name="bk"), UploadContext())
+
+
+def test_all_file_protocol_services_registered():
+    names = ["FTP", "AmazonS3", "GoogleCloudStorage", "AzureStorage", "BackblazeB2", "OwnCloud", "Nextcloud",
+             "Immich", "Pomf", "Uguu", "Seafile", "Transfersh", "Plik", "SharedFolder", "Email"]
+    from sharel.core.enums import FileDestination
+    from sharel.core.serialize import from_jsonable
+    for name in names:
+        assert name in FileDestination.__members__
+        info = registry.get("file", name)
+        assert info is not None and info.available, name
+        if info.settings_cls is not None:  # every field has a default: settings_for() builds it from {}
+            from_jsonable(info.settings_cls, {})
