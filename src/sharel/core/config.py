@@ -35,6 +35,7 @@ from .enums import (
     ImageDestination,
     ImageEditorStartMode,
     ImageInsertMethod,
+    ImageInterpolationMode,
     IndexerOutput,
     PNGBitDepth,
     ProxyMethod,
@@ -171,6 +172,7 @@ class AnnotationOptions:
     text_border_color: str = "#FFFFFFFF"
     text_border_size: int = 0
     text_fill_color: str = "#FFF03C3C"
+    image_interpolation_mode: ImageInterpolationMode = ImageInterpolationMode.NearestNeighbor
     last_image_file_path: str = ""
     step_font_size: int = 18
     step_type: StepType = StepType.Numbers
