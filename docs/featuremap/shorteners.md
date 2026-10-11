@@ -1,14 +1,14 @@
-| BITLY | src/sharel/uploaders/services/short_bitly.py | POST api-ssl.bitly.com/v4/shorten (Bearer generic token or OAuth2 loopback; domain, group_guid) | done | tests/test_shorteners.py::test_bitly_generic_token_shortens_with_domain_and_group |
-| ISGD | src/sharel/uploaders/services/short_isgd.py | GET is.gd/create.php?format=json (shorturl, logstats; errorcode 1-4) | done | tests/test_shorteners.py::test_isgd_vgd_json_create |
-| VGD | src/sharel/uploaders/services/short_isgd.py | GET v.gd/create.php?format=json (shorturl, logstats; errorcode 1-4) | done | tests/test_shorteners.py::test_isgd_vgd_json_create |
-| TINYURL | src/sharel/uploaders/services/short_tinyurl.py | POST api.tinyurl.com/create (Bearer; alias, domain, tags) or keyless api-create.php fallback | done | tests/test_shorteners.py::test_tinyurl_api_v1_with_token_alias_domain |
-| TURL | src/sharel/uploaders/services/short_turl.py | POST turl.ca/api/v1/links (Bearer pastebin.ca key; mode redirect/cite) | done | tests/test_shorteners.py::test_turl_api_v1_links |
-| YOURLS | src/sharel/uploaders/services/short_yourls.py | POST yourls-api.php action=shorturl format=json (signature / time-limited sha256 / user+pass; keyword, title) | done | tests/test_shorteners.py::test_yourls_signature_keyword_title |
-| QRnet | - | - | excluded: https://qr.net/api/short | - |
-| VURL | src/sharel/uploaders/services/short_turl.py | GET vurl.com/api.php?url= (plain text) | done | tests/test_shorteners.py::test_vurl_plain_text_api |
-| TwoGP | - | - | excluded: https://www.2.gp/api/short | - |
-| Polr | src/sharel/uploaders/services/short_polr.py | GET <instance>/api/v2/action/shorten (key, custom_ending, is_secret, response_type=json); API v1 option | done | tests/test_shorteners.py::test_polr_v2_shorten_with_custom_ending_and_secret |
-| FirebaseDynamicLinks | - | - | excluded: https://firebase.google.com/support/dynamic-links-faq | - |
-| Kutt | src/sharel/uploaders/services/short_kutt.py | POST <host>/api/v2/links X-API-KEY (domain, customurl, password, expire_in, reuse, description) | done | tests/test_shorteners.py::test_kutt_v2_links_all_options |
-| ZeroWidthShortener | src/sharel/uploaders/services/short_zws.py | POST api.zws.im {url} -> {short,url} (custom instance URL, Bearer token) | done | tests/test_shorteners.py::test_zws_post_and_url_field |
+| BITLY | uploaders/services/short_bitly.py | POST api-ssl.bitly.com/v4/shorten (Bearer generic token or OAuth2 loopback; domain, group_guid) | done | tests/test_shorteners.py::test_bitly_generic_token_shortens_with_domain_and_group |
+| ISGD | uploaders/services/short_isgd.py | GET is.gd/create.php?format=json (shorturl, logstats; errorcode 1-4) | done | tests/test_shorteners.py::test_isgd_vgd_json_create |
+| VGD | uploaders/services/short_isgd.py | GET v.gd/create.php?format=json (shorturl, logstats; errorcode 1-4) | done | tests/test_shorteners.py::test_isgd_vgd_json_create |
+| TINYURL | uploaders/services/short_tinyurl.py | POST api.tinyurl.com/create (Bearer; alias, domain, tags) or keyless api-create.php fallback | done | tests/test_shorteners.py::test_tinyurl_api_v1_with_token_alias_domain |
+| TURL | uploaders/services/short_turl.py | POST turl.ca/api/v1/links (Bearer pastebin.ca key; mode redirect/cite) | done | tests/test_shorteners.py::test_turl_api_v1_links |
+| YOURLS | uploaders/services/short_yourls.py | POST yourls-api.php action=shorturl format=json (signature / time-limited sha256 / user+pass; keyword, title) | done | tests/test_shorteners.py::test_yourls_signature_keyword_title |
+| QRnet | uploaders/services/short_defunct.py | register_defunct (shown unavailable with evidence) | excluded: https://qr.net/api/short | tests/test_shorteners.py::test_defunct_shorteners_registered_with_evidence[QRnet] |
+| VURL | uploaders/services/short_vurl.py | GET vurl.com/api.php?url= (plain text) | done | tests/test_shorteners.py::test_vurl_plain_text_api |
+| TwoGP | uploaders/services/short_defunct.py | register_defunct (shown unavailable with evidence) | excluded: https://www.2.gp/api/short | tests/test_shorteners.py::test_defunct_shorteners_registered_with_evidence[TwoGP] |
+| Polr | uploaders/services/short_polr.py | GET <instance>/api/v2/action/shorten (key, custom_ending, is_secret, response_type=json); API v1 option | done | tests/test_shorteners.py::test_polr_v2_shorten_with_custom_ending_and_secret |
+| FirebaseDynamicLinks | uploaders/services/short_defunct.py | register_defunct (shown unavailable with evidence) | excluded: https://firebase.google.com/support/dynamic-links-faq | tests/test_shorteners.py::test_defunct_shorteners_registered_with_evidence[FirebaseDynamicLinks] |
+| Kutt | uploaders/services/short_kutt.py | POST <host>/api/v2/links X-API-KEY (domain, customurl, password, expire_in, reuse, description) | done | tests/test_shorteners.py::test_kutt_v2_links_all_options |
+| ZeroWidthShortener | uploaders/services/short_zws.py | POST api.zws.im {url} -> {short,url} (custom instance URL, Bearer token) | done | tests/test_shorteners.py::test_zws_post_and_url_field |
 | CustomURLShortener | uploaders/services/*.py | HTTPS API | planned | - |

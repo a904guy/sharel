@@ -205,3 +205,13 @@ def test_email_smtp_cancelled_prompt_and_bad_login(smtp_server):
     with pytest.raises(UploaderError, match="sending through"):
         make("Email", UploadContext(prompt_input=lambda t, d: "a@example.org"),
              **_smtp_settings(port, password="wrong")).share_url(URL)
+
+
+def test_pushbullet_settings_round_trip_through_config():
+    from sharel.core.serialize import to_jsonable
+    from sharel.uploaders.config import UploadersConfig
+    from sharel.uploaders.services.share_pushbullet import PushbulletDevice, PushbulletSettings
+    cfg = UploadersConfig(services={"sharing/Pushbullet": to_jsonable(PushbulletSettings(
+        user_api_key="k", device_list=[PushbulletDevice("dev1", "Pixel")], selected_device=0))})
+    s = cfg.settings_for("sharing/Pushbullet", PushbulletSettings)
+    assert s.device_list == [PushbulletDevice("dev1", "Pixel")] and s.selected_device == 0
