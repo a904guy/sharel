@@ -260,6 +260,9 @@ class ShellClient:
     def configure_tray(self, indicator_id: str, left_opens_menu: bool) -> bool:
         return self._call("ConfigureTray", "(sb)", (indicator_id, left_opens_menu))
 
+    def tray_icon_rect(self, indicator_id: str) -> dict:
+        return self._json("GetTrayIconRect", "(s)", (indicator_id,))
+
     def toggle_tray_menu(self, indicator_id: str) -> bool:
         return self._call("ToggleTrayMenu", "(s)", (indicator_id,))
 

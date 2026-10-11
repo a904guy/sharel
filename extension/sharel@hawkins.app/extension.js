@@ -580,6 +580,16 @@ class ShareLService {
         });
     }
 
+    GetTrayIconRect(id) {
+        const actor = this._findIndicator(id);
+        if (!actor)
+            return json({found: false});
+        const [x, y] = actor.get_transformed_position();
+        const [w, h] = actor.get_transformed_size();
+        return json({found: true, rect: [Math.round(x), Math.round(y), Math.round(w), Math.round(h)],
+            menu_open: Boolean(actor.menu?.isOpen)});
+    }
+
     ToggleTrayMenu(id) {
         const actor = this._findIndicator(id);
         if (!actor?.menu)

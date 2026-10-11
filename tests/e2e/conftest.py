@@ -199,6 +199,56 @@ class Session:
         out = subprocess.run(["/usr/bin/python3", "-c", code, mime], env=self.env, capture_output=True, timeout=30)
         return out.stdout if out.returncode == 0 else b""
 
+    def tray_menu_click(self, *path: str) -> dict:
+        """Activate a tray menu item by its label path (e.g. "Capture", "Capture entire screen") the way the
+        shell does for a click: com.canonical.dbusmenu Event(id, "clicked") on ShareL's indicator menu."""
+        code = r'''
+import json, sys, gi
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio, GLib
+c = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+items = c.call_sync("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher", "org.freedesktop.DBus.Properties",
+    "Get", GLib.Variant("(ss)", ("org.kde.StatusNotifierWatcher", "RegisteredStatusNotifierItems")), None, 0, 5000,
+    None).unpack()[0]
+names = c.call_sync("org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus", "ListNames", None,
+    None, 0, 5000, None).unpack()[0]
+candidates = []
+for it in items:
+    bus, _, path = it.partition("/")
+    if bus and Gio.dbus_is_name(bus):
+        candidates.append((bus, "/" + path if path else "/StatusNotifierItem"))
+candidates += [(n, "/org/ayatana/NotificationItem/app_sharel_ShareL") for n in names if n.startswith(":")]
+for bus, path in candidates:
+    try:
+        sid = c.call_sync(bus, path, "org.freedesktop.DBus.Properties", "Get",
+            GLib.Variant("(ss)", ("org.kde.StatusNotifierItem", "Id")), None, 0, 3000, None).unpack()[0]
+    except (GLib.Error, AttributeError):
+        continue
+    if sid != "app.sharel.ShareL":
+        continue
+    menu = c.call_sync(bus, path, "org.freedesktop.DBus.Properties", "Get",
+        GLib.Variant("(ss)", ("org.kde.StatusNotifierItem", "Menu")), None, 0, 3000, None).unpack()[0]
+    _rev, layout = c.call_sync(bus, menu, "com.canonical.dbusmenu", "GetLayout",
+        GLib.Variant("(iias)", (0, -1, [])), None, 0, 5000, None).unpack()
+    node = layout
+    for want in sys.argv[1:]:
+        kids = node[2]
+        node = next((k for k in kids if k[1].get("label", "").replace("_", "") == want), None)
+        if node is None:
+            print(json.dumps({"ok": False, "missing": want, "have": [k[1].get("label") for k in kids]}))
+            sys.exit(0)
+    c.call_sync(bus, menu, "com.canonical.dbusmenu", "Event",
+        GLib.Variant("(isvu)", (node[0], "clicked", GLib.Variant("s", ""), 0)), None, 0, 5000, None)
+    print(json.dumps({"ok": True, "id": node[0], "toggle": node[1].get("toggle-state", -1)}))
+    sys.exit(0)
+print(json.dumps({"ok": False, "missing": "indicator"}))
+'''
+        out = subprocess.run(["/usr/bin/python3", "-c", code, *path], env=self.env, capture_output=True, text=True,
+                             timeout=30)
+        if out.returncode != 0 or not out.stdout.strip():
+            raise RuntimeError(f"tray_menu_click failed: {out.stderr.strip()[-800:]}")
+        return json.loads(out.stdout.strip())
+
     def launch(self, *argv: str) -> subprocess.Popen:
         return subprocess.Popen(list(argv), env=self.env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                 start_new_session=True)
@@ -263,3 +313,9 @@ def session(request, tmp_path_factory):
             s.stop_app()
         _stop_shell(state)
         atexit.unregister(_stop_shell)
+
+
+def found(data, name: str) -> bool:
+    """A RootPilot find() result really contains an element called ``name`` (not just an echo of the query)."""
+    items = (data or {}).get("data") or []
+    return any(name in (it.get("name") or "") or name in (it.get("text") or "") for it in items if isinstance(it, dict))

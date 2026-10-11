@@ -9,6 +9,7 @@ import time
 
 import numpy as np
 import pytest
+from conftest import found
 from PIL import Image
 
 pytestmark = [pytest.mark.e2e, pytest.mark.anyio]
@@ -65,8 +66,8 @@ async def test_s2_region_hotkey_on_monitor_2_and_s3_clipboard(app):
         # the task list in the main window shows it
         s.sharel("-OpenMainWindow")
         s.wait_window("ShareL")
-        text, _d, _i, _e = await call("find", name=files[0].name, window="ShareL")
-        assert files[0].name in text, text
+        text, data, _i, _e = await call("find", name=files[0].name, window="ShareL")
+        assert found(data, files[0].name), text
         await call("screenshot", window="ShareL", max_width=1000)
         s.sharel("-OpenMainWindow")
         await call("key", combo="ctrl+w", window="ShareL")

@@ -28,7 +28,7 @@ DC = "org.gnome.Mutter.DisplayConfig"
 DC_PATH = "/org/gnome/Mutter/DisplayConfig"
 QUIET_S = 0.3
 
-KEYSYMS = {"Down": 0xFF54, "Up": 0xFF52, "Page_Down": 0xFF56, "Page_Up": 0xFF55, "Home": 0xFF50, "End": 0xFF57,
+KEYSYMS = {"Down": 0xFF54, "Right": 0xFF53, "Left": 0xFF51, "Return": 0xFF0D, "Escape": 0xFF1B, "Up": 0xFF52, "Page_Down": 0xFF56, "Page_Up": 0xFF55, "Home": 0xFF50, "End": 0xFF57,
            "Shift_L": 0xFFE1, "Control_L": 0xFFE3}
 
 

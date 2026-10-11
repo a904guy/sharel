@@ -147,6 +147,10 @@ export const INTERFACE_XML = `
       <arg type="b" direction="in" name="left_opens_menu"/>
       <arg type="b" direction="out" name="found"/>
     </method>
+    <method name="GetTrayIconRect">
+      <arg type="s" direction="in" name="indicator_id"/>
+      <arg type="s" direction="out" name="json"/>
+    </method>
     <method name="ToggleTrayMenu">
       <arg type="s" direction="in" name="indicator_id"/>
       <arg type="b" direction="out" name="ok"/>
