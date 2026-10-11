@@ -163,7 +163,7 @@ def as_stream(data: bytes | BinaryIO | str | Path) -> BinaryIO:
     if isinstance(data, (bytes, bytearray)):
         return io.BytesIO(bytes(data))
     if isinstance(data, (str, Path)):
-        return open(data, "rb")  # noqa: SIM115  (caller closes)
+        return open(data, "rb")
     return data
 
 

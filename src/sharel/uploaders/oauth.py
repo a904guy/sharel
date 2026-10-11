@@ -27,7 +27,7 @@ DONE_PAGE = (b"<!doctype html><meta charset=utf-8><title>ShareL</title>"
 class _Handler(http.server.BaseHTTPRequestHandler):
     result: dict = {}
 
-    def do_GET(self):  # noqa: N802
+    def do_GET(self):
         q = parse_qs(urlparse(self.path).query)
         if "code" in q or "error" in q:
             self.server.result = {k: v[0] for k, v in q.items()}  # type: ignore[attr-defined]

@@ -389,10 +389,10 @@ class WorkerTask:
         if flags & ACT.DoOCR:
             host.ocr(img, ts, info)
         self._check()
-        if flags & ACT.UploadImageToHost:
-            if not (flags & ACT.ShowBeforeUploadWindow) or host.before_upload(info, ts):
-                self.data = data
-                self._upload_bytes(data, info.file_name, EDataType.Image)
+        if flags & ACT.UploadImageToHost and (not (flags & ACT.ShowBeforeUploadWindow)
+                                              or host.before_upload(info, ts)):
+            self.data = data
+            self._upload_bytes(data, info.file_name, EDataType.Image)
         if flags & ACT.DeleteFile and info.file_path:
             try:
                 os.unlink(info.file_path)
@@ -743,7 +743,4 @@ class TaskManager:
 
     def wait_all(self, timeout: float = 60) -> bool:
         deadline = time.monotonic() + timeout
-        for t in list(self.tasks):
-            if not t.done.wait(max(0.0, deadline - time.monotonic())):
-                return False
-        return True
+        return all(t.done.wait(max(0.0, deadline - time.monotonic())) for t in list(self.tasks))

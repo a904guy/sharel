@@ -476,7 +476,8 @@ class TaskSettingsAdvanced:
     auto_clear_clipboard: bool = False
     region_capture_disable_annotation: bool = False
     image_extensions: str = "jpg jpeg png gif bmp ico tif tiff webp"
-    text_extensions: str = "txt log nfo c cpp cc cxx h hpp hxx cs vb html htm xhtml xht xml css js php bat java lua py pl cfg ini md json yml yaml"
+    text_extensions: str = ("txt log nfo c cpp cc cxx h hpp hxx cs vb html htm xhtml xht xml css js php bat java lua "
+                            "py pl cfg ini md json yml yaml")
     upload_text_files_to_text_host: bool = True
     early_copy_url: bool = False
     text_file_extension: str = "txt"

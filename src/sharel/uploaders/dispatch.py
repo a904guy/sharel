@@ -123,7 +123,7 @@ def upload_file(stream: BinaryIO, file_name: str, data_type: EDataType, ts: Task
         try:
             up = create(d, cfg, ctx, ts)
 
-            def run(up=up):
+            def run(up=up, d=d):
                 stream.seek(0)
                 if isinstance(up, TextUploader) or getattr(up, "dest_type", "") == "TextUploader":
                     text = stream.read().decode("utf-8", errors="replace")

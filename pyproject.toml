@@ -57,4 +57,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "UP", "SIM", "A", "BLE", "RUF"]
-ignore = ["RUF001", "RUF002", "RUF003", "RUF012", "SIM105", "B008", "BLE001", "E402"]
+ignore = ["RUF001", "RUF002", "RUF003", "RUF012", "SIM105", "B008", "BLE001", "E402", "A002", "UP047", "UP042", "RUF046"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/sharel/core/nameparser.py" = ["SIM905"]
