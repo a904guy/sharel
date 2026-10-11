@@ -903,22 +903,31 @@ def box_blur(img: Image.Image, blur_range: int) -> Image.Image:
 
 
 def pixelate(img: Image.Image, pixel_size: int) -> Image.Image:
-    """ImageHelpers.Pixelate: alpha-weighted block average, blocks anchored at the top-left."""
+    """ImageHelpers.Pixelate: alpha-weighted block average, blocks anchored at the top-left.
+
+    Per block: rgb = sum(rgb * a/255) / sum(a/255); alpha = sum(a * a/255) / pixel count."""
     if pixel_size <= 1:
         return img.copy()
+    ps = int(pixel_size)
     a = np.asarray(img.convert("RGBA"), dtype=np.float64)
     h, w = a.shape[:2]
-    out = np.empty_like(a)
-    for y in range(0, h, pixel_size):
-        for x in range(0, w, pixel_size):
-            blk = a[y:y + pixel_size, x:x + pixel_size]
-            wgt = blk[..., 3] / 255.0
-            wsum = wgt.sum()
-            count = blk.shape[0] * blk.shape[1]
-            rgb = (blk[..., :3] * wgt[..., None]).sum(axis=(0, 1)) / wsum if wsum > 0 else np.zeros(3)
-            alpha = (blk[..., 3] * wgt).sum() / count
-            out[y:y + pixel_size, x:x + pixel_size, :3] = np.floor(rgb)
-            out[y:y + pixel_size, x:x + pixel_size, 3] = np.floor(alpha)
+    bh, bw = -(-h // ps), -(-w // ps)
+    pad = ((0, bh * ps - h), (0, bw * ps - w))
+    wgt = np.pad(a[..., 3] / 255.0, pad)
+    rgbw = np.pad(a[..., :3] * (a[..., 3:4] / 255.0), (*pad, (0, 0)))
+    aw = np.pad(a[..., 3] * a[..., 3] / 255.0, pad)
+    count = np.pad(np.ones((h, w)), pad)
+
+    def block_sum(x: np.ndarray) -> np.ndarray:
+        shape = (bh, ps, bw, ps, *x.shape[2:])
+        return x.reshape(shape).sum(axis=(1, 3))
+
+    wsum = block_sum(wgt)
+    safe = np.where(wsum > 0, wsum, 1.0)
+    rgb = np.where(wsum[..., None] > 0, block_sum(rgbw) / safe[..., None], 0.0)
+    alpha = block_sum(aw) / block_sum(count)
+    blocks = np.floor(np.concatenate([rgb, alpha[..., None]], axis=2))
+    out = np.repeat(np.repeat(blocks, ps, axis=0), ps, axis=1)[:h, :w]
     return Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), "RGBA")
 
 
