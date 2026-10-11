@@ -129,7 +129,12 @@ def test_urls_custom_domain_and_remove_extension():
     ("s3.eu-central-1.amazonaws.com", "", "eu-central-1"),
     ("https://s3-ap-south-1.amazonaws.com/", "", "ap-south-1"),
     ("abc123.r2.cloudflarestorage.com", "auto", "auto"),
-    ("s3.us-west-004.backblazeb2.com", "", "us-east-1"),
+    ("https://abc123.r2.cloudflarestorage.com", "", "auto"),
+    ("s3.us-west-004.backblazeb2.com", "", "us-west-004"),
+    ("nyc3.digitaloceanspaces.com", "", "nyc3"),
+    ("s3.eu-central-1.wasabisys.com", "", "eu-central-1"),
+    ("http://minio.lan:9000", "", "us-east-1"),
+    ("s3.us-west-004.backblazeb2.com", "eu-x", "eu-x"),
 ])
 def test_region(endpoint, region, expected):
     assert file_s3.region_for(AmazonS3Settings(endpoint=endpoint, region=region)) == expected

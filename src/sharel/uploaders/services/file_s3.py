@@ -15,6 +15,7 @@ import datetime as _dt
 import hashlib
 import hmac
 import io
+import re
 import threading
 from collections.abc import Iterable
 from dataclasses import dataclass
@@ -83,8 +84,8 @@ class AmazonS3Settings:
     endpoint: str = setting("s3.amazonaws.com", label="Endpoint",
                             help="e.g. s3.eu-west-1.amazonaws.com, <account-id>.r2.cloudflarestorage.com, "
                                  "s3.us-west-004.backblazeb2.com, http://minio.lan:9000")
-    region: str = setting("", label="Region", help="Empty: taken from an AWS endpoint, else us-east-1 "
-                                                   "(R2: auto)")
+    region: str = setting("", label="Region", help="Empty: taken from AWS, B2, R2 (auto), DigitalOcean and "
+                                                   "Wasabi endpoints, else us-east-1")
     use_path_style: bool = setting(False, label="Use path-style requests",
                                    help="endpoint/bucket/key instead of bucket.endpoint/key (MinIO needs this)")
     bucket: str = setting("", label="Bucket")
@@ -151,7 +152,15 @@ def region_for(settings: AmazonS3Settings) -> str:
     """AmazonS3.GetRegion: the region setting, else parsed from an *.amazonaws.com endpoint, else us-east-1."""
     if settings.region.strip():
         return settings.region.strip()
-    url = remove_prefixes(settings.endpoint).rstrip("/")
+    url = remove_prefixes(settings.endpoint).rstrip("/").split("/", 1)[0].split(":", 1)[0].lower()
+    # S3-compatible hosts whose region is part of the hostname (the scope must match or the signature fails)
+    if url.endswith(".r2.cloudflarestorage.com"):
+        return "auto"
+    m = re.match(r"^s3\.([a-z0-9-]+)\.backblazeb2\.com$", url) or \
+        re.match(r"^([a-z0-9-]+)\.digitaloceanspaces\.com$", url) or \
+        re.match(r"^s3\.([a-z0-9-]+)\.wasabisys\.com$", url)
+    if m:
+        return m.group(1)
     idx = url.find(".amazonaws.com")
     if idx < 0:
         return DEFAULT_REGION
