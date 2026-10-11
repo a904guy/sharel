@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "ShareL",
+  "version": "0.1.0",
+  "description": "Upload images, videos, audio and text, or shorten links, with ShareL (ShareX for GNOME).",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtKl2OmWxKh8O3+BdNdiDkSzYV0RnGp0EHzzXyLphFh8iLyH3VvgBM7wiG9VEQpPJ8Vmbb6ljlI6SUbcstagBQDS0gn/4TJPfE+SBn2Fb8j2GEl4e51dXHTtj0AH1hjGgEzCcFyAOc/Ei5WDIstO6ChygnZTYSoEJdbPLKwqXOhD9X7lNM1nT28MoyMlejts12jyiHIemmPBa77wqtyLuDpZ/jtEPBBaWjc1te6ayKUisPWwVCWjeNngxePOQakkuLBuXmuSAoNokHchEAk9zzTHdQ/69/15tL59bGq/bmbZoRQUMLYl/Q7RPX7TY15KWkgowPdG9CP43133w6Pc6lwIDAQAB",
+  "permissions": [
+    "contextMenus",
+    "nativeMessaging"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "icons": {
+    "128": "icon128.png"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "sharel@hawkins.app",
+      "strict_min_version": "115.0"
+    }
+  }
+}

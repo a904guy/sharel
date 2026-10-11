@@ -28,6 +28,7 @@ from ..core.enums import (
     URLSharingServices,
 )
 from ..core.tasks import TaskInfo, TaskStatus
+from ..core.i18n import N_, _
 from . import menus
 from .gtkutil import human_size, texture_from_pil
 
@@ -70,22 +71,22 @@ class TaskItem(GObject.Object):
 
 
 SIDEBAR = [
-    ("Capture", "camera-photo-symbolic", "capture"), ("Upload", "send-to-symbolic", "upload"),
-    ("Workflows", "view-list-symbolic", "workflows"), ("Tools", "applications-graphics-symbolic", "tools"),
+    (N_("Capture"), "camera-photo-symbolic", "capture"), (N_("Upload"), "send-to-symbolic", "upload"),
+    (N_("Workflows"), "view-list-symbolic", "workflows"), (N_("Tools"), "applications-graphics-symbolic", "tools"),
     (None, None, None),
-    ("After capture tasks", "object-select-symbolic", "aftercapture"),
-    ("After upload tasks", "object-select-symbolic", "afterupload"),
-    ("Destinations", "folder-remote-symbolic", "destinations"),
-    ("Task settings…", "preferences-other-symbolic", "action:task-settings"),
-    ("Application settings…", "preferences-system-symbolic", "action:app-settings"),
-    ("Hotkey settings…", "preferences-desktop-keyboard-shortcuts-symbolic", "action:hotkey-settings"),
+    (N_("After capture tasks"), "object-select-symbolic", "aftercapture"),
+    (N_("After upload tasks"), "object-select-symbolic", "afterupload"),
+    (N_("Destinations"), "folder-remote-symbolic", "destinations"),
+    (N_("Task settings…"), "preferences-other-symbolic", "action:task-settings"),
+    (N_("Application settings…"), "preferences-system-symbolic", "action:app-settings"),
+    (N_("Hotkey settings…"), "preferences-desktop-keyboard-shortcuts-symbolic", "action:hotkey-settings"),
     (None, None, None),
-    ("Screenshots folder…", "folder-pictures-symbolic", "action:screenshots-folder"),
-    ("History…", "document-open-recent-symbolic", "action:history"),
-    ("Image history…", "image-x-generic-symbolic", "action:image-history"),
+    (N_("Screenshots folder…"), "folder-pictures-symbolic", "action:screenshots-folder"),
+    (N_("History…"), "document-open-recent-symbolic", "action:history"),
+    (N_("Image history…"), "image-x-generic-symbolic", "action:image-history"),
     (None, None, None),
-    ("Debug", "dialog-information-symbolic", "debug"),
-    ("About…", "help-about-symbolic", "action:about"),
+    (N_("Debug"), "dialog-information-symbolic", "debug"),
+    (N_("About…"), "help-about-symbolic", "action:about"),
 ]
 
 TASK_MENU = [
@@ -105,8 +106,14 @@ TASK_MENU = [
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, app) -> None:
         cfg = app.store.app
-        super().__init__(application=app, title="ShareL", default_width=cfg.main_window_size.width,
-                         default_height=cfg.main_window_size.height)
+        from .gsettings import settings
+        self.gsettings = settings()
+        w, h = cfg.main_window_size.width, cfg.main_window_size.height
+        if self.gsettings is not None:
+            w, h = self.gsettings.get_int("window-width"), self.gsettings.get_int("window-height")
+        super().__init__(application=app, title="ShareL", default_width=w, default_height=h)
+        if self.gsettings is not None and self.gsettings.get_boolean("window-maximized"):
+            self.maximize()
         self.app = app
         self.items: dict[str, TaskItem] = {}
         self.store_model = Gio.ListStore.new(TaskItem)
@@ -144,7 +151,7 @@ class MainWindow(Adw.ApplicationWindow):
             if label is None:
                 box.append(Gtk.Separator(margin_top=4, margin_bottom=4))
                 continue
-            content = Adw.ButtonContent(label=label, icon_name=icon, halign=Gtk.Align.START)
+            content = Adw.ButtonContent(label=_(label), icon_name=icon, halign=Gtk.Align.START)
             if target.startswith("action:"):
                 b = Gtk.Button(child=content, action_name=f"win.{target[7:]}")
             else:
@@ -518,6 +525,10 @@ class MainWindow(Adw.ApplicationWindow):
         w, h = self.get_default_size()
         self.app.store.app.main_window_size.width, self.app.store.app.main_window_size.height = w, h
         self.app.store.save_app()
+        if self.gsettings is not None:
+            self.gsettings.set_int("window-width", w)
+            self.gsettings.set_int("window-height", h)
+            self.gsettings.set_boolean("window-maximized", self.is_maximized())
         self.app.main_window = None
         return False
 

@@ -223,7 +223,48 @@ class ShareLApp(AllJobs, Adw.Application):
         add("set-dest", lambda _a, p: self._set_destination(p.unpack()), "s")
         from .ui.windows import open_named
         add("open-window", lambda _a, p: open_named(self, p.unpack()), "s")
+        add("native", lambda _a, p: self.on_native_message(p.unpack()), "s")
         self.set_accels_for_action("app.quit", ["<Control>q"])
+
+    def on_native_message(self, payload: str) -> str:
+        """A browser extension request (ShareX's NativeMessagingAction) from sharel-native-host."""
+        import json
+        from .core.enums import NativeMessagingAction as N
+        msg = json.loads(payload)
+        action = N[msg.get("Action", "None")]
+        url, text = msg.get("URL", ""), msg.get("Text", "")
+        ts = self.store.task_settings_for(None)
+        if action == N.UploadImage and ts.advanced_settings.process_images_during_browser_upload:
+            self._download_image_then_process(url, ts)
+        elif action in (N.UploadImage, N.UploadVideo, N.UploadAudio):
+            self.tasks.download_upload(url, ts)
+        elif action == N.UploadText:
+            self.tasks.upload_text(text, ts)
+        elif action == N.ShortenURL:
+            self.tasks.shorten_url(url, ts)
+        log.info("native message: %s", action.value)
+        return action.value
+
+    def _download_image_then_process(self, url: str, ts) -> None:
+        """Browser image upload with image processing: download it, then run the after-capture tasks."""
+        import io
+        import threading
+
+        import requests
+        from PIL import Image
+
+        def work():
+            try:
+                r = requests.get(url, timeout=self.store.app.request_timeout_seconds,
+                                 proxies=self.store.app.proxy_settings.requests_proxies())
+                r.raise_for_status()
+                img = Image.open(io.BytesIO(r.content)).convert("RGBA")
+            except Exception as e:
+                err = str(e)  # `e` is unbound once the except block ends
+                GLib.idle_add(lambda: (self.message("Browser upload failed", err, urgent=True), False)[1])
+                return
+            GLib.idle_add(lambda: (self.tasks.run_image(img, ts), False)[1])
+        threading.Thread(target=work, daemon=True, name="browser-image").start()
 
     def _toggle_flag(self, kind: str, name: str) -> None:
         from .core.enums import AfterCaptureTasks, AfterUploadTasks

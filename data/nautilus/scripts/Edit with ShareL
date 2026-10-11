@@ -1,0 +1,6 @@
+#!/bin/sh
+# Nautilus script: open the selected images in ShareL's image editor ("Edit with ShareX").
+IFS='
+'
+# shellcheck disable=SC2086
+exec sharel -ImageEditor $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS

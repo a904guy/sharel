@@ -1,0 +1,6 @@
+#!/bin/sh
+# Nautilus script: upload the selected files with ShareL (ShareX's "Upload with ShareX").
+IFS='
+'
+# shellcheck disable=SC2086
+exec sharel $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS

@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=Edit with ShareL
+Comment=Open the image in ShareL's image editor
+Exec=sharel -ImageEditor %F
+TryExec=sharel
+Icon=app.sharel.ShareL
+Terminal=false
+NoDisplay=true
+MimeType=image/png;image/jpeg;image/gif;image/bmp;image/tiff;image/webp;
+Categories=Graphics;
+Actions=upload;
+
+[Desktop Action upload]
+Name=Upload with ShareL
+Exec=sharel %F

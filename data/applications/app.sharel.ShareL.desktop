@@ -1,0 +1,46 @@
+[Desktop Entry]
+Type=Application
+Name=ShareL
+GenericName=Screen capture and sharing
+Comment=Capture, annotate, record and share your screen (ShareX for GNOME)
+Exec=sharel %F
+TryExec=sharel
+Icon=app.sharel.ShareL
+Terminal=false
+StartupNotify=true
+StartupWMClass=app.sharel.ShareL
+Categories=Utility;GTK;GNOME;
+Keywords=screenshot;screen capture;recording;upload;share;ocr;annotate;sharex;
+Actions=capture-region;capture-screen;capture-window;screen-recorder;screen-recorder-gif;upload-clipboard;image-editor;history;
+
+[Desktop Action capture-region]
+Name=Capture region
+Exec=sharel -RectangleRegion
+
+[Desktop Action capture-screen]
+Name=Capture entire screen
+Exec=sharel -PrintScreen
+
+[Desktop Action capture-window]
+Name=Capture active window
+Exec=sharel -ActiveWindow
+
+[Desktop Action screen-recorder]
+Name=Screen recording
+Exec=sharel -ScreenRecorder
+
+[Desktop Action screen-recorder-gif]
+Name=Screen recording (GIF)
+Exec=sharel -ScreenRecorderGIF
+
+[Desktop Action upload-clipboard]
+Name=Upload from clipboard
+Exec=sharel -ClipboardUpload
+
+[Desktop Action image-editor]
+Name=Image editor
+Exec=sharel -ImageEditor
+
+[Desktop Action history]
+Name=History
+Exec=sharel -OpenHistory

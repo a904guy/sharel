@@ -1,0 +1,6 @@
+#!/bin/sh
+# Nautilus script: pin the selected images to the screen with ShareL.
+IFS='
+'
+# shellcheck disable=SC2086
+exec sharel -PinToScreenFromFile $NAUTILUS_SCRIPT_SELECTED_FILE_PATHS

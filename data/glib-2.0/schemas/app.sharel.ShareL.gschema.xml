@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="app.sharel.ShareL" path="/app/sharel/ShareL/">
+    <key name="window-width" type="i">
+      <default>1000</default>
+      <summary>Main window width</summary>
+    </key>
+    <key name="window-height" type="i">
+      <default>640</default>
+      <summary>Main window height</summary>
+    </key>
+    <key name="window-maximized" type="b">
+      <default>false</default>
+      <summary>Main window maximized</summary>
+    </key>
+    <key name="first-run-done" type="b">
+      <default>false</default>
+      <summary>The first-run notice has been shown</summary>
+    </key>
+  </schema>
+</schemalist>
