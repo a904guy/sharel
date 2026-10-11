@@ -34,7 +34,6 @@ def test_after_capture_flag_action_toggles_config():
         before = bool(ts.after_capture_job & AfterCaptureTasks.PinToScreen)
         win.activate_action("win.ac-PinToScreen", None)
         assert bool(ts.after_capture_job & AfterCaptureTasks.PinToScreen) != before
-        import gi
         from gi.repository import GLib
         win.activate_action("win.dest-image", GLib.Variant("s", "Chevereto"))
         assert ts.image_destination == ImageDestination.Chevereto

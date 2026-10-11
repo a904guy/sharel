@@ -84,8 +84,8 @@ class PortalScreenCast:
     def start(self, cursor: bool = True) -> tuple[int, int]:
         """Returns (PipeWire node id, PipeWire remote fd)."""
         t = self._token()
-        res = self._request("CreateSession", "(a{sv})", ({"handle_token": GLib.Variant("s", t),
-                                                          "session_handle_token": GLib.Variant("s", self._token())},), t)
+        create = {"handle_token": GLib.Variant("s", t), "session_handle_token": GLib.Variant("s", self._token())}
+        res = self._request("CreateSession", "(a{sv})", (create,), t)
         self.session = res["session_handle"]
         opts = {"handle_token": GLib.Variant("s", (t := self._token())),
                 "types": GLib.Variant("u", SOURCE_MONITOR | SOURCE_WINDOW),

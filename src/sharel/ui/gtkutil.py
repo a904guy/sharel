@@ -115,11 +115,11 @@ def cairo_surface_from_pil(img: Image.Image):
     bgra[..., 1] = pre[..., 1]
     bgra[..., 2] = pre[..., 0]
     bgra[..., 3] = rgba[..., 3]
-    stride = cairo.ImageSurface.format_stride_for_width(cairo.FORMAT_ARGB32, w)
-    buf = np.zeros((h, stride), np.uint8)
-    buf[:, : w * 4] = bgra.reshape(h, w * 4)
-    surf = cairo.ImageSurface.create_for_data(memoryview(buf), cairo.FORMAT_ARGB32, w, h, stride)
-    surf._keepalive = buf  # type: ignore[attr-defined]
+    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, w, h)  # cairo owns the pixels
+    stride = surf.get_stride()
+    dst = np.ndarray((h, stride), np.uint8, buffer=surf.get_data())
+    dst[:, : w * 4] = bgra.reshape(h, w * 4)
+    surf.mark_dirty()
     return surf
 
 

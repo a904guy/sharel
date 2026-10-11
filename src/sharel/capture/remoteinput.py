@@ -82,13 +82,12 @@ class RemoteInput:
             sid = self.conn.call_sync(RD, session, "org.freedesktop.DBus.Properties", "Get",
                                       GLib.Variant("(ss)", (RD + ".Session", "SessionId")), None,
                                       Gio.DBusCallFlags.NONE, 5000, None).unpack()[0]
-            (sc_session,) = self._call(SC_PATH, SC, "CreateSession",
-                                       GLib.Variant("(a{sv})", ({"remote-desktop-session-id": GLib.Variant("s", sid)},)),
-                                       dest=SC)
+            link = {"remote-desktop-session-id": GLib.Variant("s", sid)}
+            (sc_session,) = self._call(SC_PATH, SC, "CreateSession", GLib.Variant("(a{sv})", (link,)), dest=SC)
             for m in monitors():
+                props = {"cursor-mode": GLib.Variant("u", 0)}
                 (stream,) = self._call(sc_session, SC + ".Session", "RecordMonitor",
-                                       GLib.Variant("(sa{sv})", (m["connector"], {"cursor-mode": GLib.Variant("u", 0)})),
-                                       dest=SC)
+                                       GLib.Variant("(sa{sv})", (m["connector"], props)), dest=SC)
                 self.streams[m["connector"]] = (stream, m)
             self._call(session, RD + ".Session", "Start")
             # Spend the dropped first events on harmless ones.

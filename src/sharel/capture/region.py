@@ -70,6 +70,9 @@ class RegionCaptureSession:
         self.on_done = on_done
         self.windows = windows if windows is not None else self._list_windows()
         self._done = False
+        self.views: list = []
+        self.gtk_windows: list[Gtk.Window] = []
+        self.toolbar = None
         cb = callbacks or Callbacks()
         self.dialogs = DialogBridge(lambda: self.manager, self._active_window, self._redraw)
         cb.request_text = cb.request_text or self.dialogs.request_text
@@ -87,9 +90,6 @@ class RegionCaptureSession:
         ox, oy = capture.region[0], capture.region[1]
         self.manager.set_monitors([((m.x - ox) * s, (m.y - oy) * s, m.width * s, m.height * s)
                                    for m in layout.monitors])
-        self.views: list = []
-        self.gtk_windows: list[Gtk.Window] = []
-        self.toolbar = None
         show_toolbar = mode in (RegionCaptureMode.Annotation, RegionCaptureMode.TaskEditor) and \
             not getattr(app.store.app.default_task_settings.advanced_settings, "region_capture_disable_annotation",
                         False)

@@ -45,7 +45,7 @@ def run_app(body: Callable, timeout: float = 30.0, argv: list[str] | None = None
             box["result"] = e.value
             finish()
             return False
-        except BaseException as e:  # noqa: BLE001
+        except BaseException as e:
             box["error"] = e
             finish()
             return False
@@ -55,7 +55,7 @@ def run_app(body: Callable, timeout: float = 30.0, argv: list[str] | None = None
     def start():
         try:
             res = body(app)
-        except BaseException as e:  # noqa: BLE001
+        except BaseException as e:
             box["error"] = e
             finish()
             return False

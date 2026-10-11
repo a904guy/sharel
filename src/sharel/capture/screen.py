@@ -73,6 +73,26 @@ def current_layout() -> Layout:
         except Exception:
             pass
     try:
-        return from_display_config()
+        layout = from_display_config()
+        if layout.monitors:
+            return layout
     except GLib.Error:
+        pass
+    return from_gdk()
+
+
+def from_gdk() -> Layout:
+    """Last resort (no shell extension, no Mutter DisplayConfig): GDK's monitors."""
+    try:
+        gi.require_version("Gdk", "4.0")
+        from gi.repository import Gdk
+        display = Gdk.Display.get_default()
+    except (ImportError, ValueError):
         return Layout([])
+    if display is None:
+        return Layout([])
+    out = []
+    for i, m in enumerate(display.get_monitors()):
+        g = m.get_geometry()
+        out.append(Monitor(i, g.x, g.y, g.width, g.height, float(m.get_scale_factor()), i == 0))
+    return Layout(out)

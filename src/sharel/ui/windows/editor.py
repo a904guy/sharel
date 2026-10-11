@@ -45,7 +45,8 @@ class EditorWindow(Adw.ApplicationWindow):
         cb = Callbacks(request_text=self.dialogs.request_text, request_image_file=self.dialogs.request_image_file,
                        request_sticker=self.dialogs.request_sticker, capture_screen_image=self._capture_screen,
                        apply_effects=self._apply_effects, confirm_exit=self._confirm_exit,
-                       copy_image=clipboard.set_image, copy_text=clipboard.set_text, read_clipboard=self._read_clipboard,
+                       copy_image=clipboard.set_image, copy_text=clipboard.set_text,
+                       read_clipboard=self._read_clipboard,
                        save_image=self._save, save_image_as=self._save_as, upload_image=self._upload,
                        print_image=self._print, zoom=lambda d: self.canvas.zoom_step(d), on_result=self._on_result,
                        on_change=self._changed)
@@ -68,7 +69,8 @@ class EditorWindow(Adw.ApplicationWindow):
         if task_mode:
             cont = Gtk.Button(label="Run after capture tasks", tooltip_text="Continue the task (Enter)")
             cont.add_css_class("suggested-action")
-            cont.connect("clicked", lambda *_: self._on_result(CaptureResult(RegionResult.AnnotateRunAfterCaptureTasks)))
+            run = CaptureResult(RegionResult.AnnotateRunAfterCaptureTasks)
+            cont.connect("clicked", lambda *_: self._on_result(run))
             cancel = Gtk.Button(label="Cancel task", tooltip_text="Stop the task (Esc)")
             cancel.connect("clicked", lambda *_: self._on_result(CaptureResult(RegionResult.AnnotateCancelTask)))
             header.pack_start(cont)

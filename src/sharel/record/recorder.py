@@ -138,7 +138,7 @@ class Recorder:
                 self._portal = PortalScreenCast(self.restore_token_store)
                 node, fd = self._portal.start(cursor=self.cursor)
         src = P.video_source(node, fd, self.test_pattern)
-        x, y, w, h = self.rect
+        _x, _y, w, h = self.rect
         fps = self.gif_fps if self.gif else self.fps
         audio = "" if self.gif else self.opts.audio_source
         desc = P.build_launch(src, self.ep, self.record_path, fps, width=w, height=h, audio_source=audio, o=self.opts)

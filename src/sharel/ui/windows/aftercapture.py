@@ -190,7 +190,7 @@ def open_before_upload(app, info: TaskInfo, ts, done) -> Adw.Window:
 
 def open_after_upload(app, info: TaskInfo) -> Adw.Window:
     """AfterUploadForm: the result URLs with copy/open buttons, a preview and an optional QR code."""
-    win, box, header = _window(app, "ShareL: upload completed", 560, 620)
+    win, box, _header = _window(app, "ShareL: upload completed", 560, 620)
     if info.file_path and Path(info.file_path).exists() and info.is_image:
         box.append(picture(imaging.load(info.file_path), 420))
     group = Adw.PreferencesGroup(title="Links")
