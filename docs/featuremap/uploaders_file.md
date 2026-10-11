@@ -13,4 +13,4 @@
 | Plik | uploaders/services/file_plik.py | REST: POST /upload (ttl, oneShot, removable, comments, login) + POST /file/{id} multipart with X-UploadToken | done | tests/test_file_http_hosts.py::test_plik_create_upload_then_file |
 | SharedFolder | uploaders/services/file_sharedfolder.py | copy into local/mounted folder (account list, %-pattern sub-folder) + homepage or file:// URL | done | tests/test_file_sharedfolder.py::test_copy_with_http_homepage |
 | Email | uploaders/services/file_email.py | SMTP (smtplib) STARTTLS / SSL / plain with AUTH, file as MIME attachment; no URL | done | tests/test_file_email.py::test_sends_attachment |
-| CustomFileUploader | uploaders/services/*.py | HTTPS API | planned | - |
+| CustomFileUploader | uploaders/custom/uploader.py + ui/windows/customuploader.py | custom uploader (.sxcu) via uploaders/dispatch | done | tests/test_ui_customuploader.py::test_dispatch_to_custom_uploaders_for_every_destination_type |

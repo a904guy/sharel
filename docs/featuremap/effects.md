@@ -49,8 +49,8 @@
 | Manipulations: RoundedCorners | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_rounded_corners |
 | Manipulations: Scale | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_scale |
 | Manipulations: Skew | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_skew |
-| Image Effects window: preset list | ui/effects_window.py | - | planned | - |
-| Add/remove/reorder/enable effects | ui/effects_window.py | - | planned | - |
-| Live preview | ui/effects_window.py | - | planned | - |
+| Image Effects window: preset list | src/sharel/ui/windows/effects.py | presets new/remove/duplicate/move/rename/select, saved as ImageEffectPreset.to_jsonable dicts + selected index | done | tests/test_ui_effects.py::test_effect_list_add_remove_reorder_enable_and_presets |
+| Add/remove/reorder/enable effects | src/sharel/ui/windows/effects.py | categorized Add menu from effects.base.load_all, remove/duplicate/clear/up/down, Enabled check per row, params() editor | done | tests/test_ui_effects.py::test_effect_list_add_remove_reorder_enable_and_presets |
+| Live preview | src/sharel/ui/windows/effects.py | debounced ImageEffectPreset.apply on a worker thread, stale results dropped, errors shown | done | tests/test_ui_effects.py::test_pipeline_runs_through_effects_window_and_ok_returns_effect_image |
 | Import/export .sxie | src/sharel/effects/sxie.py | zip + JSON | done | tests/test_sxie.py::test_sxie_export_import_round_trip_with_assets |
 | Image Beautifier (background colour/gradient/image, padding, rounded corners, shadow) | src/sharel/effects/beautifier.py | Pillow + pycairo, numpy | done | tests/test_beautifier.py::test_default_render_size_corners_shadow_and_background |

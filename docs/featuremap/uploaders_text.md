@@ -8,5 +8,5 @@
 | OneTimeSecret | uploaders/services/text_onetimesecret.py | OneTimeSecret API v2 /api/v2/secret/conceal (Basic auth) or /api/v2/guest/secret/conceal | done | tests/test_uploaders_text.py::test_onetimesecret_authenticated |
 | Pastie | uploaders/services/text_pastie.py | pastie.org (pastie_express) POST /pastes/create, URL from the redirect | done | tests/test_uploaders_text.py::test_pastie_create_redirect |
 | PrivateBin | uploaders/services/text_privatebin.py | PrivateBin v2 JSON API; client-side PBKDF2-SHA256 + AES-256-GCM + raw deflate | done | tests/test_privatebin.py::test_upload_request_shape_and_urls |
-| CustomTextUploader | uploaders/services/*.py | HTTPS API | planned | - |
+| CustomTextUploader | uploaders/custom/uploader.py + ui/windows/customuploader.py | custom uploader (.sxcu) via uploaders/dispatch | done | tests/test_ui_customuploader.py::test_dispatch_to_custom_uploaders_for_every_destination_type |
 | FileUploader | uploaders/dispatch.py | destination_for redirects text tasks to the text file destination | done | tests/test_uploaders_image.py::test_dispatch_file_uploader_redirects_image_and_text_to_file_destination |

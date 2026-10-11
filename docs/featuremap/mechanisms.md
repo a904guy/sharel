@@ -2,7 +2,7 @@
 | Pixels: Mutter ScreenCast backend | capture/backends.py | org.gnome.Mutter.ScreenCast RecordArea/RecordMonitor + one PipeWire frame (GStreamer pipewiresrc) | planned | - |
 | Pixels: Screenshot portal backend | capture/backends.py | org.freedesktop.portal.Screenshot | planned | - |
 | Pixels: gnome-screenshot CLI backend | capture/backends.py | gnome-screenshot -f | planned | - |
-| Backend auto-detect + settings override | capture/backends.py | probe chain; ApplicationConfig.capture_backend | planned | - |
+| Backend auto-detect + settings override | capture/backends.py, ui/windows/appsettings.py | probe chain; ApplicationConfig.capture_backend (Advanced), TaskSettings capture_backend wins | done | tests/test_ui_settings.py::test_capture_backend_setting_overrides_auto_detect |
 | Physical vs logical pixels, fractional scaling | capture/screen.py | org.gnome.Mutter.DisplayConfig GetCurrentState scales | planned | - |
 | Window list / geometry / active window | shell/client.py, extension | app.sharel.Shell GetWindows/GetActiveWindow/GetMonitors | planned | - |
 | Pointer position | shell/client.py, extension | app.sharel.Shell GetPointer | planned | - |
@@ -54,11 +54,11 @@
 | Pin sources: region, clipboard, file, after-capture | tools/pin.py | - | planned | - |
 | Show in Explorer | core/desktop.py | org.freedesktop.FileManager1.ShowItems | planned | - |
 | Print | ui/printing.py | Gtk.PrintOperation, fallback lp | planned | - |
-| OCR window + language picker | tools/ocr.py | tesseract CLI, --list-langs | planned | - |
-| Scan/decode QR | tools/qr.py | zbarimg | planned | - |
-| Encode QR | tools/qr.py | qrcode package | planned | - |
+| OCR window + language picker | ui/tools/ocr.py | tesseract --list-langs, worker thread, cancel on option change | done | tests/test_ui_tools_ocr.py::test_ocr_window_recognises_text_and_options |
+| Scan/decode QR | ui/tools/qrcode.py | zbarimg from screen/region/file/clipboard | done | tests/test_ui_tools_qrcode.py::test_scan_sources |
+| Encode QR | ui/tools/qrcode.py | qrcode package, live preview, PNG/JPEG/BMP/SVG save | done | tests/test_ui_tools_qrcode.py::test_encode_decode_round_trip_and_actions |
 | Explorer context menu Upload/Edit with ShareL | data/nautilus, data/applications | Nautilus scripts + .desktop actions | planned | - |
-| Windows startup | core/autostart.py | XDG autostart entry | planned | - |
+| Windows startup | core/autostart.py, ui/windows/appsettings.py | XDG autostart entry toggled by "Run ShareL when I log in" | done | tests/test_ui_settings.py::test_app_settings_autostart_tray_language |
 | Browser extension native messaging | tools/native_host.py, browser-extension/ | Chrome/Firefox native messaging host manifests | planned | - |
 | NativeMessagingAction.UploadImage | tools/native_host.py | native messaging | planned | - |
 | NativeMessagingAction.UploadVideo | tools/native_host.py | native messaging | planned | - |

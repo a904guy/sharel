@@ -10,4 +10,4 @@
 | Pushbullet | uploaders/services/share_pushbullet.py | POST api.pushbullet.com/v2/pushes type=link (Access-Token; device_iden or all; GET /v2/devices) | done | tests/test_sharing.py::test_pushbullet_pushes_link_to_all_devices |
 | GoogleImageSearch | uploaders/services/share_templates.py | https://lens.google.com/uploadbyurl?url= | done | tests/test_sharing.py::test_template_share_url[GoogleImageSearch] |
 | BingVisualSearch | uploaders/services/share_templates.py | https://www.bing.com/images/searchbyimage?cbir=sbi&imgurl= | done | tests/test_sharing.py::test_template_share_url[BingVisualSearch] |
-| CustomURLSharingService | uploaders/services/*.py | HTTPS API | planned | - |
+| CustomURLSharingService | uploaders/custom/uploader.py + ui/windows/customuploader.py | custom uploader (.sxcu) via uploaders/dispatch | done | tests/test_ui_customuploader.py::test_dispatch_to_custom_uploaders_for_every_destination_type |

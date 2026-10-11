@@ -1,5 +1,5 @@
-| Custom uploader editor UI | uploaders/custom/ | - | planned | - |
-| Test button | uploaders/custom/ | - | planned | - |
-| OAuth: loopback redirect + system browser | uploaders/custom/ | - | planned | - |
-| Token storage: UploadersConfig.json / libsecret | uploaders/custom/ | - | planned | - |
-| Destination settings pages (one per service) | uploaders/custom/ | - | planned | - |
+| Custom uploader editor UI | ui/windows/customuploader.py | GTK4/libadwaita editor over CustomUploaderItem + sxcu import/export | done | tests/test_ui_customuploader.py::test_add_edit_export_reimport |
+| Test button | ui/windows/customuploader.py | uploaders/custom/uploader.test() on a worker thread; result URL, request summary, raw response | done | tests/test_ui_customuploader.py::test_test_button_against_local_server_shows_parsed_url |
+| OAuth: loopback redirect + system browser | ui/windows/destinations.py + uploaders/oauth.py | module authorize(settings, ctx) on a worker; ctx.open_url = core.desktop.open_url | done | tests/test_ui_destinations.py::test_authorize_calls_module_authorize_on_a_worker_and_refreshes |
+| Token storage: UploadersConfig.json / libsecret | uploaders/config.py + ui/windows/destinations.py | ctx.save_settings = store.save_uploaders (secrets to libsecret when a keyring runs) | done | tests/test_ui_destinations.py::test_authorize_calls_module_authorize_on_a_worker_and_refreshes |
+| Destination settings pages (one per service) | ui/windows/destinations.py | ui/forms.Form pages from each settings dataclass; Test connection, helpers, set current, test upload | done | tests/test_ui_destinations.py::test_every_service_gets_a_page_grouped_and_searchable |

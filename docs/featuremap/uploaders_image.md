@@ -4,5 +4,5 @@
 | Photobucket | uploaders/services/img_photobucket.py | - (developer API retired; api.photobucket.com/login/request returns 404) | excluded: https://web.archive.org/web/20260516202928/http://developer.photobucket.com/ | tests/test_uploaders_image.py::test_image_services_registered |
 | Chevereto | uploaders/services/img_chevereto.py | Chevereto API V1.1 POST /api/1/upload with X-API-Key | done | tests/test_uploaders_image.py::test_chevereto_upload |
 | Vgyme | uploaders/services/img_vgyme.py | POST https://vgy.me/upload (optional userkey) | done | tests/test_uploaders_image.py::test_vgyme_upload |
-| CustomImageUploader | uploaders/services/*.py | HTTPS API | planned | - |
+| CustomImageUploader | uploaders/custom/uploader.py + ui/windows/customuploader.py | custom uploader (.sxcu) via uploaders/dispatch | done | tests/test_ui_customuploader.py::test_dispatch_to_custom_uploaders_for_every_destination_type |
 | FileUploader | uploaders/dispatch.py | destination_for redirects image tasks to the image file destination | done | tests/test_uploaders_image.py::test_dispatch_file_uploader_redirects_image_and_text_to_file_destination |

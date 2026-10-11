@@ -23,8 +23,8 @@
 | {input} | uploaders/custom/parser.py | text / URL being uploaded | done | tests/test_custom_syntax.py::test_input_and_filename_plain_and_url_encoded |
 | {filename} | uploaders/custom/parser.py | file name | done | tests/test_custom_syntax.py::test_input_and_filename_plain_and_url_encoded |
 | {random:} | uploaders/custom/parser.py | uniform pick | done | tests/test_custom_syntax.py::test_random_picks_within_choices |
-| {select:} (GTK dialog) | uploaders/custom/parser.py | ctx.prompt_select (dialog itself: UI slice) | done | tests/test_custom_syntax.py::test_select_asks_through_ctx_with_non_empty_options |
-| {inputbox:} (GTK dialog) | uploaders/custom/parser.py | ctx.prompt_input (dialog itself: UI slice) | done | tests/test_custom_syntax.py::test_inputbox_title_default_and_alias |
+| {select:} (GTK dialog) | ui/host.py + ui/gtkutil.py | GtkTaskHost.prompt_select -> gtkutil.prompt_choice (Adw.AlertDialog) | done | tests/test_ui_customuploader.py::test_gtk_prompts_for_select_and_inputbox |
+| {inputbox:} (GTK dialog) | ui/host.py + ui/gtkutil.py | GtkTaskHost.prompt_input -> gtkutil.prompt_text (Adw.AlertDialog) | done | tests/test_ui_customuploader.py::test_gtk_prompts_for_select_and_inputbox |
 | {outputbox:} | uploaders/custom/parser.py | ctx.show_output(title, text) | done | tests/test_custom_syntax.py::test_outputbox_argument_order_is_title_then_text |
 | {base64:} | uploaders/custom/parser.py | UTF-8 Base64 | done | tests/test_custom_syntax.py::test_base64 |
 | Backslash escaping | uploaders/custom/parser.py | backslash before braces, pipe and backslash | done | tests/test_custom_syntax.py::test_backslash_escapes_braces_pipe_and_backslash |

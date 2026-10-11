@@ -11,4 +11,4 @@
 | FirebaseDynamicLinks | uploaders/services/short_defunct.py | register_defunct (shown unavailable with evidence) | excluded: https://firebase.google.com/support/dynamic-links-faq | tests/test_shorteners.py::test_defunct_shorteners_registered_with_evidence[FirebaseDynamicLinks] |
 | Kutt | uploaders/services/short_kutt.py | POST <host>/api/v2/links X-API-KEY (domain, customurl, password, expire_in, reuse, description) | done | tests/test_shorteners.py::test_kutt_v2_links_all_options |
 | ZeroWidthShortener | uploaders/services/short_zws.py | POST api.zws.im {url} -> {short,url} (custom instance URL, Bearer token) | done | tests/test_shorteners.py::test_zws_post_and_url_field |
-| CustomURLShortener | uploaders/services/*.py | HTTPS API | planned | - |
+| CustomURLShortener | uploaders/custom/uploader.py + ui/windows/customuploader.py | custom uploader (.sxcu) via uploaders/dispatch | done | tests/test_ui_customuploader.py::test_dispatch_to_custom_uploaders_for_every_destination_type |
