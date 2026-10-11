@@ -46,6 +46,7 @@ class _Handler(http.server.BaseHTTPRequestHandler):
 
 class LoopbackServer:
     def __init__(self, port: int = 0) -> None:
+        # port 0 = any free port; services that match redirect URIs exactly (Imgur, Dropbox, Box) use a fixed one
         self.httpd = http.server.HTTPServer(("127.0.0.1", port), _Handler)
         self.httpd.result = {}  # type: ignore[attr-defined]
         self.httpd.got = threading.Event()  # type: ignore[attr-defined]
@@ -118,12 +119,12 @@ def _info_from(tok: dict, old: OAuth2Info | None = None) -> OAuth2Info:
 
 
 def authorize(spec: OAuth2Spec, client_id: str, client_secret: str, ctx: UploadContext,
-              timeout: float = 300.0) -> OAuth2Info:
+              timeout: float = 300.0, port: int = 0) -> OAuth2Info:
     if not client_id:
         raise UploaderError("Enter a client ID first")
     state = secrets.token_urlsafe(16)
     verifier, challenge = pkce_pair() if spec.pkce else ("", "")
-    with LoopbackServer(spec.redirect_port) as srv:
+    with LoopbackServer(port or spec.redirect_port) as srv:
         ctx.open_url(authorize_url(spec, client_id, srv.redirect_uri, state, challenge))
         result = srv.wait(timeout, ctx.cancel_event)
         redirect = srv.redirect_uri
