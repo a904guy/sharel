@@ -1243,6 +1243,8 @@ class ShapeManager:
         s = self._current_shape
         if s is not None:
             if not self._shape_valid(s):
+                saved_rect = s.rect
+                s.rect = S.Rect()  # ShareX: an invalid shape is emptied before the hover check
                 self._update_hover()
                 hover = self.hover_shape
                 if hover is not None and hover is not s and hover.is_valid(self.minimum_size) and was_creating:
@@ -1253,6 +1255,8 @@ class ShapeManager:
                 else:
                     if was_creating:
                         self._discard_shape(s)
+                    else:
+                        s.rect = saved_rect
                     s = None
             if s is not None:
                 if self.options.quick_crop and self.is_current_tool_region and isinstance(s, S.RegionShape):
