@@ -1,0 +1,10 @@
+Twemoji sticker pack
+====================
+
+The PNG images in this directory are from Twemoji (https://github.com/jdecked/twemoji),
+Copyright 2019 Twitter, Inc and other contributors; Copyright 2024 jdecked and other contributors.
+
+Graphics licensed under CC-BY 4.0: https://creativecommons.org/licenses/by/4.0/
+
+Each file is named after the Unicode code point(s) of the emoji it depicts (e.g. 1f600.png = U+1F600).
+The images are unmodified 72x72 PNGs from assets/72x72/ of the Twemoji repository.

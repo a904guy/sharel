@@ -193,6 +193,8 @@ ArrowHeadDirection = StrEnum("ArrowHeadDirection", _e("End", "Start", "Both"))
 StepType = StrEnum("StepType", _e("Numbers", "LettersUppercase", "LettersLowercase", "RomanNumeralsUppercase",
                                   "RomanNumeralsLowercase"))
 CutOutEffectType = StrEnum("CutOutEffectType", _e("None", "ZigZag", "TornEdge", "Wave"))
+ImageInterpolationMode = StrEnum("ImageInterpolationMode", _e(
+    "HighQualityBicubic", "Bicubic", "HighQualityBilinear", "Bilinear", "NearestNeighbor"))
 
 ScrollMethod = StrEnum("ScrollMethod", _e("MouseWheel", "DownArrow", "PageDown", "ScrollMessage"))
 ScrollingCaptureScrollTopMethod = StrEnum("ScrollingCaptureScrollTopMethod", _e(

@@ -1,0 +1,10 @@
+Twemoji graphics
+Copyright 2019 Twitter, Inc and other contributors
+Copyright 2024 jdecked and other contributors
+
+Licensed under the Creative Commons Attribution 4.0 International license (CC BY 4.0).
+You may share and adapt the graphics for any purpose, provided you give appropriate credit,
+provide a link to the license, and indicate if changes were made.
+
+Full license text: https://creativecommons.org/licenses/by/4.0/legalcode
+Source: https://github.com/jdecked/twemoji
