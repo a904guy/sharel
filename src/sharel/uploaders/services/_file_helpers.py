@@ -73,14 +73,31 @@ def combine_url(*parts: str) -> str:
     return out
 
 
+# ApplicationConfig.url_encode_ignore_emoji (set by the app at startup and by Application settings).
+URL_ENCODE_IGNORE_EMOJI = False
+
+
+def _is_emoji(ch: str) -> bool:
+    o = ord(ch)
+    return (0x1F000 <= o <= 0x1FAFF or 0x2600 <= o <= 0x27BF or 0x2300 <= o <= 0x23FF or 0x2B00 <= o <= 0x2BFF
+            or o in (0x200D, 0xFE0F, 0x20E3))
+
+
+def _encode(text: str, safe: str) -> str:
+    if not URL_ENCODE_IGNORE_EMOJI:
+        return quote(text, safe=safe)
+    return "".join(ch if _is_emoji(ch) else quote(ch, safe=safe) for ch in text)
+
+
 def url_encode(text: str) -> str:
-    """URLHelpers.URLEncode: everything but RFC 3986 unreserved characters is percent-encoded."""
-    return quote(text, safe="")
+    """URLHelpers.URLEncode: everything but RFC 3986 unreserved characters is percent-encoded
+    (emoji kept as they are when "ignore emoji" is on)."""
+    return _encode(text, "")
 
 
 def url_encode_path(text: str) -> str:
     """URLHelpers.URLEncode(text, isPath: true): like url_encode but keeps '/'."""
-    return quote(text, safe="/")
+    return _encode(text, "/")
 
 
 def has_prefix(url: str) -> bool:

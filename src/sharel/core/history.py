@@ -117,6 +117,11 @@ class HistoryManager:
                 return True
             return False
 
+    def reload(self) -> None:
+        """Forget the cached items; the next read loads the file again (settings import)."""
+        with self._lock:
+            self._items = None
+
     def clear(self) -> None:
         with self._lock:
             self._items = []

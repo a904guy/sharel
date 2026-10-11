@@ -46,8 +46,10 @@ class WatchFolderManager:
         """(Re)create monitors for the default task settings and every workflow that enables them."""
         self.stop()
         store = self.app.store
+        # Watch folders have no "use default" switch: every workflow's own list counts (ShareX's
+        # WatchFolderManager.UpdateWatchFolders walks every hotkey's task settings).
         sources = [(store.app.default_task_settings, None)] + \
-                  [(hk.task_settings, hk) for hk in store.hotkeys.hotkeys if not hk.task_settings.is_using_defaults]
+                  [(hk.task_settings, hk) for hk in store.hotkeys.hotkeys]
         for ts, hk in sources:
             if not ts.watch_folder_enabled:
                 continue

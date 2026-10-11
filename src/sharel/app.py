@@ -44,7 +44,9 @@ def setup_logging(dev: bool = False) -> Path:
         sh.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
         sh.setLevel(logging.DEBUG if dev else logging.WARNING)
         root.addHandler(sh)
-        from .ui.debuglog import MEMORY_HANDLER
+    # The Debug log window's in-memory copy, independent of other file handlers (e.g. pytest's).
+    from .ui.debuglog import MEMORY_HANDLER
+    if MEMORY_HANDLER not in root.handlers:
         root.addHandler(MEMORY_HANDLER)
     root.setLevel(logging.DEBUG if dev else logging.INFO)
     return path
@@ -79,6 +81,8 @@ class ShareLApp(AllJobs, Adw.Application):
         self.tasks = TaskManager(self.store, self.history, GtkTaskHost(self))
         self.tasks.add_listener(self._on_task_event)
         self.apply_theme()
+        from .uploaders.services import _file_helpers
+        _file_helpers.URL_ENCODE_IGNORE_EMOJI = self.store.app.url_encode_ignore_emoji
         self._install_gtk_clipboard()
         from .ui.notify import Notifier
         self.notifier = Notifier(self.on_toast_action)
@@ -289,7 +293,9 @@ class ShareLApp(AllJobs, Adw.Application):
         if self.hotkeys is None:
             self.hotkeys = HotkeyManager(self.on_hotkey, self.store.app.hotkey_backend.value)
         self.hotkeys.backend_pref = self.store.app.hotkey_backend.value
-        self.hotkeys.disabled = self.store.app.disable_hotkeys or bool(os.environ.get("SHAREL_DISABLE_HOTKEYS"))
+        # "Disable hotkeys" keeps the grabs (so the DisableHotkeys hotkey can switch them back on);
+        # on_hotkey ignores the other activations while the flag is set.
+        self.hotkeys.disabled = bool(os.environ.get("SHAREL_DISABLE_HOTKEYS"))
         self.hotkeys.register(self.store.hotkeys.hotkeys)
         GLib.timeout_add_seconds(3, self._refresh_hotkey_states)
 
@@ -299,9 +305,33 @@ class ShareLApp(AllJobs, Adw.Application):
         return GLib.SOURCE_REMOVE
 
     def on_hotkey(self, hk: HotkeySettings) -> None:
-        if self.store.app.disable_hotkeys:
+        cfg = self.store.app
+        if cfg.disable_hotkeys and hk.job != HotkeyType.DisableHotkeys:
+            return
+        # Application settings > Advanced: ignore repeats faster than hotkey_repeat_limit ms, and
+        # (optionally) every hotkey while the focused window is fullscreen (games, presentations).
+        import time
+        now = time.monotonic()
+        last = getattr(self, "_hotkey_last", {})
+        self._hotkey_last = last
+        if cfg.hotkey_repeat_limit > 0 and now - last.get(id(hk), -1e9) < cfg.hotkey_repeat_limit / 1000:
+            return
+        last[id(hk)] = now
+        if cfg.disable_hotkeys_on_fullscreen and self._focused_window_fullscreen():
             return
         GLib.idle_add(lambda: (dispatch(self, hk.job, hk, source="hotkey"), False)[1])
+
+    @staticmethod
+    def _focused_window_fullscreen() -> bool:
+        from .shell.client import ShellUnavailable, shell
+        sh = shell()
+        if not sh.available:
+            return False
+        try:
+            w = sh.get_active_window()
+        except ShellUnavailable:
+            return False
+        return bool(w and w.fullscreen)
 
     # ---- tasks ----------------------------------------------------------------------------------
 

@@ -661,6 +661,10 @@ class TaskManager:
     def add_listener(self, cb: Callable[[str, TaskInfo], None]) -> None:
         self._listeners.append(cb)
 
+    def set_upload_limit(self, limit: int) -> None:
+        """Application settings > Upload limit: tasks started from now on share the new limit."""
+        self._sem = threading.BoundedSemaphore(max(1, int(limit)))
+
     def emit(self, event: str, info: TaskInfo) -> None:
         for cb in list(self._listeners):
             try:
