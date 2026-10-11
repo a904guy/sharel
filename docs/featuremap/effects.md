@@ -1,56 +1,56 @@
-| Adjustments: Alpha | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: BlackWhite | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: Brightness | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: Colorize | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: Contrast | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: Gamma | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: Grayscale | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: Hue | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: Inverse | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: MatrixColor | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: Polaroid | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: ReplaceColor | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: Saturation | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: SelectiveColor | effects/adjustments.py | Pillow/numpy | planned | - |
-| Adjustments: Sepia | effects/adjustments.py | Pillow/numpy | planned | - |
-| Drawings: DrawBackground | effects/drawings.py | Pillow/numpy | planned | - |
-| Drawings: DrawBackgroundImage | effects/drawings.py | Pillow/numpy | planned | - |
-| Drawings: DrawBorder | effects/drawings.py | Pillow/numpy | planned | - |
-| Drawings: DrawCheckerboard | effects/drawings.py | Pillow/numpy | planned | - |
-| Drawings: DrawImage | effects/drawings.py | Pillow/numpy | planned | - |
-| Drawings: DrawParticles | effects/drawings.py | Pillow/numpy | planned | - |
-| Drawings: DrawText | effects/drawings.py | Pillow/numpy | planned | - |
-| Drawings: DrawTextEx | effects/drawings.py | Pillow/numpy | planned | - |
-| Filters: Blur | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: ColorDepth | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: EdgeDetect | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: Emboss | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: GaussianBlur | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: Glow | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: MatrixConvolution | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: MeanRemoval | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: Outline | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: Pixelate | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: RGBSplit | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: Reflection | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: Shadow | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: Sharpen | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: Slice | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: Smooth | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: TornEdge | effects/filters.py | Pillow/numpy | planned | - |
-| Filters: WaveEdge | effects/filters.py | Pillow/numpy | planned | - |
-| Manipulations: AutoCrop | effects/manipulations.py | Pillow/numpy | planned | - |
-| Manipulations: Canvas | effects/manipulations.py | Pillow/numpy | planned | - |
-| Manipulations: Crop | effects/manipulations.py | Pillow/numpy | planned | - |
-| Manipulations: Flip | effects/manipulations.py | Pillow/numpy | planned | - |
-| Manipulations: ForceProportions | effects/manipulations.py | Pillow/numpy | planned | - |
-| Manipulations: Resize | effects/manipulations.py | Pillow/numpy | planned | - |
-| Manipulations: Rotate | effects/manipulations.py | Pillow/numpy | planned | - |
-| Manipulations: RoundedCorners | effects/manipulations.py | Pillow/numpy | planned | - |
-| Manipulations: Scale | effects/manipulations.py | Pillow/numpy | planned | - |
-| Manipulations: Skew | effects/manipulations.py | Pillow/numpy | planned | - |
+| Adjustments: Alpha | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_alpha |
+| Adjustments: BlackWhite | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_black_white |
+| Adjustments: Brightness | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_brightness |
+| Adjustments: Colorize | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_colorize |
+| Adjustments: Contrast | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_contrast |
+| Adjustments: Gamma | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_gamma |
+| Adjustments: Grayscale | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_grayscale |
+| Adjustments: Hue | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_hue |
+| Adjustments: Inverse | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_inverse |
+| Adjustments: MatrixColor | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_matrix_color |
+| Adjustments: Polaroid | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_polaroid |
+| Adjustments: ReplaceColor | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_replace_color |
+| Adjustments: Saturation | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_saturation |
+| Adjustments: SelectiveColor | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_selective_color |
+| Adjustments: Sepia | src/sharel/effects/adjustments.py | Pillow/numpy | done | tests/test_effects.py::test_sepia |
+| Drawings: DrawBackground | src/sharel/effects/drawings.py | pycairo + PangoCairo, numpy | done | tests/test_effects.py::test_draw_background_color_and_gradient |
+| Drawings: DrawBackgroundImage | src/sharel/effects/drawings.py | pycairo + PangoCairo, numpy | done | tests/test_effects.py::test_draw_background_image |
+| Drawings: DrawBorder | src/sharel/effects/drawings.py | pycairo + PangoCairo, numpy | done | tests/test_effects.py::test_draw_border_outside_inside_dash_gradient |
+| Drawings: DrawCheckerboard | src/sharel/effects/drawings.py | pycairo + PangoCairo, numpy | done | tests/test_effects.py::test_draw_checkerboard |
+| Drawings: DrawImage | src/sharel/effects/drawings.py | pycairo + PangoCairo, numpy | done | tests/test_effects.py::test_draw_image_placement_sizes_opacity |
+| Drawings: DrawParticles | src/sharel/effects/drawings.py | pycairo + PangoCairo, numpy | done | tests/test_effects.py::test_draw_particles |
+| Drawings: DrawText | src/sharel/effects/drawings.py | pycairo + PangoCairo, numpy | done | tests/test_effects.py::test_draw_text_watermark_box |
+| Drawings: DrawTextEx | src/sharel/effects/drawings.py | pycairo + PangoCairo, numpy | done | tests/test_effects.py::test_draw_text_ex_fill_outline_angle |
+| Filters: Blur | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_blur_matches_sharex_box_blur |
+| Filters: ColorDepth | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_color_depth |
+| Filters: EdgeDetect | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_edge_detect |
+| Filters: Emboss | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_emboss |
+| Filters: GaussianBlur | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_gaussian_blur |
+| Filters: Glow | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_glow |
+| Filters: MatrixConvolution | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_matrix_convolution |
+| Filters: MeanRemoval | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_mean_removal |
+| Filters: Outline | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_outline |
+| Filters: Pixelate | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_pixelate |
+| Filters: RGBSplit | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_rgb_split |
+| Filters: Reflection | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_reflection |
+| Filters: Shadow | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_shadow |
+| Filters: Sharpen | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_sharpen |
+| Filters: Slice | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_slice |
+| Filters: Smooth | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_smooth |
+| Filters: TornEdge | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_torn_edge |
+| Filters: WaveEdge | src/sharel/effects/filters.py | Pillow/numpy | done | tests/test_effects.py::test_wave_edge |
+| Manipulations: AutoCrop | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_auto_crop |
+| Manipulations: Canvas | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_canvas |
+| Manipulations: Crop | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_crop |
+| Manipulations: Flip | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_flip |
+| Manipulations: ForceProportions | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_force_proportions |
+| Manipulations: Resize | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_resize |
+| Manipulations: Rotate | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_rotate |
+| Manipulations: RoundedCorners | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_rounded_corners |
+| Manipulations: Scale | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_scale |
+| Manipulations: Skew | src/sharel/effects/manipulations.py | Pillow/numpy | done | tests/test_effects.py::test_skew |
 | Image Effects window: preset list | ui/effects_window.py | - | planned | - |
 | Add/remove/reorder/enable effects | ui/effects_window.py | - | planned | - |
 | Live preview | ui/effects_window.py | - | planned | - |
-| Import/export .sxie | effects/sxie.py | zip + JSON | planned | - |
-| Image Beautifier (background colour/gradient/image, padding, rounded corners, shadow) | effects/beautifier.py | Pillow | planned | - |
+| Import/export .sxie | src/sharel/effects/sxie.py | zip + JSON | done | tests/test_sxie.py::test_sxie_export_import_round_trip_with_assets |
+| Image Beautifier (background colour/gradient/image, padding, rounded corners, shadow) | src/sharel/effects/beautifier.py | Pillow + pycairo, numpy | done | tests/test_beautifier.py::test_default_render_size_corners_shadow_and_background |
