@@ -122,6 +122,8 @@ def upload_file(stream: BinaryIO, file_name: str, data_type: EDataType, ts: Task
     for d in candidates:
         try:
             up = create(d, cfg, ctx, ts)
+            if hasattr(up, "data_type"):  # FTP / SharedFolder pick their image/text/file account by data type
+                up.data_type = data_type
 
             def run(up=up):
                 stream.seek(0)
