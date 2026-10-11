@@ -1,0 +1,166 @@
+"""Directory indexer: all four outputs on a generated tree."""
+from __future__ import annotations
+
+import datetime as dt
+import json
+import threading
+import xml.etree.ElementTree as ET
+
+import pytest
+from lxml import html as lxml_html
+
+from sharel.core.config import TaskSettingsTools
+from sharel.tools._common import OperationCancelled
+from sharel.tools.indexer import IndexerOutput, IndexerSettings, index_folder, scan, size_string
+
+NOW = dt.datetime(2026, 1, 2, 3, 4, 5, tzinfo=dt.UTC)
+
+
+@pytest.fixture
+def tree(tmp_path):
+    root = tmp_path / "proj"
+    (root / "src" / "deep" / "deeper").mkdir(parents=True)
+    (root / "docs").mkdir()
+    (root / ".git").mkdir()
+    (root / "a.txt").write_bytes(b"x" * 10)
+    (root / "b<&>.bin").write_bytes(b"y" * 1500)
+    (root / ".hidden").write_bytes(b"h" * 7)
+    (root / "src" / "main.py").write_bytes(b"z" * 2500)
+    (root / "src" / "deep" / "d.dat").write_bytes(b"d" * 100)
+    (root / "src" / "deep" / "deeper" / "e.dat").write_bytes(b"e" * 5)
+    (root / ".git" / "config").write_bytes(b"c" * 50)
+    return root
+
+
+def test_size_string_like_sharex():
+    assert size_string(0) == "0 B"
+    assert size_string(999) == "999 B"
+    assert size_string(1000) == "1.00 KB"
+    assert size_string(1500) == "1.50 KB"
+    assert size_string(1_000_000) == "1.00 MB"
+    assert size_string(1536, binary=True) == "1.50 KiB"
+
+
+def test_scan_counts_and_sizes(tree):
+    info = scan(tree)
+    assert info.name == "proj"
+    assert [f.name for f in info.folders] == ["docs", "src"]  # .git skipped
+    assert [f.name for f in info.files] == ["a.txt", "b<&>.bin"]  # .hidden skipped
+    assert info.size == 10 + 1500 + 2500 + 100 + 5
+    assert info.total_file_count == 5
+    assert info.total_folder_count == 4  # docs, src, deep, deeper
+    shown = scan(tree, IndexerSettings(skip_hidden_files=False, skip_hidden_folders=False))
+    assert ".git" in [f.name for f in shown.folders] and ".hidden" in [f.name for f in shown.files]
+
+
+def test_json_parseable_structure_and_depth(tree):
+    r = index_folder(tree, IndexerSettings(output=IndexerOutput.Json), now=NOW)
+    assert r.suggested_name == "Index for proj.json" and r.extension == "json"
+    obj = json.loads(r.text)
+    assert obj["Name"] == "proj" and obj["Size"] == "4.12 KB"
+    assert [f["Name"] for f in obj["Folders"]] == ["docs", "src"]
+    assert obj["Files"] == [{"Name": "a.txt", "Size": "10 B"}, {"Name": "b<&>.bin", "Size": "1.50 KB"}]
+    src = obj["Folders"][1]
+    assert src["Files"] == [{"Name": "main.py", "Size": "2.50 KB"}]
+    assert src["Folders"][0]["Folders"][0]["Files"][0]["Name"] == "e.dat"
+    # max depth 2: "deep" (level 2) is listed but not descended into
+    lim = json.loads(index_folder(tree, IndexerSettings(output=IndexerOutput.Json, max_depth=2)).text)
+    deep = lim["Folders"][1]["Folders"][0]
+    assert deep["Name"] == "deep" and "Folders" not in deep and "Files" not in deep
+    lim1 = json.loads(index_folder(tree, IndexerSettings(output=IndexerOutput.Json, max_depth=1)).text)
+    assert all("Files" not in f and "Folders" not in f for f in lim1["Folders"])
+
+
+def test_json_simple(tree):
+    obj = json.loads(index_folder(tree, IndexerSettings(output=IndexerOutput.Json, parseable_json=False)).text)
+    assert list(obj) == ["proj"]
+    items = obj["proj"]
+    assert items[-2:] == ["a.txt", "b<&>.bin"]
+    assert items[0] == {"docs": []}
+    assert items[1]["src"][-1] == "main.py"
+
+
+def test_xml_attributes_and_elements(tree):
+    r = index_folder(tree, IndexerSettings(output=IndexerOutput.Xml))
+    assert r.text.startswith('<?xml version="1.0" encoding="utf-8"?>')
+    root = ET.fromstring(r.text.split("\n", 1)[1])
+    assert root.tag == "Folder" and root.get("Name") == "proj" and root.get("Size") == "4.12 KB"
+    assert [f.get("Name") for f in root.find("Files")] == ["a.txt", "b<&>.bin"]
+    assert [f.get("Name") for f in root.find("Folders")] == ["docs", "src"]
+    docs = root.find("Folders")[0]
+    assert docs.get("Size") is None  # empty folder: no size (ShareX)
+    el = ET.fromstring(index_folder(tree, IndexerSettings(output=IndexerOutput.Xml, use_attribute=False,
+                                                          show_sizes=False)).text.split("\n", 1)[1])
+    assert el.findtext("Name") == "proj" and el.find("Size") is None
+    assert [f.findtext("Name") for f in el.find("Files")] == ["a.txt", "b<&>.bin"]
+
+
+def test_txt_tree(tree):
+    r = index_folder(tree, IndexerSettings(output=IndexerOutput.Txt), now=NOW)
+    lines = r.text.splitlines()
+    assert lines[:8] == [
+        "proj [4.12 KB]",
+        "|___docs",
+        "|___src [2.60 KB]",
+        "|___|___deep [105 B]",
+        "|___|___|___deeper [5 B]",
+        "|___|___|___|___e.dat [5 B]",
+        "|___|___|___d.dat [100 B]",
+        "|___|___main.py [2.50 KB]",
+    ]
+    assert lines[8:10] == ["|___a.txt [10 B]", "|___b<&>.bin [1.50 KB]"]
+    assert lines[-1] == "Generated by ShareL Directory Indexer on 2026-01-02 03:04:05 UTC."
+    assert set(lines[-2]) == {"_"} and len(lines[-2]) == len(lines[-1])
+    plain = index_folder(tree, IndexerSettings(output=IndexerOutput.Txt, show_sizes=False, add_footer=False,
+                                               indentation_text="  ")).text
+    assert plain.splitlines()[:3] == ["proj", "  docs", "  src"]
+
+
+def test_html_look_and_structure(tree):
+    r = index_folder(tree, IndexerSettings(), now=NOW)
+    assert r.suggested_name == "Index for proj.html"
+    assert r.text.startswith("<!DOCTYPE html>")
+    assert "background-color: #336699;" in r.text  # ShareX default CSS
+    assert "b&lt;&amp;&gt;.bin" in r.text
+    doc = lxml_html.fromstring(r.text)
+    assert doc.findtext(".//title") == "Index for proj"
+    h1 = doc.find(".//h1")
+    assert h1.text.strip() == "proj"  # ShareX puts a space before the info span
+    assert h1.find("span").text == "4.12 KB (5 files, 4 folders)"
+    assert [h.text.strip() for h in doc.iter("h2")] == ["docs", "src"]
+    assert [h.text.strip() for h in doc.iter("h3")] == ["deep"]
+    assert [h.text.strip() for h in doc.iter("h4")] == ["deeper"]
+    assert doc.find(".//div[@class='MainFolderBorder']") is not None
+    sizes = [s.text for s in doc.iter("span") if s.get("class") == "FileSize"]
+    assert "2.50 KB" in sizes and "10 B" in sizes
+    # collapsible: every folder is a <details open> with its heading in <summary>
+    details = list(doc.iter("details"))
+    assert len(details) == 5 and all(d.get("open") is not None for d in details)
+    assert details[0].find("summary/h1") is not None
+    assert "Generated by ShareL Directory Indexer on 2026-01-02 03:04:05 UTC." in r.text
+
+
+def test_html_custom_css_and_options(tree, tmp_path):
+    css_file = tmp_path / "my.css"
+    css_file.write_text("body { color: red; }")
+    r = index_folder(tree, IndexerSettings(custom_css=str(css_file), collapsible=False, show_sizes=False,
+                                           display_path=True, display_path_limited=True, add_footer=False))
+    assert "body { color: red; }" in r.text and "#336699" not in r.text
+    assert "<details" not in r.text and "Generated by" not in r.text
+    doc = lxml_html.fromstring(r.text)
+    assert [h.text.strip() for h in doc.iter("h3")] == ["proj/src/deep"]
+    assert doc.find(".//h1/span").text == "(5 files, 4 folders)"
+    inline = index_folder(tree, IndexerSettings(custom_css="h1 { color: blue; }")).text
+    assert "h1 { color: blue; }" in inline
+
+
+def test_from_task_settings_and_cancel(tree):
+    tools = TaskSettingsTools(indexer_output=IndexerOutput.Txt, indexer_max_depth=1, indexer_show_sizes=False)
+    s = IndexerSettings.from_task_settings(tools)
+    assert s.output == IndexerOutput.Txt and s.max_depth == 1 and not s.show_sizes
+    ev = threading.Event()
+    ev.set()
+    with pytest.raises(OperationCancelled):
+        index_folder(tree, s, cancel=ev)
+    with pytest.raises(NotADirectoryError):
+        scan(tree / "a.txt")
