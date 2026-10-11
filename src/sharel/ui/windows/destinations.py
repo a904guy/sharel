@@ -82,7 +82,7 @@ def open_destination_settings(app, select: str = "") -> DestinationSettingsWindo
     if win is None:
         win = DestinationSettingsWindow(app)
         _windows[id(app)] = win
-        win.connect("destroy", lambda *_: _windows.pop(id(app), None))
+        win.connect("unrealize", lambda w: _windows.get(id(app)) is w and _windows.pop(id(app), None))
     win.present()
     if select:
         win.select(select)

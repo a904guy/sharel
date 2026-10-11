@@ -64,7 +64,7 @@ def open_custom_uploaders(app) -> CustomUploadersWindow:
     if win is None:
         win = CustomUploadersWindow(app)
         _windows[id(app)] = win
-        win.connect("destroy", lambda *_: _windows.pop(id(app), None))
+        win.connect("unrealize", lambda w: _windows.get(id(app)) is w and _windows.pop(id(app), None))
     win.present()
     return win
 
@@ -582,7 +582,7 @@ class CustomUploadersWindow(Adw.Window):
                 obj = json.loads(item.data)
                 text = json.dumps(obj, separators=(",", ":"), ensure_ascii=False) if minify else \
                     json.dumps(obj, indent=2, ensure_ascii=False)
-        except Exception as e:  # noqa: BLE001 - shown to the user
+        except Exception as e:
             gtkutil.alert(self, "Data is not valid " + ("XML" if item.body == "XML" else "JSON"), str(e))
             return
         self.data_view.get_buffer().set_text(text)
@@ -606,7 +606,7 @@ class CustomUploadersWindow(Adw.Window):
     def import_text(self, text: str | bytes, source: str = "clipboard") -> list[CustomUploaderItem]:
         try:
             items = sxcu.loads_many(text)
-        except Exception as e:  # noqa: BLE001 - shown to the user
+        except Exception as e:
             gtkutil.alert(self, f"Could not import from {source}", str(e))
             return []
         for it in items:
@@ -623,7 +623,7 @@ class CustomUploadersWindow(Adw.Window):
         for p in paths:
             try:
                 imported += sxcu.load_many(p)
-            except Exception as e:  # noqa: BLE001 - collected and shown
+            except Exception as e:
                 errors.append(f"{p}: {e}")
         if imported:
             self.items.extend(imported)
@@ -726,7 +726,7 @@ class CustomUploadersWindow(Adw.Window):
         def work():
             try:
                 res = fn()
-            except Exception as e:  # noqa: BLE001 - shown to the user
+            except Exception as e:
                 gtkutil.idle(finish, False, e)
                 return
             gtkutil.idle(finish, True, res)

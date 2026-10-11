@@ -326,3 +326,24 @@ def test_test_upload_button_selects_destination_per_category(monkeypatch):
         assert seen[3][2].url_sharing_service_destination.value == "Reddit"
         return True
     assert run_app(body)
+
+
+def test_main_window_destinations_menu_opens_settings_windows():
+    def body(app):
+        app.show_main_window()
+        yield 0.2
+        from sharel.ui.windows import customuploader, destinations
+        app.main_window.activate_action("win.destination-settings", None)
+        app.main_window.activate_action("win.custom-uploaders", None)
+        yield 0.2
+        dwin = destinations._windows[id(app)]
+        cwin = customuploader._windows[id(app)]
+        assert dwin.get_mapped() and cwin.get_mapped()
+        # re-presenting returns the same window; after closing a new one is made
+        assert destinations.open_destination_settings(app) is dwin
+        dwin.close()
+        yield 0.2
+        assert id(app) not in destinations._windows
+        assert destinations.open_destination_settings(app) is not dwin
+        return True
+    assert run_app(body)
