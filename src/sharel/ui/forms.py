@@ -65,8 +65,12 @@ class Form:
 
     def __init__(self, obj: Any, changed: Callable[[], None] | None = None, *,
                  on_authorize: Callable[[Any, str], None] | None = None,
-                 on_button: Callable[[Any, str], None] | None = None, parent: Gtk.Widget | None = None) -> None:
+                 on_button: Callable[[Any, str], None] | None = None, parent: Gtk.Widget | None = None,
+                 meta: dict[str, dict[str, Any]] | None = None) -> None:
         self.obj = obj
+        # Per-field metadata overrides ({"field": {"label": ..., "kind": ..., "min": ...}}), applied on top of
+        # the dataclass field's own metadata; passed down to nested forms and list items.
+        self.meta = meta or {}
         self.changed = changed or (lambda: None)
         self.on_authorize = on_authorize
         self.on_button = on_button
@@ -85,7 +89,8 @@ class Form:
         hints = _hints(self.obj)
         out = []
         for f in dataclasses.fields(self.obj):
-            if f.metadata.get("hidden") or f.metadata.get("transient"):
+            md = self._md(f)
+            if md.get("hidden") or md.get("transient"):
                 continue
             if only is not None and f.name not in only:
                 continue
@@ -100,8 +105,15 @@ class Form:
 
     # -- rows --
 
+    def _md(self, f: dataclasses.Field) -> dict[str, Any]:
+        return {**f.metadata, **self.meta.get(f.name, {})}
+
+    def _sub(self, obj: Any) -> Form:
+        return Form(obj, self.changed, on_authorize=self.on_authorize, on_button=self.on_button, parent=self.parent,
+                    meta=self.meta)
+
     def _label(self, f: dataclasses.Field) -> str:
-        return f.metadata.get("label") or humanize(f.name)
+        return self._md(f).get("label") or humanize(f.name)
 
     def _set(self, name: str, value: Any) -> None:
         setattr(self.obj, name, value)
@@ -111,8 +123,9 @@ class Form:
         name = f.name
         value = getattr(self.obj, name)
         title = self._label(f)
-        subtitle = f.metadata.get("help", "") or ""
-        kind = f.metadata.get("kind", "") or ""
+        md = self._md(f)
+        subtitle = md.get("help", "") or ""
+        kind = md.get("kind", "") or ""
         origin = typing.get_origin(tp)
 
         if kind == "oauth" or type(value).__name__ == "OAuth2Info":
@@ -131,7 +144,7 @@ class Form:
             return self._flags_row(name, value, title)
         if isinstance(value, Enum):
             return self._enum_row(name, value, title, subtitle, type(value))
-        choices = f.metadata.get("choices")
+        choices = md.get("choices")
         if choices:
             return self._choice_row(name, value, title, subtitle, list(choices))
         if isinstance(value, (int, float)):
@@ -141,9 +154,9 @@ class Form:
                 return self._color_row(name, value, title, subtitle)
             if kind in ("path", "file", "folder"):
                 return self._path_row(name, value, title, subtitle, kind)
-            if f.metadata.get("multiline"):
+            if md.get("multiline"):
                 return self._multiline_row(name, value, title, subtitle)
-            if f.metadata.get("secret"):
+            if md.get("secret"):
                 row = Adw.PasswordEntryRow(title=title, text=value)
             else:
                 row = Adw.EntryRow(title=title, text=value)
@@ -153,9 +166,7 @@ class Form:
             return row
         if dataclasses.is_dataclass(value):
             exp = Adw.ExpanderRow(title=title, subtitle=subtitle)
-            sub = Form(value, self.changed, on_authorize=self.on_authorize, on_button=self.on_button,
-                       parent=self.parent)
-            for r in sub.rows():
+            for r in self._sub(value).rows():
                 exp.add_row(r)
             return exp
         if origin is list:
@@ -170,9 +181,10 @@ class Form:
 
     def _spin_row(self, f, name, value, title, subtitle) -> Adw.SpinRow:
         is_float = isinstance(value, float)
-        lo = f.metadata.get("min")
-        hi = f.metadata.get("max")
-        step = f.metadata.get("step") or (0.1 if is_float else 1)
+        md = self._md(f)
+        lo = md.get("min")
+        hi = md.get("max")
+        step = md.get("step") or (0.1 if is_float else 1)
         lo = -1_000_000 if lo is None else lo
         hi = 1_000_000_000 if hi is None else hi
         adj = Gtk.Adjustment(value=value, lower=lo, upper=hi, step_increment=step, page_increment=step * 10)
@@ -292,7 +304,7 @@ class Form:
                 label = getattr(item, "name", "") or getattr(item, "folder_path", "") or \
                     getattr(item, "host", "") or f"#{i + 1}"
                 sub = Adw.ExpanderRow(title=str(label))
-                for r in Form(item, self.changed, on_authorize=self.on_authorize, on_button=self.on_button).rows():
+                for r in self._sub(item).rows():
                     sub.add_row(r)
                 rm = Gtk.Button(icon_name="list-remove-symbolic", valign=Gtk.Align.CENTER, tooltip_text="Remove")
                 rm.add_css_class("flat")
