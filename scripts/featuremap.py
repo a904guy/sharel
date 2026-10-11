@@ -19,8 +19,8 @@ FRAG = ROOT / "docs" / "featuremap"
 OUT = ROOT / "docs" / "FEATURE_MAP.md"
 
 ORDER = ["mechanisms", "hotkeys", "after_capture", "after_upload", "task_settings", "nameparser", "shapes",
-         "editor", "effects", "uploaders_image", "uploaders_text", "uploaders_file", "shorteners", "sharing",
-         "custom_uploader", "main_ui", "packaging"]
+         "editor", "effects", "uploaders_image", "uploaders_text", "uploaders_file", "uploaders_file_api", "shorteners",
+         "sharing", "custom_uploader", "destinations_ui", "main_ui", "packaging"]
 
 TITLES = {
     "mechanisms": "Wayland constraints and platform mappings",
@@ -34,7 +34,9 @@ TITLES = {
     "effects": "Image effects (ShareX.ImageEffectsLib)",
     "uploaders_image": "Image uploaders",
     "uploaders_text": "Text uploaders",
-    "uploaders_file": "File uploaders",
+    "uploaders_file": "File uploaders (protocols and self-hosted)",
+    "uploaders_file_api": "File uploaders (cloud APIs)",
+    "destinations_ui": "Destination settings, OAuth and token storage",
     "shorteners": "URL shorteners",
     "sharing": "URL sharing services",
     "custom_uploader": "Custom uploader engine",

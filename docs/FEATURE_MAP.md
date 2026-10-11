@@ -424,17 +424,11 @@ Every ShareX feature in the parity target, the module that implements it, the Li
 | CustomTextUploader | uploaders/services/*.py | HTTPS API | planned | - |
 | FileUploader | uploaders/services/*.py | HTTPS API | planned | - |
 
-## File uploaders
+## File uploaders (protocols and self-hosted)
 
 | ShareX feature | ShareL module | Linux mechanism | Status | Test that proves it |
 |---|---|---|---|---|
-| Dropbox | uploaders/services/*.py | HTTPS API | planned | - |
 | FTP | uploaders/services/*.py | HTTPS API | planned | - |
-| OneDrive | uploaders/services/*.py | HTTPS API | planned | - |
-| GoogleDrive | uploaders/services/*.py | HTTPS API | planned | - |
-| Puush | uploaders/services/*.py | HTTPS API | planned | - |
-| Box | uploaders/services/*.py | HTTPS API | planned | - |
-| Mega | uploaders/services/*.py | HTTPS API | planned | - |
 | AmazonS3 | uploaders/services/*.py | HTTPS API | planned | - |
 | GoogleCloudStorage | uploaders/services/*.py | HTTPS API | planned | - |
 | AzureStorage | uploaders/services/*.py | HTTPS API | planned | - |
@@ -442,24 +436,35 @@ Every ShareX feature in the parity target, the module that implements it, the Li
 | OwnCloud | uploaders/services/*.py | HTTPS API | planned | - |
 | Nextcloud | uploaders/services/*.py | HTTPS API | planned | - |
 | Immich | uploaders/services/*.py | HTTPS API | planned | - |
+| Pomf | uploaders/services/*.py | HTTPS API | planned | - |
+| Uguu | uploaders/services/*.py | HTTPS API | planned | - |
+| Seafile | uploaders/services/*.py | HTTPS API | planned | - |
+| Transfersh | uploaders/services/*.py | HTTPS API | planned | - |
+| Plik | uploaders/services/*.py | HTTPS API | planned | - |
+| SharedFolder | uploaders/services/*.py | HTTPS API | planned | - |
+| Email | uploaders/services/*.py | HTTPS API | planned | - |
+| CustomFileUploader | uploaders/services/*.py | HTTPS API | planned | - |
+
+## File uploaders (cloud APIs)
+
+| ShareX feature | ShareL module | Linux mechanism | Status | Test that proves it |
+|---|---|---|---|---|
+| Dropbox | uploaders/services/*.py | HTTPS API | planned | - |
+| OneDrive | uploaders/services/*.py | HTTPS API | planned | - |
+| GoogleDrive | uploaders/services/*.py | HTTPS API | planned | - |
+| Puush | uploaders/services/*.py | HTTPS API | planned | - |
+| Box | uploaders/services/*.py | HTTPS API | planned | - |
+| Mega | uploaders/services/*.py | HTTPS API | planned | - |
 | MediaFire | uploaders/services/*.py | HTTPS API | planned | - |
 | Pushbullet | uploaders/services/*.py | HTTPS API | planned | - |
 | SendSpace | uploaders/services/*.py | HTTPS API | planned | - |
 | Localhostr | uploaders/services/*.py | HTTPS API | planned | - |
 | Lambda | uploaders/services/*.py | HTTPS API | planned | - |
 | ImgFish | uploaders/services/*.py | HTTPS API | planned | - |
-| Pomf | uploaders/services/*.py | HTTPS API | planned | - |
-| Uguu | uploaders/services/*.py | HTTPS API | planned | - |
-| Seafile | uploaders/services/*.py | HTTPS API | planned | - |
 | Streamable | uploaders/services/*.py | HTTPS API | planned | - |
 | Sul | uploaders/services/*.py | HTTPS API | planned | - |
 | Lithiio | uploaders/services/*.py | HTTPS API | planned | - |
-| Transfersh | uploaders/services/*.py | HTTPS API | planned | - |
-| Plik | uploaders/services/*.py | HTTPS API | planned | - |
 | YouTube | uploaders/services/*.py | HTTPS API | planned | - |
-| SharedFolder | uploaders/services/*.py | HTTPS API | planned | - |
-| Email | uploaders/services/*.py | HTTPS API | planned | - |
-| CustomFileUploader | uploaders/services/*.py | HTTPS API | planned | - |
 
 ## URL shorteners
 
@@ -532,6 +537,11 @@ Every ShareX feature in the parity target, the module that implements it, the Li
 | {outputbox:} | uploaders/custom/ | - | planned | - |
 | {base64:} | uploaders/custom/ | - | planned | - |
 | Backslash escaping | uploaders/custom/ | - | planned | - |
+
+## Destination settings, OAuth and token storage
+
+| ShareX feature | ShareL module | Linux mechanism | Status | Test that proves it |
+|---|---|---|---|---|
 | Custom uploader editor UI | uploaders/custom/ | - | planned | - |
 | Test button | uploaders/custom/ | - | planned | - |
 | OAuth: loopback redirect + system browser | uploaders/custom/ | - | planned | - |

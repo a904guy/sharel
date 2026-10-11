@@ -1,0 +1,16 @@
+| Dropbox | uploaders/services/*.py | HTTPS API | planned | - |
+| OneDrive | uploaders/services/*.py | HTTPS API | planned | - |
+| GoogleDrive | uploaders/services/*.py | HTTPS API | planned | - |
+| Puush | uploaders/services/*.py | HTTPS API | planned | - |
+| Box | uploaders/services/*.py | HTTPS API | planned | - |
+| Mega | uploaders/services/*.py | HTTPS API | planned | - |
+| MediaFire | uploaders/services/*.py | HTTPS API | planned | - |
+| Pushbullet | uploaders/services/*.py | HTTPS API | planned | - |
+| SendSpace | uploaders/services/*.py | HTTPS API | planned | - |
+| Localhostr | uploaders/services/*.py | HTTPS API | planned | - |
+| Lambda | uploaders/services/*.py | HTTPS API | planned | - |
+| ImgFish | uploaders/services/*.py | HTTPS API | planned | - |
+| Streamable | uploaders/services/*.py | HTTPS API | planned | - |
+| Sul | uploaders/services/*.py | HTTPS API | planned | - |
+| Lithiio | uploaders/services/*.py | HTTPS API | planned | - |
+| YouTube | uploaders/services/*.py | HTTPS API | planned | - |
