@@ -50,6 +50,7 @@ packages = ["src/sharel"]
 testpaths = ["tests"]
 markers = ["e2e: drives a real (headless) GNOME Shell session"]
 addopts = "-m 'not e2e'"
+filterwarnings = ["ignore::DeprecationWarning:gi.*", "ignore::PendingDeprecationWarning:gi.*"]
 
 [tool.ruff]
 line-length = 120

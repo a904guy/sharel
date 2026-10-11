@@ -7,6 +7,10 @@ Each fragment is a markdown table body (no header): one row per ShareX feature,
 
     python3 scripts/featuremap.py build    # regenerate FEATURE_MAP.md (and print the counts)
     python3 scripts/featuremap.py check    # exit 1 if any row is not done/excluded
+    python3 scripts/featuremap.py apply    # merge docs/featuremap/_updates_*.md into the fragments
+
+An updates file holds rows ``| fragment | feature | module | mechanism | status | test |``; each
+replaces the fragment's row with the same feature (or is appended), then the file is deleted.
 """
 from __future__ import annotations
 
@@ -75,7 +79,7 @@ def build() -> dict[str, int]:
              "`docs/featuremap/*.md`; edit those fragments, not this file.\n"]
     counts = {"done": 0, "excluded": 0, "open": 0}
     names = [n for n in ORDER if (FRAG / f"{n}.md").exists()]
-    names += sorted(p.stem for p in FRAG.glob("*.md") if p.stem not in ORDER)
+    names += sorted(p.stem for p in FRAG.glob("*.md") if p.stem not in ORDER and not p.stem.startswith("_"))
     body = []
     for name in names:
         rs = rows((FRAG / f"{name}.md").read_text())
@@ -90,8 +94,35 @@ def build() -> dict[str, int]:
     return counts
 
 
+def apply_updates() -> int:
+    n = 0
+    for upd in sorted(FRAG.glob("_updates_*.md")):
+        for cells in rows(upd.read_text()):
+            if len(cells) < 6:
+                continue
+            frag, feature = cells[0], cells[1]
+            path = FRAG / f"{frag}.md"
+            if not path.exists():
+                raise SystemExit(f"{upd.name}: unknown fragment {frag!r}")
+            new_row = "| " + " | ".join(cells[1:6]) + " |"
+            lines = path.read_text().splitlines()
+            for i, line in enumerate(lines):
+                r = rows(line)
+                if r and r[0][0] == feature:
+                    lines[i] = new_row
+                    break
+            else:
+                lines.append(new_row)
+            path.write_text("\n".join(lines) + "\n")
+            n += 1
+        upd.unlink()
+    return n
+
+
 def main(argv: list[str]) -> int:
     cmd = argv[1] if len(argv) > 1 else "build"
+    if cmd == "apply":
+        print(f"applied {apply_updates()} row update(s)")
     counts = build()
     print(counts)
     if cmd == "check":
