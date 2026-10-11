@@ -237,6 +237,7 @@ class HistoryActionsMixin:
     def _attach_context(self, view: Gtk.Widget) -> None:
         self.popover = Gtk.PopoverMenu(menu_model=self.context_menu_model(), has_arrow=False)
         self.popover.set_parent(view)
+        view.connect("unrealize", lambda *_: self.popover.get_parent() is not None and self.popover.unparent())
         click = Gtk.GestureClick(button=3)
         click.connect("pressed", self._on_context_press, view)
         view.add_controller(click)
