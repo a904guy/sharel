@@ -358,3 +358,16 @@ def file_drop_target(widget: Gtk.Widget, on_paths: Callable[[list[str]], None]) 
     target.connect("drop", dropped)
     widget.add_controller(target)
     return target
+
+
+def stored_tool_settings(app, ctx=None):
+    """The ``TaskSettingsTools`` a tool should write its remembered options to, and the save function.
+
+    ``ctx.task_settings`` is an effective *copy*, so edits to it are lost. Like ShareX
+    (``TaskSettings.ToolsSettingsReference``) this is the workflow's own tool settings when the workflow
+    does not use the defaults, otherwise the default task settings."""
+    wf = getattr(ctx, "workflow", None) if ctx is not None else None
+    wts = getattr(wf, "task_settings", None)
+    if wts is not None and not wts.use_default_tool_settings:
+        return wts.tool_settings, app.store.save_hotkeys
+    return app.store.app.default_task_settings.tool_settings, app.store.save_app

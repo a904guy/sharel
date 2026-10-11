@@ -23,6 +23,7 @@ from ...core import clipboard
 from ...tools import videotools as vt
 from ..forms import Form
 from ..gtkutil import texture_from_pil
+from ._base import stored_tool_settings
 from ._base import ProgressPanel, ToolWindow, button, dropdown, dropdown_value, file_drop_target, select_value, single
 from ._videocommon import OutputActions, PathRow
 
@@ -176,11 +177,12 @@ class VideoThumbnailerWindow(ToolWindow):
             self.toast("Image copied")
 
     def _remember(self) -> None:
-        tool = self.app.store.app.default_task_settings.tool_settings
-        tool.video_thumbnailer_count = self.options.thumbnail_count
-        tool.video_thumbnailer_columns = self.options.column_count
-        tool.video_thumbnailer_width = self.options.max_thumbnail_width
-        self.app.store.save_app()
+        stored, save = stored_tool_settings(self.app, self.ctx)
+        for tool in (stored, self.ctx.task_settings.tool_settings):
+            tool.video_thumbnailer_count = self.options.thumbnail_count
+            tool.video_thumbnailer_columns = self.options.column_count
+            tool.video_thumbnailer_width = self.options.max_thumbnail_width
+        save()
 
 
 def open(app, ctx) -> VideoThumbnailerWindow:  # noqa: A001 - the tool contract's name

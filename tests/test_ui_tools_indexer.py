@@ -56,6 +56,8 @@ def test_settings_json_and_save_as(tmp_path):
         win.settings.skip_hidden_files = False
         win._settings_changed()
         assert ctx.task_settings.tool_settings.indexer_output == IndexerOutput.Json
+        # remembered in the stored (default) task settings, not just the effective copy
+        assert app.store.app.default_task_settings.tool_settings.indexer_output == IndexerOutput.Json
         win.index_button.emit("clicked")
         yield from wait_until(lambda: win.result.extension == "json" and not win.worker.running)
         obj = json.loads(win.result.text)

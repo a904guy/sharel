@@ -21,6 +21,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Gtk
 
 from ...tools import videotools as vt
+from ._base import stored_tool_settings
 from ._base import ProgressPanel, ToolWindow, button, dropdown, file_drop_target, set_text, single, spin, text_of, \
     text_view
 from ._videocommon import OutputActions, PathRow, codec_from_setting
@@ -297,10 +298,11 @@ class VideoConverterWindow(ToolWindow):
 
     def _remember(self) -> None:
         """Keep the encoder and quality for next time (ShareX keeps VideoConverterOptions)."""
-        tool = self.app.store.app.default_task_settings.tool_settings
-        tool.video_converter_codec = self.opts.codec.value
-        tool.video_converter_crf = int(self.opts.video_quality)
-        self.app.store.save_app()
+        stored, save = stored_tool_settings(self.app, self.ctx)
+        for tool in (stored, self.ctx.task_settings.tool_settings):
+            tool.video_converter_codec = self.opts.codec.value
+            tool.video_converter_crf = int(self.opts.video_quality)
+        save()
 
 
 def open(app, ctx) -> VideoConverterWindow:  # noqa: A001 - the tool contract's name

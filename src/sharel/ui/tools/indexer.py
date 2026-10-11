@@ -23,6 +23,7 @@ from ...core import clipboard, desktop
 from ...tools.indexer import IndexerOutput, IndexerSettings, index_folder
 from ..forms import Form
 from ..gtkutil import save_file, select_folder
+from ._base import stored_tool_settings
 from ._base import ProgressPanel, ToolWindow, button, file_drop_target, labeled, set_text, single, text_view
 
 
@@ -96,13 +97,17 @@ class IndexerWindow(ToolWindow):
         self.browser_button.set_sensitive(has and self.result.extension == "html")
 
     def _settings_changed(self) -> None:
-        tool = self.ctx.task_settings.tool_settings
+        stored, save = stored_tool_settings(self.app, self.ctx)
+        for tool in (stored, self.ctx.task_settings.tool_settings):
+            self._write_settings(tool)
+        save()
+
+    def _write_settings(self, tool) -> None:
         tool.indexer_output = self.settings.output
         tool.indexer_max_depth = self.settings.max_depth
         tool.indexer_skip_hidden = self.settings.skip_hidden_folders
         tool.indexer_show_sizes = self.settings.show_sizes
         tool.indexer_custom_css = self.settings.custom_css
-        self.app.store.save_app()
 
     # -- actions --
 
