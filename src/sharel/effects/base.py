@@ -12,8 +12,22 @@ snake_case (ShareX ``Value`` -> ``value``, ``UseGradient`` -> ``use_gradient``):
             ...
 
 ``apply`` receives and returns an RGBA PIL image (it may return a different size). Field metadata
-(``label``, ``min``, ``max``, ``step``, ``kind`` = 'color' | 'file' | 'font' | 'text' | 'choice',
-``choices``) drives the generated parameter editor in the Image Effects window.
+(``label``, ``min``, ``max``, ``step``, ``kind``, ``choices``) drives the generated parameter editor in
+the Image Effects window. ``kind`` is one of:
+
+* ``''`` - plain bool / int / float (by the field's type) or str
+* ``'color'`` - ``"#AARRGGBB"`` string
+* ``'choice'`` - str, one of ``choices`` (ShareX enum member names)
+* ``'flags'`` - str of comma separated ``choices`` (ShareX flags enum, e.g. ``"Top, Bottom, Left, Right"``)
+* ``'point'`` / ``'size'`` - ``[x, y]`` / ``[width, height]`` int list
+* ``'padding'`` - ``[left, top, right, bottom]`` int list
+* ``'font'`` - ShareX FontConverter string, ``"Arial, 11.25pt"`` or ``"Arial, 36pt, style=Bold, Italic"``
+* ``'gradient'`` - :class:`sharel.effects.common.GradientInfo`
+* ``'file'`` / ``'folder'`` - path (``%ShareXImageEffects%`` and ``~`` are expanded)
+* ``'text'`` - free text (name parser patterns for the text effects)
+
+``sharex`` metadata is the ShareX property name (default: the field name in PascalCase), used by
+:mod:`sharel.effects.sxie`.
 
 Presets serialize to ``{"name": ..., "effects": [{"type": "Brightness", "enabled": true, ...}]}``;
 :mod:`sharel.effects.sxie` converts to and from ShareX's ``.sxie`` packages.
@@ -33,10 +47,13 @@ CATEGORIES = ("Adjustments", "Drawings", "Filters", "Manipulations")
 EFFECTS: dict[str, type[ImageEffect]] = {}
 
 
-def param(default: Any = dataclasses.MISSING, *, label: str = "", min: float | None = None,
-          max: float | None = None, step: float | None = None, kind: str = "", choices: list[str] | None = None,
-          help: str = "", default_factory: Any = dataclasses.MISSING) -> Any:
-    md = {"label": label, "min": min, "max": max, "step": step, "kind": kind, "choices": choices, "help": help}
+def param(default: Any = dataclasses.MISSING, *, label: str = "", min: float | None = None,  # noqa: A002
+          max: float | None = None,  # noqa: A002
+          step: float | None = None, kind: str = "", choices: list[str] | None = None,
+          help: str = "",  # noqa: A002
+          default_factory: Any = dataclasses.MISSING, sharex: str = "") -> Any:
+    md = {"label": label, "min": min, "max": max, "step": step, "kind": kind, "choices": choices, "help": help,
+          "sharex": sharex}
     if default_factory is not dataclasses.MISSING:
         return field(default_factory=default_factory, metadata=md)
     return field(default=default, metadata=md)
@@ -47,6 +64,8 @@ class ImageEffect:
     category: ClassVar[str] = ""
     display_name: ClassVar[str] = ""
     enabled: bool = param(True, label="Enabled")
+    # ShareX lets the user rename an effect in the list; "" shows the default description.
+    name: str = param("", label="Name")
 
     def apply(self, img: Image.Image) -> Image.Image:
         raise NotImplementedError
@@ -61,7 +80,8 @@ class ImageEffect:
         return type(self).__name__
 
     def params(self) -> list[dataclasses.Field]:
-        return [f for f in dataclasses.fields(self) if f.name != "enabled"]
+        """The editable parameters (everything but ``enabled`` and the list ``name``)."""
+        return [f for f in dataclasses.fields(self) if f.name not in ("enabled", "name")]
 
     def to_jsonable(self) -> dict:
         d = to_jsonable(self)
@@ -74,8 +94,17 @@ class ImageEffect:
             raise KeyError(f"unknown image effect {d.get('type')!r}")
         return from_jsonable(cls, {k: v for k, v in d.items() if k != "type"})
 
+    def summary(self) -> str:
+        """Short parameter summary shown after the name (ShareX ``GetSummary``); "" for none."""
+        return ""
+
     def describe(self) -> str:
-        return self.display_name or self.type_name
+        """List text, like ShareX ``ImageEffect.ToString``: custom name, else "Description: summary"."""
+        if self.name:
+            return self.name
+        base = self.display_name or self.type_name
+        summary = self.summary()
+        return f"{base}: {summary}" if summary else base
 
 
 def effect(category: str, display_name: str = ""):
@@ -121,3 +150,16 @@ class ImageEffectPreset:
             except KeyError:
                 continue
         return ImageEffectPreset(d.get("name", "Preset"), effects)
+
+
+def default_preset() -> ImageEffectPreset:
+    """ShareX ``ImageEffectPreset.GetDefaultPreset``: a 30 px bottom canvas with a gradient text watermark."""
+    load_all()
+    canvas = EFFECTS["Canvas"](margin=[0, 0, 0, 30])
+    text = EFFECTS["DrawText"](offset=[0, 0], use_gradient=True)
+    return ImageEffectPreset("Default", [canvas, text])
+
+
+def default_presets() -> list[ImageEffectPreset]:
+    """The preset list a fresh configuration starts with."""
+    return [default_preset()]
