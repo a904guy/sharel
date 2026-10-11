@@ -84,6 +84,11 @@ class ProgressReader(io.RawIOBase):
     def __len__(self) -> int:
         return self.total
 
+    def tell(self) -> int:
+        # requests' super_len() subtracts tell() from len(); RawIOBase.tell() raises (not seekable), which makes
+        # requests treat the length as 0 and send the body chunked without Content-Length.
+        return self.done
+
 
 class UploadContext:
     """What an uploader may use from its environment. The task layer makes one per upload."""
