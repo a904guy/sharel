@@ -1,0 +1,13 @@
+| Email | uploaders/services/*.py | HTTPS API | planned | - |
+| Facebook | uploaders/services/*.py | HTTPS API | planned | - |
+| Reddit | uploaders/services/*.py | HTTPS API | planned | - |
+| Pinterest | uploaders/services/*.py | HTTPS API | planned | - |
+| Tumblr | uploaders/services/*.py | HTTPS API | planned | - |
+| LinkedIn | uploaders/services/*.py | HTTPS API | planned | - |
+| StumbleUpon | uploaders/services/*.py | HTTPS API | planned | - |
+| Delicious | uploaders/services/*.py | HTTPS API | planned | - |
+| VK | uploaders/services/*.py | HTTPS API | planned | - |
+| Pushbullet | uploaders/services/*.py | HTTPS API | planned | - |
+| GoogleImageSearch | uploaders/services/*.py | HTTPS API | planned | - |
+| BingVisualSearch | uploaders/services/*.py | HTTPS API | planned | - |
+| CustomURLSharingService | uploaders/services/*.py | HTTPS API | planned | - |

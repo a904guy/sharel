@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+/dist/
+/build/
+tests/e2e/artifacts/*
+!tests/e2e/artifacts/.gitkeep
+.pytest_cache/
+.ruff_cache/

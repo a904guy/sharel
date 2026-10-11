@@ -1,0 +1,14 @@
+| BITLY | uploaders/services/*.py | HTTPS API | planned | - |
+| ISGD | uploaders/services/*.py | HTTPS API | planned | - |
+| VGD | uploaders/services/*.py | HTTPS API | planned | - |
+| TINYURL | uploaders/services/*.py | HTTPS API | planned | - |
+| TURL | uploaders/services/*.py | HTTPS API | planned | - |
+| YOURLS | uploaders/services/*.py | HTTPS API | planned | - |
+| QRnet | uploaders/services/*.py | HTTPS API | planned | - |
+| VURL | uploaders/services/*.py | HTTPS API | planned | - |
+| TwoGP | uploaders/services/*.py | HTTPS API | planned | - |
+| Polr | uploaders/services/*.py | HTTPS API | planned | - |
+| FirebaseDynamicLinks | uploaders/services/*.py | HTTPS API | planned | - |
+| Kutt | uploaders/services/*.py | HTTPS API | planned | - |
+| ZeroWidthShortener | uploaders/services/*.py | HTTPS API | planned | - |
+| CustomURLShortener | uploaders/services/*.py | HTTPS API | planned | - |

@@ -1,0 +1,12 @@
+| Pastebin | uploaders/services/*.py | HTTPS API | planned | - |
+| Paste2 | uploaders/services/*.py | HTTPS API | planned | - |
+| Slexy | uploaders/services/*.py | HTTPS API | planned | - |
+| Paste_ee | uploaders/services/*.py | HTTPS API | planned | - |
+| Gist | uploaders/services/*.py | HTTPS API | planned | - |
+| Upaste | uploaders/services/*.py | HTTPS API | planned | - |
+| Hastebin | uploaders/services/*.py | HTTPS API | planned | - |
+| OneTimeSecret | uploaders/services/*.py | HTTPS API | planned | - |
+| Pastie | uploaders/services/*.py | HTTPS API | planned | - |
+| PrivateBin | uploaders/services/*.py | HTTPS API | planned | - |
+| CustomTextUploader | uploaders/services/*.py | HTTPS API | planned | - |
+| FileUploader | uploaders/services/*.py | HTTPS API | planned | - |
