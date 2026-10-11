@@ -120,7 +120,8 @@ class CaptureJobs:
 
         def go():
             try:
-                cap = backends.capture_monitor(self.active_monitor_index(), ctx.task_settings.capture_settings.show_cursor,
+                cs = ctx.task_settings.capture_settings
+                cap = backends.capture_monitor(self.active_monitor_index(), cs.show_cursor,
                                                self.backend_pref(ctx.task_settings))
             except backends.CaptureError as e:
                 return self.capture_error(e)
@@ -164,7 +165,8 @@ class CaptureJobs:
             try:
                 w = sh.pick_window("Click the window to capture. Esc to cancel.")
             except ShellUnavailable as e:
-                GLib.idle_add(lambda: (self.capture_error(e), False)[1])
+                err = e
+                GLib.idle_add(lambda: (self.capture_error(err), False)[1])
                 return
             if w is None:
                 return
