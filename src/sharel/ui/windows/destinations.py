@@ -393,7 +393,7 @@ class DestinationSettingsWindow(Adw.Window):
         def work() -> None:
             try:
                 res = fn()
-            except Exception as e:  # noqa: BLE001 - every failure is shown to the user
+            except Exception as e:
                 gtkutil.idle(finish, False, e)
                 return
             gtkutil.idle(finish, True, res)
