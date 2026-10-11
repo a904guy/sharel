@@ -68,23 +68,26 @@ def play(kind: str, g: TaskSettingsGeneral, block: bool = False) -> str:
     if not enabled(kind, g):
         return ""
     custom = custom_file(kind, g)
+    theme = theme_file(kind)
+    canberra = shutil.which("canberra-gtk-play")
     if custom:
         what = custom
-        fn = (lambda: _playbin(custom))
-    elif shutil.which("canberra-gtk-play"):
+    elif canberra:
         what = f"theme:{THEME_EVENTS[kind]}"
-        fn = (lambda: subprocess.run(["canberra-gtk-play", "-i", THEME_EVENTS[kind], "-d", "ShareL"],
-                                     timeout=15, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+    elif theme is not None:
+        what = str(theme)
     else:
-        f = theme_file(kind)
-        if f is None:
-            return ""
-        what = str(f)
-        fn = (lambda: _playbin(str(f)))
+        return ""
 
     def run():
         try:
-            fn()
+            if custom:
+                _playbin(custom)
+            elif canberra:
+                subprocess.run([canberra, "-i", THEME_EVENTS[kind], "-d", "ShareL"], timeout=15,
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            else:
+                _playbin(str(theme))
         except Exception as e:
             log.info("sound %s failed: %s", kind, e)
 

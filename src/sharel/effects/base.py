@@ -47,10 +47,10 @@ CATEGORIES = ("Adjustments", "Drawings", "Filters", "Manipulations")
 EFFECTS: dict[str, type[ImageEffect]] = {}
 
 
-def param(default: Any = dataclasses.MISSING, *, label: str = "", min: float | None = None,  # noqa: A002
-          max: float | None = None,  # noqa: A002
+def param(default: Any = dataclasses.MISSING, *, label: str = "", min: float | None = None,
+          max: float | None = None,
           step: float | None = None, kind: str = "", choices: list[str] | None = None,
-          help: str = "",  # noqa: A002
+          help: str = "",
           default_factory: Any = dataclasses.MISSING, sharex: str = "") -> Any:
     md = {"label": label, "min": min, "max": max, "step": step, "kind": kind, "choices": choices, "help": help,
           "sharex": sharex}

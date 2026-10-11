@@ -47,11 +47,14 @@ def _net_color(name: str) -> RGBA | None:
     key = name.strip().lower().replace(" ", "")
     if key in _NET_NAMES:
         return _NET_NAMES[key]
-    hexv = ImageColor.colormap.get(key)
-    if isinstance(hexv, str):
-        r, g, b = ImageColor.getrgb(hexv)[:3]
-        return (r, g, b, 255)
-    return None
+    # Pillow caches converted names back into ImageColor.colormap as tuples, so ask getrgb.
+    if key not in ImageColor.colormap:
+        return None
+    try:
+        r, g, b = ImageColor.getrgb(key)[:3]
+    except ValueError:
+        return None
+    return (r, g, b, 255)
 
 
 def parse_color(value: str | tuple | list | None, default: RGBA = (0, 0, 0, 255)) -> RGBA:

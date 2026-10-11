@@ -43,7 +43,7 @@ def call_main(fn: Callable[..., Any], *args, timeout: float | None = None) -> An
     def run():
         try:
             box["v"] = fn(*args)
-        except BaseException as e:  # noqa: BLE001
+        except BaseException as e:
             box["e"] = e
         done.set()
         return GLib.SOURCE_REMOVE
