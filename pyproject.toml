@@ -12,11 +12,12 @@ dependencies = [
     "requests>=2.31",
     "qrcode>=7.4",
     "paramiko>=3.4",
+    "cryptography>=42",
+    "lxml>=5",
 ]
 
 [project.optional-dependencies]
-gi = ["PyGObject>=3.48"]
-rembg = ["rembg>=2.0", "onnxruntime>=1.17"]
+rembg = ["rembg>=2.0.85", "onnxruntime>=1.17"]
 
 [project.scripts]
 sharel = "sharel.cli:main"
@@ -34,6 +35,8 @@ dev = [
     "moto[server]>=5.0",
     "mcp>=1.10",
     "ruff>=0.6",
+    "rembg>=2.0.85",
+    "onnxruntime>=1.17",
 ]
 
 [build-system]
