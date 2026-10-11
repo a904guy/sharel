@@ -93,7 +93,7 @@ class Worker:
             self.result = self.fn(self._progress, self.cancel_event)
         except OperationCancelled:
             self.cancelled = True
-        except BaseException as e:  # noqa: BLE001 - reported to the UI
+        except BaseException as e:
             self.error = e
             log.debug("tool worker failed: %s", "".join(traceback.format_exception(e)))
         if self.cancel_event.is_set():
