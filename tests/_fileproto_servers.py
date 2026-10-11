@@ -385,3 +385,75 @@ class SFTPTestServer:
                 t.start_server(server=Server())
             except (paramiko.SSHException, EOFError, OSError):
                 continue
+
+
+# ---- WebDAV (wsgidav) + an OCS share endpoint, like ownCloud / Nextcloud -------------------------
+
+class CloudServer:
+    """wsgidav serving ``root`` at ``/remote.php/dav/files/<user>`` behind basic auth, plus a minimal
+    ``/ocs/v{1,2}.php/apps/files_sharing/api/v1/shares`` that records the share requests. Runs on cheroot."""
+
+    def __init__(self, root: Path, user: str = "alice", password: str = "app-pass") -> None:
+        import base64
+        from urllib.parse import parse_qs
+
+        from cheroot import wsgi
+        from wsgidav.fs_dav_provider import FilesystemProvider
+        from wsgidav.wsgidav_app import WsgiDAVApp
+
+        self.root = root
+        self.user = user
+        self.shares: list[dict] = []
+        self.methods: list[tuple[str, str]] = []
+        dav = WsgiDAVApp({
+            "provider_mapping": {f"/remote.php/dav/files/{user}": FilesystemProvider(str(root))},
+            "simple_dc": {"user_mapping": {"*": {user: {"password": password}}}},
+            "http_authenticator": {"accept_basic": True, "accept_digest": False, "default_to_digest": False},
+            "verbose": 0, "logging": {"enable": False}, "dir_browser": {"enable": False},
+            "lock_storage": True,
+        })
+        expected_auth = "Basic " + base64.b64encode(f"{user}:{password}".encode()).decode()
+        outer = self
+
+        def app(environ, start_response):
+            path = environ.get("PATH_INFO", "")
+            outer.methods.append((environ["REQUEST_METHOD"], path))
+            if "/apps/files_sharing/api/v1/shares" in path:
+                version = 2 if path.startswith("/ocs/v2.php") else 1
+                if environ.get("HTTP_AUTHORIZATION") != expected_auth:
+                    start_response("401 Unauthorized", [("Content-Type", "application/json")])
+                    return [b'{"ocs":{"meta":{"status":"failure","statuscode":997,"message":"auth"}}}']
+                size = int(environ.get("CONTENT_LENGTH") or 0)
+                form = {k: v[0] for k, v in parse_qs(environ["wsgi.input"].read(size).decode()).items()}
+                form["_ocs_api_request"] = environ.get("HTTP_OCS_APIREQUEST", "")
+                form["_version"] = version
+                form["_query"] = environ.get("QUERY_STRING", "")
+                outer.shares.append(form)
+                token = f"tok{len(outer.shares)}"
+                host = environ.get("HTTP_HOST")
+                exists = (outer.root / form.get("path", "").lstrip("/")).is_file()
+                if not exists:
+                    body = {"ocs": {"meta": {"status": "failure", "statuscode": 404,
+                                             "message": "Wrong path, file/folder does not exist"}, "data": []}}
+                else:
+                    body = {"ocs": {"meta": {"status": "ok", "statuscode": 200 if version == 2 else 100,
+                                             "message": "OK"},
+                                    "data": {"id": len(outer.shares), "token": token, "path": form["path"],
+                                             "url": f"http://{host}/s/{token}"}}}
+                import json as _json
+                start_response("200 OK", [("Content-Type", "application/json")])
+                return [_json.dumps(body).encode()]
+            return dav(environ, start_response)
+
+        self.server = wsgi.Server(("127.0.0.1", 0), app)
+        self.server.prepare()
+        self.port = self.server.bind_addr[1]
+        self.url = f"http://127.0.0.1:{self.port}"
+        self.thread = threading.Thread(target=self.server.serve, daemon=True)
+
+    def __enter__(self) -> CloudServer:
+        self.thread.start()
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self.server.stop()
