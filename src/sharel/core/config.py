@@ -758,6 +758,7 @@ class ApplicationConfig:
     workflows_only_show_edited: bool = False
     # misc
     image_viewer_last_folder: str = ""
+    screencast_restore_token: str = ""  # ScreenCast portal (recording fallback), persist_mode=2
 
 
 # ---- loading / saving -------------------------------------------------------------------

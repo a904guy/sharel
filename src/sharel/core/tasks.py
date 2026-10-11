@@ -53,6 +53,7 @@ class TaskJob(Enum):
     ShortenURL = "ShortenURL"
     ShareURL = "ShareURL"
     DownloadUpload = "DownloadUpload"
+    MediaFile = "MediaFile"  # a finished screen recording: file-level after-capture tasks, maybe upload
 
 
 @dataclass
@@ -271,6 +272,8 @@ class WorkerTask:
                 self._do_share()
             elif info.job == TaskJob.DownloadUpload:
                 self._do_download_upload()
+            elif info.job == TaskJob.MediaFile:
+                self._do_media_file()
             if info.uploaded or info.result_url:
                 self._after_upload()
             info.end_time = time.time()
@@ -560,6 +563,33 @@ class WorkerTask:
         self.data = data
         self._do_file_upload()
 
+    def _do_media_file(self) -> None:
+        """A recorded video/GIF (ShareX's screen recording after-capture handling)."""
+        info, flags, host = self.info, self.ts.after_capture_job, self.host
+        if flags & ACT.PerformActions:
+            for prog in self.ts.external_programs:
+                if prog.is_active and prog.path and prog.matches(info.file_path):
+                    out = run_external_program(prog, info.file_path)
+                    if out and Path(out).exists():
+                        info.file_path, info.file_name = out, Path(out).name
+        if flags & ACT.CopyFileToClipboard:
+            host.copy_files([info.file_path])
+        elif flags & ACT.CopyFilePathToClipboard:
+            host.copy_text(info.file_path)
+        elif flags & ACT.CopyFolderPathToClipboard:
+            host.copy_text(str(Path(info.file_path).parent))
+        if flags & ACT.ShowInExplorer:
+            host.show_in_folder(info.file_path)
+        if flags & ACT.UploadImageToHost:
+            path = info.file_path
+            self._do_file_upload()
+            if flags & ACT.DeleteFile and info.uploaded:
+                try:
+                    os.unlink(path)
+                except OSError as e:
+                    info.errors.append(f"Delete failed: {e}")
+                info.file_path = ""
+
     # -- after upload --
 
     def _after_upload(self) -> None:
@@ -713,6 +743,11 @@ class TaskManager:
 
     def share_url(self, url: str, ts: TaskSettings) -> WorkerTask:
         info = TaskInfo(job=TaskJob.ShareURL, data_type=EDataType.URL, url=url)
+        return self.start(WorkerTask(self, info, ts))
+
+    def run_media_file(self, path: str, ts: TaskSettings) -> WorkerTask:
+        info = TaskInfo(job=TaskJob.MediaFile, data_type=EDataType.File, file_path=str(path),
+                        file_name=Path(path).name)
         return self.start(WorkerTask(self, info, ts))
 
     def download_upload(self, url: str, ts: TaskSettings) -> WorkerTask:
