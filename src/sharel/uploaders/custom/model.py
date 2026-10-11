@@ -31,8 +31,8 @@ class CustomUploaderItem:
 
     @property
     def display_name(self) -> str:
+        """CustomUploaderItem.ToString: the name, else the request URL's host (without ``www.``)."""
         if self.name:
             return self.name
-        from urllib.parse import urlparse
-        host = urlparse(self.request_url).hostname
-        return host or "Custom uploader"
+        from .parser import host_name
+        return host_name(self.request_url) or "Custom uploader"
