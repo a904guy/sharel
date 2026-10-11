@@ -171,7 +171,9 @@ def error_message(resp: requests.Response, what: str) -> str:
     try:
         js = resp.json()
         err = js.get("error") if isinstance(js, dict) else None
-        if isinstance(err, dict):
+        if isinstance(js, dict) and js.get("error_summary"):  # Dropbox
+            detail = js["error_summary"]
+        elif isinstance(err, dict):
             detail = err.get("message") or err.get("error_summary") or json.dumps(err)
         elif isinstance(err, str):
             detail = js.get("error_description") or js.get("error_summary") or err
