@@ -74,6 +74,7 @@ class ComparerWindow(_base.ToolWindow):
         self.similarity.add_css_class("title-4")
         self.details = Gtk.Label(label="", xalign=0, margin_start=10, selectable=True)
         self.details.add_css_class("dim-label")
+        self.preview = _base.LivePreview(self._snapshot, self._render, self._show, self._fail, delay_ms=30)
         self.pane = _base.ImagePane("Choose or drop two images")
         self.pane.set_margin_start(10)
         self.pane.set_margin_end(10)
@@ -137,12 +138,32 @@ class ComparerWindow(_base.ToolWindow):
         for w in (self.save_button, self.copy_button, self.swap_button):
             w.set_sensitive(ready)
         if not ready:
+            self.preview.cancel()
             self.view = None
             self.pane.set_image(a or b)
             return
-        if self.result is None:
-            self.result = imagetools.compare_images(a, b)
-            r = self.result
+        self.preview.schedule()  # comparing large images takes a while: off the main loop
+
+    def _snapshot(self):
+        return self.images[0], self.images[1], self.mode, self.position, self.result
+
+    @staticmethod
+    def _render(snap):
+        a, b, mode, position, result = snap
+        if result is None:
+            result = imagetools.compare_images(a, b)
+        if mode == 0:
+            view = slider_view(a, b, position)
+        elif mode == 1:
+            view = result.diff_image
+        else:
+            view = imagetools.highlight_differences(a, b)
+        return result, view
+
+    def _show(self, res) -> None:
+        r, self.view = res
+        if r is not self.result:
+            self.result = r
             self.similarity.set_label(f"Similarity: {r.similarity_percent:.2f}%"
                                       + (" (identical)" if r.identical else ""))
             parts = [f"{r.changed_pixels:,} of {r.total_pixels:,} pixels differ ({r.changed_percent:.2f}%)"]
@@ -151,13 +172,11 @@ class ComparerWindow(_base.ToolWindow):
             if r.bbox:
                 parts.append(f"changes within x {r.bbox[0]}–{r.bbox[2]}, y {r.bbox[1]}–{r.bbox[3]}")
             self.details.set_label("; ".join(parts))
-        if self.mode == 0:
-            self.view = slider_view(a, b, self.position)
-        elif self.mode == 1:
-            self.view = self.result.diff_image
-        else:
-            self.view = imagetools.highlight_differences(a, b)
         self.pane.set_image(self.view)
+
+    def _fail(self, msg: str) -> None:
+        self.view = None
+        self.pane.set_image(None, f"Comparison failed: {msg}")
 
     def copy(self) -> None:
         if self.view is not None:

@@ -355,17 +355,25 @@ def test_comparer_similarity_and_views(tmp_path, monkeypatch):
     def body(app):
         from sharel.ui.tools import comparer
         win = comparer.open(app, _ctx(app, HotkeyType.ImageComparer, [a, tmp_path / "b.png"]))
+
+        def settled():
+            return _wait(lambda: win.preview.idle.is_set() and win.view is not None)
+        yield from settled()
         assert win.similarity.get_label() == "Similarity: 99.00%"
         assert "1 of 100 pixels differ" in win.details.get_label()
         assert win.view.size == (10, 10)
         win.mode_drop.set_selected(1)
+        yield from settled()
         assert win.view.getpixel((9, 9)) == (255, 255, 255) and win.view.getpixel((0, 0)) == (0, 0, 0)
         win.mode_drop.set_selected(2)
+        yield from settled()
         assert win.view.getpixel((9, 9)) == (255, 0, 0)
         win.mode_drop.set_selected(0)
         win.scale.set_value(100)
+        yield from settled()
         assert win.view.getpixel((9, 9)) == (0, 0, 0, 255)  # all of the first image
         win.scale.set_value(0)
+        yield from settled()
         assert win.view.getpixel((9, 9)) == (255, 255, 255, 255)
         out = tmp_path / "view.png"
         win.save_to(str(out))
@@ -373,8 +381,8 @@ def test_comparer_similarity_and_views(tmp_path, monkeypatch):
         win.swap_button.emit("clicked")
         assert Path(win.paths[0]).name == "b.png"
         win.set_image(1, str(tmp_path / "b.png"))
+        yield from settled()
         assert win.similarity.get_label() == "Similarity: 100.00% (identical)"
-        yield 0
         return True
     assert run_app(body)
 
