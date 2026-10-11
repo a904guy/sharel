@@ -169,6 +169,16 @@ class BodyStream(io.RawIOBase):
         return len(data)
 
 
+def _header_value(value: str) -> str | bytes:
+    """http.client can only send Latin-1 header text; anything beyond goes out as UTF-8 bytes
+    (e.g. a ``{filename}`` header for ``日本.png``) instead of failing the upload."""
+    try:
+        value.encode("latin-1")
+    except UnicodeEncodeError:
+        return value.encode("utf-8")
+    return value
+
+
 def _quote_header_value(value: str) -> str:
     """Uploader.QuoteHeaderValue: ``"value"`` with ``\\`` and ``"`` backslash-escaped."""
     return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
@@ -347,14 +357,14 @@ class CustomUploader(FileUploader):
 
     def _send(self, method: str, url: str, headers: dict[str, str], content_type: str | None,
               body: bytes | BodyStream | None, summary: RequestSummary) -> ResponseInfo:
-        send_headers: dict[str, str] = {}
+        send_headers: dict[str, str | bytes] = {}
         if content_type:
             send_headers["Content-Type"] = content_type
         # Custom headers win over the defaults, Content-Type included (ShareX docs: they can be overridden).
         for k, v in headers.items():
             for existing in [h for h in send_headers if h.lower() == k.lower()]:
                 del send_headers[existing]
-            send_headers[k] = v
+            send_headers[k] = _header_value(v)
         summary.method, summary.url, summary.headers = method, url, dict(headers)
         summary.content_type = content_type or ""
         self.last_request = summary

@@ -515,6 +515,14 @@ def test_binary_put_to_a_real_server(server):
     assert (method, path, headers["Content-Type"], body) == ("PUT", "/files/%C3%A4.png", "image/png", PNG)
 
 
+def test_non_latin1_header_values_are_sent_as_utf8(server):
+    it = item(request_url=server.url + "/up", body="Binary", headers={"X-Name": "{filename}"})
+    res = CustomUploader(it, UploadContext(), "FileUploader").upload(io.BytesIO(b"x"), "日本.png")
+    assert res.is_success
+    raw = server.requests[0][2]["X-Name"]  # http.server decodes header bytes as Latin-1
+    assert raw.encode("latin-1").decode("utf-8") == "日本.png"
+
+
 def test_cancellation_during_upload_raises(server):
     cancel = threading.Event()
     ctx = UploadContext(cancel=cancel, progress=lambda d, t: cancel.set() if d > 0 else None)
