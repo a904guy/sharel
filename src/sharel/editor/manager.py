@@ -2830,10 +2830,13 @@ _COLOR_NAMES: dict[tuple[int, int, int], str] = {}
 def color_name(r: int, g: int, b: int) -> str:
     """Name of a CSS/.NET web colour matching exactly, else the hex value."""
     if not _COLOR_NAMES:
-        for name, hexv in ImageColor.colormap.items():
-            if isinstance(hexv, str) and hexv.startswith("#") and len(hexv) == 7:
-                rgb = ImageColor.getrgb(hexv)[:3]
-                _COLOR_NAMES.setdefault(rgb, name[0].upper() + name[1:])
+        # Pillow caches converted entries back into colormap as tuples: resolve through getrgb.
+        for name in list(ImageColor.colormap):
+            try:
+                rgb = ImageColor.getrgb(name)[:3]
+            except ValueError:
+                continue
+            _COLOR_NAMES.setdefault(rgb, name[0].upper() + name[1:])
     return _COLOR_NAMES.get((r, g, b), f"{r:02X}{g:02X}{b:02X}")
 
 

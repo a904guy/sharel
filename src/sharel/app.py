@@ -155,7 +155,7 @@ class ShareLApp(AllJobs, Adw.Application):
             GLib.timeout_add(500, self._check_autoclose)
 
     def _check_autoclose(self) -> bool:
-        if self.tasks and self.tasks.running or self.busy_interactive():
+        if (self.tasks and self.tasks.running) or self.busy_interactive():
             return True
         self.quit_app()
         return False
@@ -267,8 +267,7 @@ class ShareLApp(AllJobs, Adw.Application):
     def on_hotkey(self, hk: HotkeySettings) -> None:
         if self.store.app.disable_hotkeys:
             return
-        GLib.idle_add(lambda: (dispatch(self, hk.job, hk if hk.task_settings.description else hk,
-                                        source="hotkey"), False)[1])
+        GLib.idle_add(lambda: (dispatch(self, hk.job, hk, source="hotkey"), False)[1])
 
     # ---- tasks ----------------------------------------------------------------------------------
 

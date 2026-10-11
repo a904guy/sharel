@@ -56,8 +56,8 @@ def rgba_from_hex(s: str) -> Gdk.RGBA:
 
 
 def hex_from_rgba(c: Gdk.RGBA) -> str:
-    return "#{:02X}{:02X}{:02X}{:02X}".format(round(c.alpha * 255), round(c.red * 255), round(c.green * 255),
-                                              round(c.blue * 255))
+    a, r, g, b = (round(v * 255) for v in (c.alpha, c.red, c.green, c.blue))
+    return f"#{a:02X}{r:02X}{g:02X}{b:02X}"
 
 
 class Form:
