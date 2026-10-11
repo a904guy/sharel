@@ -622,11 +622,12 @@ def sample_png() -> bytes:
 
 
 def test(item: CustomUploaderItem, dest_type: str, ctx: UploadContext,
-         text: str | None = None) -> tuple[UploadResult, str, str]:
+         text: str | None = None, on_response: Any = None) -> tuple[UploadResult, str, str]:
     """Run ``item`` as ``dest_type`` on generated sample data, as ShareX's custom uploader Test button does.
 
     Image / file: a generated ``Test.png``; text: ``text`` (or a sample sentence) as ``Test.txt``;
     URL shortener / sharing: ``https://getsharex.com``. Returns (result, request summary, raw response).
+    ``on_response(ResponseInfo | None)`` receives the parsed response (the editor's syntax tester uses it).
     Failures come back as ``result.errors``; only cancellation raises.
     """
     up = CustomUploader(item, ctx, dest_type)
@@ -644,6 +645,8 @@ def test(item: CustomUploaderItem, dest_type: str, ctx: UploadContext,
     except UploaderError as e:
         result = UploadResult(errors=[str(e)], response=e.response)
     summary = str(up.last_request) if up.last_request else ""
+    if on_response is not None:
+        on_response(up.last_response)
     return result, summary, format_response(up.last_response)
 
 

@@ -93,6 +93,8 @@ class Form:
                 continue
             row = self.row_for(f, hints.get(f.name, type(getattr(self.obj, f.name))))
             if row is not None:
+                if isinstance(row, Adw.PreferencesRow):
+                    row.set_use_markup(False)  # help texts hold "<port>", "&" ... literally
                 out.append(row)
         return out
 
