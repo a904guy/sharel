@@ -17,18 +17,15 @@ from __future__ import annotations
 import json
 import os
 import sys
-from pathlib import Path
 
 APP_ID = "app.sharel.ShareL"
 APP_PATH = "/app/sharel/ShareL"
 
 
 def _icon_dir() -> str:
-    here = Path(__file__).resolve()
-    for cand in (here.parents[3] / "data" / "icons" / "tray", Path("/usr/share/sharel/icons/tray")):
-        if cand.is_dir():
-            return str(cand)
-    return ""
+    from sharel.core.paths import package_data_dir
+    d = package_data_dir() / "icons" / "tray"
+    return str(d) if d.is_dir() else ""
 
 
 def main() -> int:

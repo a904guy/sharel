@@ -72,9 +72,10 @@ def tools_dir() -> Path:
 
 
 def package_data_dir() -> Path:
-    """data/ in a source checkout, /usr/share/sharel when installed."""
+    """data/ in a source checkout; ~/.local/share/sharel after install.sh; /usr/share/sharel from the .deb."""
     here = Path(__file__).resolve()
-    for cand in (here.parents[3] / "data", Path("/usr/share/sharel"), Path("/usr/local/share/sharel")):
-        if cand.is_dir():
+    user = _xdg("XDG_DATA_HOME", ".local/share") / "sharel"
+    for cand in (here.parents[3] / "data", user, Path("/usr/share/sharel"), Path("/usr/local/share/sharel")):
+        if (cand / "stickers").is_dir():
             return cand
     return here.parents[3] / "data"
