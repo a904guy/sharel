@@ -21,7 +21,7 @@ from ..base import FileUploader, UploadContext, UploaderError, UploadResult
 from ..oauth import authorize as oauth_authorize
 from ..oauth import bearer
 from ..registry import OAuth2Info, OAuth2Spec, register, setting
-from ._api_common import error_message, iter_chunks, json_ok, remaining_size
+from ._api_common import error_message, iter_chunks, json_ok, progress_body, remaining_size
 
 GRAPH = "https://graph.microsoft.com/v1.0"
 SIMPLE_UPLOAD_LIMIT = 4 * 1024 * 1024
@@ -86,7 +86,7 @@ class OneDriveUploader(FileUploader):
         size = remaining_size(stream)
         if size <= self.simple_upload_limit:
             resp = self.ctx.put(f"{target}/content?@microsoft.graph.conflictBehavior=replace",
-                                data=self.ctx.progress_stream(stream, size),
+                                data=progress_body(self.ctx, stream, size),
                                 headers={**self._auth(), "Content-Type": "application/octet-stream",
                                          "Content-Length": str(size)})
         else:

@@ -84,7 +84,8 @@ class MediaFireSession:
 
     def signed_url(self, action: str, params: dict[str, Any]) -> str:
         """The full URL with ``session_token`` and a signature over the exact query string sent."""
-        query = urlencode({"session_token": self.token, **params, "response_format": "json"})
+        # %20 rather than "+": the server may re-encode canonically before checking the signature
+        query = urlencode({"session_token": self.token, **params, "response_format": "json"}, quote_via=quote)
         uri = f"{API_PATH}{action}?{query}"
         return f"{HOST}{uri}&signature={call_signature(self.secret_key, self.time, uri)}"
 

@@ -25,7 +25,7 @@ from ..base import FileUploader, UploadContext, UploaderError, UploadResult
 from ..oauth import authorize as oauth_authorize
 from ..oauth import bearer
 from ..registry import OAuth2Info, OAuth2Spec, register, setting
-from ._api_common import error_message, iter_chunks, json_ok, parse_pattern, remaining_size
+from ._api_common import error_message, iter_chunks, json_ok, progress_body, parse_pattern, remaining_size
 
 API = "https://api.dropboxapi.com/2"
 CONTENT = "https://content.dropboxapi.com/2"
@@ -111,7 +111,7 @@ class DropboxUploader(FileUploader):
         if size <= self.simple_upload_limit:
             headers = {**self._auth(), "Dropbox-API-Arg": _arg(commit), "Content-Type": "application/octet-stream",
                        "Content-Length": str(size)}
-            resp = self.ctx.post(f"{CONTENT}/files/upload", data=self.ctx.progress_stream(stream, size),
+            resp = self.ctx.post(f"{CONTENT}/files/upload", data=progress_body(self.ctx, stream, size),
                                  headers=headers)
         else:
             resp = self._session_upload(stream, size, commit)

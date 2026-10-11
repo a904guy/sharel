@@ -135,12 +135,45 @@ def multipart_related(metadata: dict, stream: BinaryIO, size: int | None,
     return StreamingBody([head, (stream, size), tail]), f"multipart/related; boundary={boundary}"
 
 
+class ProgressBody:
+    """A request body that reports progress and honours cancellation while requests streams it.
+
+    Not an ``io.RawIOBase``: requests' ``super_len`` calls ``tell()``, which raises on a raw stream and makes
+    it treat the length as 0 and switch to ``Transfer-Encoding: chunked`` (on top of any Content-Length
+    header we set). Here ``tell()`` reports the bytes sent so far and ``__len__`` the total.
+    """
+
+    def __init__(self, ctx: UploadContext, stream: BinaryIO, total: int) -> None:
+        self._ctx = ctx
+        self._stream = stream
+        self.total = total
+        self.done = 0
+
+    def __len__(self) -> int:
+        return self.total
+
+    def tell(self) -> int:
+        return self.done
+
+    def read(self, size: int = -1) -> bytes:
+        self._ctx.check_cancelled()
+        want = self.total - self.done if size is None or size < 0 else min(size, self.total - self.done)
+        chunk = self._stream.read(want) if want > 0 else b""
+        self.done += len(chunk)
+        self._ctx.report(self.done, self.total)
+        return chunk
+
+
+def progress_body(ctx: UploadContext, stream: BinaryIO, total: int | None = None) -> ProgressBody:
+    return ProgressBody(ctx, stream, remaining_size(stream) if total is None else total)
+
+
 def send_body(ctx: UploadContext, method: str, url: str, body: StreamingBody, content_type: str,
               headers: dict[str, str] | None = None, **kw) -> requests.Response:
-    """Send a streaming body with progress reporting."""
+    """Send a streaming body (with a Content-Length, not chunked) with progress reporting."""
     hdrs = {"Content-Type": content_type, "Content-Length": str(len(body))}
     hdrs.update(headers or {})
-    return ctx.request(method, url, data=ctx.progress_stream(body, len(body)), headers=hdrs, **kw)
+    return ctx.request(method, url, data=progress_body(ctx, body, len(body)), headers=hdrs, **kw)
 
 
 def read_exact(stream: BinaryIO, n: int) -> bytes:
