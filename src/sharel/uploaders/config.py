@@ -83,6 +83,9 @@ def _secret_fields(obj: Any, prefix: str = ""):
             yield f"{prefix}{f.name}", f.name, obj
         elif dataclasses.is_dataclass(val):
             yield from _secret_fields(val, f"{prefix}{f.name}.")
+        elif isinstance(val, list):  # e.g. the FTP account list
+            for i, item in enumerate(val):
+                yield from _secret_fields(item, f"{prefix}{f.name}.{i}.")
 
 
 def store_secrets(cfg: UploadersConfig) -> bool:
@@ -112,7 +115,7 @@ def jsonable_with_secrets_hidden(cfg: UploadersConfig, keyring_ok: bool) -> dict
                 node = data["services"][key]
                 *parents, leaf = path.split(".")
                 for p in parents:
-                    node = node[p]
+                    node = node[int(p)] if isinstance(node, list) else node[p]
                 node[leaf] = SECRET_MARK
     return data
 

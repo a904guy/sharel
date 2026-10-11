@@ -1,16 +1,16 @@
-| FTP | uploaders/services/*.py | HTTPS API | planned | - |
-| AmazonS3 | uploaders/services/*.py | HTTPS API | planned | - |
-| GoogleCloudStorage | uploaders/services/*.py | HTTPS API | planned | - |
-| AzureStorage | uploaders/services/*.py | HTTPS API | planned | - |
-| BackblazeB2 | uploaders/services/*.py | HTTPS API | planned | - |
-| OwnCloud | uploaders/services/*.py | HTTPS API | planned | - |
-| Nextcloud | uploaders/services/*.py | HTTPS API | planned | - |
-| Immich | uploaders/services/*.py | HTTPS API | planned | - |
-| Pomf | uploaders/services/*.py | HTTPS API | planned | - |
-| Uguu | uploaders/services/*.py | HTTPS API | planned | - |
-| Seafile | uploaders/services/*.py | HTTPS API | planned | - |
-| Transfersh | uploaders/services/*.py | HTTPS API | planned | - |
-| Plik | uploaders/services/*.py | HTTPS API | planned | - |
-| SharedFolder | uploaders/services/*.py | HTTPS API | planned | - |
-| Email | uploaders/services/*.py | HTTPS API | planned | - |
+| FTP | uploaders/services/file_ftp.py | FTP (ftplib, passive/active), FTPS explicit/implicit (PROT P, TLS session reuse, optional cert verify + client cert), SFTP (paramiko, password/key+passphrase, known_hosts/pinned fingerprint); account list, %-pattern remote dir, ShareX GetUriPath homepage URL | done | tests/test_file_ftp.py::test_ftp_passive_upload_creates_dirs_and_reports_progress, tests/test_file_ftp.py::test_ftps_upload, tests/test_file_ftp.py::test_sftp_password_upload_creates_dirs |
+| AmazonS3 | uploaders/services/file_s3.py | S3 REST PUT / multipart upload signed with own SigV4 (AWS, R2, MinIO, B2-S3...), path/virtual-hosted style, prefix, ACL, storage class, custom domain | done | tests/test_file_s3.py::test_put_object_signed, tests/test_file_s3.py::test_multipart_upload_parallel_parts, tests/test_file_s3.py::test_signature_matches_botocore |
+| GoogleCloudStorage | uploaders/services/file_gcs.py | OAuth2 loopback+PKCE; JSON API multipart/related upload with allUsers READER ACL | done | tests/test_file_cloud_apis.py::test_gcs_multipart_upload_public_acl, tests/test_file_cloud_apis.py::test_gcs_authorize_stores_tokens |
+| AzureStorage | uploaders/services/file_azure.py | Blob REST Put Blob (BlockBlob) with SharedKey signature or SAS token; custom domain, $root, cache-control | done | tests/test_file_cloud_apis.py::test_azure_shared_key_upload, tests/test_file_cloud_apis.py::test_azure_wrong_key_and_sas |
+| BackblazeB2 | uploaders/services/file_b2.py | B2 native API v4: b2_authorize_account, b2_list_buckets, b2_get_upload_url, b2_upload_file (SHA1), ShareX retry rules | done | tests/test_file_cloud_apis.py::test_b2_native_upload_flow, tests/test_file_cloud_apis.py::test_b2_retries_and_custom_url |
+| OwnCloud | uploaders/services/file_owncloud.py | WebDAV PUT remote.php/dav/files/<user> (+MKCOL) and OCS v1 share API public link | done | tests/test_file_webdav_cloud.py::test_owncloud_direct_link_expiry_v1 |
+| Nextcloud | uploaders/services/file_nextcloud.py | WebDAV PUT remote.php/dav/files/<user> (+MKCOL) and OCS v2 share API public link | done | tests/test_file_webdav_cloud.py::test_nextcloud_upload_creates_folders_and_shares |
+| Immich | uploaders/services/file_immich.py | REST: POST /api/assets multipart (v3 DTO; device fields for <v3), album add/create, POST /api/shared-links | done | tests/test_file_http_hosts.py::test_immich_v3_upload_album_and_shared_link |
+| Pomf | uploaders/services/file_pomf.py | HTTPS multipart files[] to configurable instance (default pomf.lain.la), JSON files[0].url | done | tests/test_file_http_hosts.py::test_pomf_default_instance_and_relative_url |
+| Uguu | uploaders/services/file_uguu.py | HTTPS multipart files[] to https://uguu.se/upload (pomf-compatible JSON) | done | tests/test_file_http_hosts.py::test_pomf_error_and_uguu |
+| Seafile | uploaders/services/file_seafile.py | api2 token/login, upload-link + multipart upload (ret-json), api/v2.1 share-links with expiry/password/raw | done | tests/test_file_http_hosts.py::test_seafile_login_upload_share_raw |
+| Transfersh | uploaders/services/file_transfersh.py | HTTP PUT /<name> to configurable instance; body = URL, X-Url-Delete; Max-Days/Max-Downloads headers | done | tests/test_file_http_hosts.py::test_transfersh_put_headers_and_delete_url |
+| Plik | uploaders/services/file_plik.py | REST: POST /upload (ttl, oneShot, removable, comments, login) + POST /file/{id} multipart with X-UploadToken | done | tests/test_file_http_hosts.py::test_plik_create_upload_then_file |
+| SharedFolder | uploaders/services/file_sharedfolder.py | copy into local/mounted folder (account list, %-pattern sub-folder) + homepage or file:// URL | done | tests/test_file_sharedfolder.py::test_copy_with_http_homepage |
+| Email | uploaders/services/file_email.py | SMTP (smtplib) STARTTLS / SSL / plain with AUTH, file as MIME attachment; no URL | done | tests/test_file_email.py::test_sends_attachment |
 | CustomFileUploader | uploaders/services/*.py | HTTPS API | planned | - |
