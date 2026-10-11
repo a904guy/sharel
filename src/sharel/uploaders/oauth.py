@@ -45,8 +45,8 @@ class _Handler(http.server.BaseHTTPRequestHandler):
 
 
 class LoopbackServer:
-    def __init__(self) -> None:
-        self.httpd = http.server.HTTPServer(("127.0.0.1", 0), _Handler)
+    def __init__(self, port: int = 0) -> None:
+        self.httpd = http.server.HTTPServer(("127.0.0.1", port), _Handler)
         self.httpd.result = {}  # type: ignore[attr-defined]
         self.httpd.got = threading.Event()  # type: ignore[attr-defined]
         self.thread = threading.Thread(target=self.httpd.serve_forever, daemon=True, name="oauth-loopback")
@@ -123,7 +123,7 @@ def authorize(spec: OAuth2Spec, client_id: str, client_secret: str, ctx: UploadC
         raise UploaderError("Enter a client ID first")
     state = secrets.token_urlsafe(16)
     verifier, challenge = pkce_pair() if spec.pkce else ("", "")
-    with LoopbackServer() as srv:
+    with LoopbackServer(spec.redirect_port) as srv:
         ctx.open_url(authorize_url(spec, client_id, srv.redirect_uri, state, challenge))
         result = srv.wait(timeout, ctx.cancel_event)
         redirect = srv.redirect_uri
