@@ -58,6 +58,16 @@ def set_brush(cr: cairo.Context, width: int, height: int, color: str, gradient: 
     cr.set_source_rgba(r / 255, g / 255, b / 255, a / 255)
 
 
+def blank_surface(width: int, height: int) -> cairo.ImageSurface:
+    """A clear drawing layer. Effects draw onto it and composite it over the source image, so source
+    pixels never go through cairo's premultiplied format (source-over is the same either way)."""
+    return cairo.ImageSurface(cairo.FORMAT_ARGB32, max(1, width), max(1, height))
+
+
+def composite_layer(img: Image.Image, surface: cairo.ImageSurface) -> Image.Image:
+    return Image.alpha_composite(img, from_surface(surface))
+
+
 def rotate_flip(img: Image.Image, mode: str) -> Image.Image:
     """GDI+ ``RotateFlip``: rotate clockwise first, then flip."""
     T = Image.Transpose
@@ -123,7 +133,7 @@ class DrawBorder(ImageEffect):
         else:
             out = Image.new("RGBA", (img.width + size * 2, img.height + size * 2), (0, 0, 0, 0))
         w, h = out.size
-        surface = to_surface(out)
+        surface = blank_surface(w, h)
         cr = cairo.Context(surface)
         cr.set_antialias(cairo.ANTIALIAS_NONE)
         grad = self.gradient if self.use_gradient else None
@@ -134,7 +144,7 @@ class DrawBorder(ImageEffect):
         cr.set_line_join(cairo.LINE_JOIN_MITER)
         set_dash(cr, self.dash_style, size)
         cr.stroke()
-        out = from_surface(surface)
+        out = composite_layer(out, surface)
         if self.border_type != "Inside":
             draw_over(out, img, size, size)
         return out
@@ -271,7 +281,7 @@ class DrawParticles(ImageEffect):
             return canvas
         cache: dict[str, Image.Image | None] = {}
         rects: list[tuple[int, int, int, int]] = []
-        surface = to_surface(canvas)
+        surface = blank_surface(*canvas.size)
         cr = cairo.Context(surface)
         count = min(max(self.image_count, 1), 1000)
         for _ in range(count):
@@ -281,7 +291,7 @@ class DrawParticles(ImageEffect):
             particle = cache[path]
             if particle is not None:
                 self._draw_one(cr, canvas.size, particle, rects)
-        return from_surface(surface)
+        return composite_layer(canvas, surface)
 
     def _draw_one(self, cr: cairo.Context, canvas_size: tuple[int, int], particle: Image.Image,
                   rects: list[tuple[int, int, int, int]]) -> None:
@@ -393,7 +403,7 @@ class DrawText(ImageEffect):
         if self.auto_hide and not rect_contains(img.width, img.height, x, y, w, h):
             return img
         spec = parse_font(self.text_font)
-        surface = to_surface(img)
+        surface = blank_surface(*img.size)
         cr = cairo.Context(surface)
         # GDI+ PixelOffsetMode.Default: integer coordinates are pixel centres (cairo: +0.5). Paths are
         # built in that shifted space; the brush stays in device space.
@@ -432,7 +442,7 @@ class DrawText(ImageEffect):
         cr.set_source_rgba(r / 255, g / 255, b / 255, a / 255)
         cr.move_to(x + pl, y + pt)
         show_layout(cr, layout)
-        return from_surface(surface)
+        return composite_layer(img, surface)
 
     def summary(self) -> str:
         return _truncate(self.text) if self.text else ""
@@ -500,7 +510,7 @@ class DrawTextEx(ImageEffect):
             return img
         trect = (tx, ty, size[0], size[1])
         W, H = img.size
-        surface = to_surface(img)
+        surface = blank_surface(*img.size)
         cr = cairo.Context(surface)
         cr.set_line_join(cairo.LINE_JOIN_ROUND)
         dx, dy = tx - x1, ty - y1
@@ -542,7 +552,7 @@ class DrawTextEx(ImageEffect):
                 draw(0, 0, False, self.color, self.gradient, _inflate(trect, 1))
         elif parse_color(self.color)[3] > 0:
             draw(0, 0, False, self.color, None, trect)
-        return from_surface(surface)
+        return composite_layer(img, surface)
 
     def summary(self) -> str:
         return _truncate(self.text) if self.text else ""

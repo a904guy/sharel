@@ -272,6 +272,8 @@ def test_gamma():
     out = E("Gamma", value=0.5)(img)
     assert out.getpixel((0, 0)) == (181, 128, 255, 90)
     assert E("Gamma", value=1.0)(img).getpixel((0, 0)) == (128, 64, 255, 90)
+    # Wine's gdiplus test of ImageAttributes.SetGamma(3.0) (checked against Windows): 0x80 -> 0x20
+    assert E("Gamma", value=3.0)(img).getpixel((0, 0))[0] == 0x20
 
 
 def test_grayscale():
@@ -466,6 +468,14 @@ def test_draw_particles(tmp_path):
     under = arr(E("DrawParticles", image_folder=str(folder), image_count=3, background=True)(clear))
     assert (under[..., 3] == 255).sum() >= 16
     assert E("DrawParticles", image_folder=str(tmp_path / "none"))(base).tobytes() == base.tobytes()
+
+
+def test_drawing_keeps_untouched_semi_transparent_pixels():
+    img = solid(60, 40, (200, 100, 50, 3))  # would drift through a premultiplied round trip
+    for e in (E("DrawText", text="x", placement="TopLeft"), E("DrawTextEx", text="x"),
+              E("DrawBorder", border_type="Inside")):
+        out = e(img)
+        assert out.getpixel((30, 35)) == (200, 100, 50, 3), e.type_name
 
 
 def test_draw_text_watermark_box():

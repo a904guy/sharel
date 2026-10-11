@@ -155,7 +155,8 @@ class Gamma(ImageEffect):
     value: float = param(1.0, label="Value", min=0.1, max=5.0, step=0.1, help="Min 0.1, Max 5.0")
 
     def apply(self, img: Image.Image) -> Image.Image:
-        # GDI+ ImageAttributes.SetGamma: each colour channel c (0..1) becomes c ^ gamma; alpha untouched.
+        # GDI+ ImageAttributes.SetGamma: each colour channel c (0..1) becomes c ^ gamma, alpha untouched
+        # (as Wine's gdiplus implements it and tests against Windows: gamma 3 maps 0x80 to 0x20).
         gamma = min(max(self.value, 0.1), 5.0)
         lut = [round(((i / 255.0) ** gamma) * 255.0) for i in range(256)]
         r, g, b, a = img.split()
