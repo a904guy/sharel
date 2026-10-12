@@ -4,10 +4,21 @@
 
 - Feature map: 506 rows, 497 done, 9 excluded (defunct services, each with dated evidence), 0 open.
   `python3 scripts/featuremap.py check` also fails if a row cites a test node that doesn't exist.
-- Unit suite: `uv run pytest -q`: 1449 passed, 41 deselected (the e2e tests). `uv run ruff check src tests`
+- Unit suite: `uv run pytest -q`: 1450 passed, 41 deselected (the e2e tests). `uv run ruff check src tests`
   is clean.
 - E2E: every scenario of 6.3 (1-15) has a module under `tests/e2e/`. Run them one module at a time
   (`uv run pytest -q -m e2e tests/e2e/test_e2e_<module>.py`). Evidence goes to `tests/e2e/artifacts/`.
+  Last full pass (2026-10-12, 00:46-00:58, from main 15bee55): 41/41 passed. Per module: capture 5,
+  main 2, editor 3, ocr_qr 2, record 2, upload 1, scrolling 1, tools_image 16, tools_misc 5,
+  tools_screen 4. After the S5 fix, the capture module passed 8 of 9 repeated runs; the one failure came
+  before logs were kept, so its cause is unknown.
+- Live smoke test on "mine": not done. The session was locked from about 22:16 on 2026-10-11 through
+  01:05 on 2026-10-12 (`org.gnome.ScreenSaver.GetActive` = true, RootPilot `locked: true`), so overlays
+  and captures could only show the lock screen. ShareL was never started on the real session. The
+  setup is ready to run once the session is unlocked: throwaway XDG dirs, in-memory GSettings, hotkeys
+  disabled, save-only after-capture. A snapshot taken before and after (enabled extensions,
+  keybindings, media keys, the full `dconf dump /`, autostart, `~/.local` install, ShareL dirs) shows no
+  change.
 - Commits are unsigned (`commit.gpgsign=false`: the signing agent refuses) and carry no AI trailer.
 
 ## Phase 1: core (2026-10-11)
@@ -122,3 +133,10 @@ endpoints.
 5. **Feature map:** `python3 scripts/featuremap.py check` prints `{'done': 497, 'excluded': 9, 'open': 0}`
    and exits 0. It also fails on a cited test node that doesn't exist
    (`tests/test_packaging_data.py::test_feature_map_check_passes_and_catches_missing_tests`).
+
+## Unit sandbox cleanup (2026-10-12)
+- Killed or timed-out runs had left dbus-daemon, weston and their `sharel-unit-*` runtime dirs behind.
+  Both now start with PR_SET_PDEATHSIG, and a detached watchdog removes the sandbox dirs when the test
+  process is gone. `test_a_killed_run_leaves_no_daemon_and_no_directory` SIGKILLs an inner pytest with
+  its own fresh sandbox and fails without either mechanism. The leftovers (19 processes, 27 dirs, all
+  sandbox-only) were removed, with a check that no test run was active.
