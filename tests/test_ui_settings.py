@@ -613,3 +613,32 @@ def test_about_dialog():
         dlg.close()
         return True
     assert run_app(body)
+
+
+def test_fresh_config_never_writes_an_autostart_entry(tmp_path, monkeypatch):
+    """start_with_system defaults to off: a first run, opening and editing settings, and a settings import
+    leave no autostart entry (and no autostart directory)."""
+    xdg = tmp_path / "xdg-config"
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(xdg))
+    cfg_dir = Path(os.environ["SHAREL_CONFIG_DIR"])
+    assert not (cfg_dir / "ApplicationConfig.json").exists()  # a fresh configuration
+
+    def body(app):
+        from sharel.core import autostart
+        from sharel.ui.windows.appsettings import apply_side_effects, open_app_settings
+        assert app.store.app.start_with_system is False
+        assert autostart.entry_path() == xdg / "autostart" / "app.sharel.ShareL.desktop"
+        win = open_app_settings(app)
+        yield 0.2
+        tray = find_row(win.pages["general"], "Show tray icon", Adw.SwitchRow)
+        tray.set_active(not tray.get_active())  # an unrelated change is saved
+        yield 0.1
+        assert saved(app)["start_with_system"] is False
+        apply_side_effects(app)  # what an import or reset runs
+        win.close()
+        yield 0.1
+        assert not autostart.is_enabled()
+        return True
+    assert run_app(body)
+    assert not (xdg / "autostart").exists(), list(xdg.rglob("*"))
+    assert json.loads((cfg_dir / "ApplicationConfig.json").read_text())["start_with_system"] is False

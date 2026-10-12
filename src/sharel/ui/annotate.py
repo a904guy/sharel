@@ -105,6 +105,9 @@ class CanvasView(Gtk.DrawingArea):
         self._t0 = time.monotonic()
         self._panning: tuple[float, float, float, float] | None = None
         self.peers: list[CanvasView] = []  # other monitors' views of the same manager
+        # True while one of its dialogs (text, sticker) is open: keys meant for the dialog must not reach the
+        # canvas, where letters are tool shortcuts and Space/Enter/Escape finish or cancel the capture
+        self.keys_blocked: Callable[[], bool] = lambda: False
         self.set_draw_func(self._draw)
         self.update_property([Gtk.AccessibleProperty.LABEL], ["Image canvas" if editor else "Region capture"])
         self.set_cursor(Gdk.Cursor.new_from_name("crosshair" if not editor else "default"))
@@ -188,6 +191,8 @@ class CanvasView(Gtk.DrawingArea):
         self.redraw_all()
 
     def _key(self, ctl, keyval, _code, state) -> bool:
+        if self.keys_blocked():
+            return True
         name = Gdk.keyval_name(keyval) or ""
         mods = gdk_mods(state)
         if self.editor and mods & Mod.CTRL and name in ("plus", "equal", "KP_Add", "minus", "KP_Subtract", "0"):
@@ -310,6 +315,9 @@ class Toolbar(Gtk.Box):
         for item in tm.main:
             self._add_item(item)
         for item in tm.tools:
+            if item.kind == "separator":
+                self.append(Gtk.Separator(orientation=Gtk.Orientation.VERTICAL))
+                continue
             if not item.visible:
                 continue
             b = _icon_button(item, toggle=True)
@@ -450,6 +458,7 @@ class DialogBridge:
 
     def __init__(self, manager_getter: Callable[[], ShapeManager], parent: Callable[[], Gtk.Widget | None],
                  redraw: Callable[[], None]) -> None:
+        self.pending = 0  # dialogs open now (see CanvasView.keys_blocked)
         self.manager = manager_getter
         self.parent = parent
         self.redraw = redraw
@@ -458,9 +467,11 @@ class DialogBridge:
         from .gtkutil import prompt_text
 
         def done(text):
+            self.pending -= 1
             self.manager().set_text(shape, text)
             self.redraw()
-        prompt_text(self.parent(), "Text", initial or "", done, multiline=True)
+        self.pending += 1
+        self.text_dialog = prompt_text(self.parent(), "Text", initial or "", done, multiline=True)
         return PENDING
 
     def request_image_file(self):
@@ -496,6 +507,7 @@ class DialogBridge:
             grid.append(b)
 
         def closed(*_):
+            self.pending -= 1
             if not state["answered"]:
                 m.set_shape_sticker(shape, None)
                 self.redraw()
@@ -503,6 +515,7 @@ class DialogBridge:
         tv = Adw.ToolbarView(content=Gtk.ScrolledWindow(child=grid))
         tv.add_top_bar(Adw.HeaderBar())
         d.set_child(tv)
+        self.pending += 1
         d.present(self.parent())
         return PENDING
 

@@ -4,8 +4,9 @@ EXIF summary of an image, every value copyable.
 ``open(app, ctx)`` (Tools → Analyze image: ``ctx.files``, a chooser or the clipboard) and
 ``open_analyze(app, img, path)`` (the after-capture "Analyze image" task). The analysis runs on a thread.
 
-ShareX 18's "Analyze image" sends the image to an AI provider for a description; ShareL keeps to a local,
-offline analysis.
+Like ShareX 18, it can also send the image to an AI provider for a description (OpenAI, Gemini, OpenRouter
+or any OpenAI-compatible server: ``tools/ai.py``). That runs only once a provider has an API key (AI settings,
+key kept in the keyring); without one nothing leaves the machine and only the local analysis is shown.
 """
 from __future__ import annotations
 
@@ -22,7 +23,9 @@ from PIL import Image
 
 from ...core import clipboard
 from ...core.jobs import JobContext
+from ...tools import ai
 from .. import gtkutil
+from ..forms import Form
 from . import _base
 
 EXIF_SUMMARY = ("Make", "Model", "LensModel", "DateTimeOriginal", "DateTime", "ExposureTime", "FNumber",
@@ -219,6 +222,27 @@ class AnalyzeWindow(_base.ToolWindow):
         self.header.pack_start(clip_btn)
         self.copy_button = _base.button("Copy all", self.copy_all)
         self.header.pack_end(self.copy_button)
+        self.header.pack_end(_base.button("AI settings", self.open_ai_settings, icon="preferences-system-symbolic",
+                                          tooltip="AI provider for image descriptions"))
+        self.ai_text = ""
+        self.ai_error = ""
+        self.ai_done = threading.Event()
+        self.ai_group = Adw.PreferencesGroup(title="AI description")
+        self.ai_prompt = Adw.EntryRow(title="Prompt")
+        self.ai_prompt.update_property([Gtk.AccessibleProperty.LABEL], ["Prompt"])
+        self.ai_button = _base.button("Describe", self.describe, suggested=True)
+        self.ai_button.set_valign(Gtk.Align.CENTER)
+        self.ai_prompt.add_suffix(self.ai_button)
+        self.ai_result = Gtk.Label(wrap=True, selectable=True, xalign=0, margin_top=8, margin_bottom=8,
+                                   margin_start=12, margin_end=12)
+        self.ai_result.update_property([Gtk.AccessibleProperty.LABEL], ["AI description"])
+        self.ai_off = Adw.ActionRow(title="AI description is off", use_markup=False,
+                                    subtitle="Add an API key in AI settings to describe images with OpenAI, Gemini, "
+                                             "OpenRouter or an OpenAI-compatible server. Nothing is sent until then.")
+        self.ai_off.set_subtitle_lines(0)
+        self.ai_group.add(self.ai_off)
+        self.ai_group.add(self.ai_prompt)
+        self.ai_group.add(self.ai_result)
         self.thumb = _base.ImagePane("Open an image to analyze", 200, 160)
         self.spinner = Gtk.Spinner()
         self.groups_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12)
@@ -226,10 +250,12 @@ class AnalyzeWindow(_base.ToolWindow):
                       margin_start=12, margin_end=12)
         box.append(self.thumb)
         box.append(self.spinner)
+        box.append(self.ai_group)
         box.append(self.groups_box)
         self.set_body(_base.scrolled(box))
         self.add_controller(_base.image_drop_target(lambda ps: self.load(ps[0])))
         self.copy_button.set_sensitive(False)
+        self._sync_ai()
         if img is not None:
             self.set_image(img, path)
 
@@ -268,6 +294,63 @@ class AnalyzeWindow(_base.ToolWindow):
                 res, err = None, str(e)
             gtkutil.idle(self._show, img, res, err)
         threading.Thread(target=work, daemon=True, name="sharel-analyze").start()
+        self.ai_done.clear()
+        self.ai_text = self.ai_error = ""
+        self.ai_result.set_text("")
+        if ai.options(self.app).configured:
+            self.describe()  # ShareX's AutoStartAnalyze
+        else:
+            self.ai_done.set()
+
+    # -- AI description --
+
+    def _sync_ai(self) -> None:
+        opts = ai.options(self.app)
+        on = opts.configured
+        self.ai_off.set_visible(not on)
+        self.ai_prompt.set_visible(on)
+        self.ai_result.set_visible(on and bool(self.ai_result.get_text()))
+        if not self.ai_prompt.get_text():
+            self.ai_prompt.set_text(opts.input or ai.DEFAULT_PROMPT)
+        self.ai_group.set_description(ai.PROVIDER_TITLES[opts.provider] if on else "")
+
+    def describe(self) -> None:
+        opts = ai.options(self.app)
+        img = self.image
+        if img is None or not opts.configured:
+            self.ai_done.set()
+            return
+        prompt = self.ai_prompt.get_text().strip() or opts.input
+        proxies = self.app.store.app.proxy_settings.requests_proxies()
+        self.ai_done.clear()
+        self.ai_button.set_sensitive(False)
+        self.ai_result.set_text("Describing…")
+        self.ai_result.set_visible(True)
+
+        def work():
+            try:
+                text, err = ai.describe(img, opts, prompt, proxies=proxies), ""
+            except ai.AIError as e:
+                text, err = "", str(e)
+            gtkutil.idle(self._ai_show, img, text, err, opts.auto_copy_result)
+        threading.Thread(target=work, daemon=True, name="sharel-ai-describe").start()
+
+    def _ai_show(self, img, text: str, err: str, copy: bool) -> None:
+        if img is not self.image:
+            return
+        self.ai_button.set_sensitive(True)
+        self.ai_text, self.ai_error = text, err
+        self.ai_result.set_text(text if not err else f"The AI provider failed: {err}")
+        if text and copy:
+            clipboard.set_text(text)
+            self.toast("Description copied")
+        self.ai_done.set()
+
+    def open_ai_settings(self) -> AISettingsWindow:
+        win = AISettingsWindow(self.app, on_saved=self._sync_ai)
+        win.set_transient_for(self)
+        win.present()
+        return win
 
     def _show(self, img, res: Analysis | None, err) -> None:
         if img is not self.image:
@@ -305,8 +388,56 @@ class AnalyzeWindow(_base.ToolWindow):
 
     def copy_all(self) -> None:
         if self.analysis is not None:
-            clipboard.set_text(self.analysis.as_text())
+            text = self.analysis.as_text()
+            if self.ai_text:
+                text = f"[AI description]\n{self.ai_text}\n\n{text}"
+            clipboard.set_text(text)
             self.toast("Analysis copied")
+
+
+class AISettingsWindow(_base.ToolWindow):
+    """ShareX's AI options: provider, keys (kept in the keyring), models, prompt; Test connection."""
+
+    def __init__(self, app, on_saved=None) -> None:
+        super().__init__(app, "AI settings", 560, 640)
+        self.opts = ai.options(app)
+        self.on_saved = on_saved
+        self.form = Form(self.opts, self.save, parent=self)
+        self.status = Gtk.Label(wrap=True, xalign=0)
+        test = _base.button("Test connection", self.test)
+        self.test_button = test
+        self.test_done = threading.Event()
+        page = Adw.PreferencesPage()
+        page.add(self.form.group("Provider", "API keys are stored in the keyring when one is available."))
+        g = Adw.PreferencesGroup()
+        row = Adw.ActionRow(title="Connection")
+        test.set_valign(Gtk.Align.CENTER)
+        row.add_suffix(test)
+        g.add(row)
+        g.add(self.status)
+        page.add(g)
+        self.set_body(page)
+
+    def save(self) -> None:
+        self.app.store.save_uploaders()
+        if self.on_saved:
+            self.on_saved()
+
+    def test(self) -> None:
+        opts = self.opts
+        proxies = self.app.store.app.proxy_settings.requests_proxies()
+        self.test_done.clear()
+        self.status.set_text("Testing…")
+
+        def work():
+            ok, msg = ai.check_connection(opts, proxies=proxies)
+            gtkutil.idle(self._tested, ok, msg)
+        threading.Thread(target=work, daemon=True, name="sharel-ai-test").start()
+
+    def _tested(self, ok: bool, msg: str) -> None:
+        self.status.set_text(msg)
+        self.test_ok = ok
+        self.test_done.set()
 
 
 _windows = _base.WindowList()

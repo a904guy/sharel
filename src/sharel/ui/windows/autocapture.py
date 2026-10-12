@@ -10,7 +10,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from ...capture.autocapture import AUTO
-from ..gtkutil import live
+from ..gtkutil import live, spin_row_widget
 from ...core.config import Rect
 from ...core.enums import RegionCaptureMode
 
@@ -26,9 +26,8 @@ def open_auto_capture(app, ctx) -> Adw.Window:
     win = Adw.Window(application=app, title="ShareL: auto capture", default_width=440, default_height=420)
     page = Adw.PreferencesPage()
     group = Adw.PreferencesGroup(title="Auto capture")
-    repeat = Adw.SpinRow(title="Repeat every (seconds)", adjustment=Gtk.Adjustment(
-        value=opts.repeat_time, lower=0.5, upper=86400, step_increment=1, page_increment=10), digits=1,
-        accessible_role=Gtk.AccessibleRole.LIST_ITEM)  # not "presentation": keep it in the a11y tree
+    repeat = spin_row_widget(title="Repeat every (seconds)", adjustment=Gtk.Adjustment(
+        value=opts.repeat_time, lower=0.5, upper=86400, step_increment=1, page_increment=10), digits=1)
     full = Adw.SwitchRow(title="Capture the whole screen", active=opts.capture_fullscreen)
     region_row = Adw.ActionRow(title="Region", subtitle=_region_text(opts.region))
     pick = Gtk.Button(label="Select region…", valign=Gtk.Align.CENTER)

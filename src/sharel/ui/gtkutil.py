@@ -16,6 +16,14 @@ gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import Adw, Gdk, GLib, Gtk
 from PIL import Image
 
+
+def spin_row_widget(**props) -> Adw.SpinRow:
+    """Every Adw.SpinRow in ShareL is made here. Its own role is "presentation", which drops the row and
+    its spin button from the accessibility tree (screen readers, RootPilot); it gets the list-item role
+    its sibling rows have. (libadwaita then names the spin button after the row's title and subtitle.)"""
+    props.setdefault("accessible_role", Gtk.AccessibleRole.LIST_ITEM)
+    return Adw.SpinRow(**props)
+
 # ---- threads --------------------------------------------------------------------------------
 
 _main_thread = threading.main_thread()
@@ -240,7 +248,7 @@ def ask(parent: Gtk.Widget | None, heading: str, body: str, responses: list[tupl
 
 
 def prompt_text(parent: Gtk.Widget | None, heading: str, default: str, on_done: Callable[[str | None], None],
-                body: str = "", multiline: bool = False) -> None:
+                body: str = "", multiline: bool = False) -> Adw.AlertDialog:
     d = Adw.AlertDialog(heading=heading, body=body)
     if multiline:
         view = Gtk.TextView(wrap_mode=Gtk.WrapMode.WORD_CHAR, monospace=True)
@@ -264,6 +272,9 @@ def prompt_text(parent: Gtk.Widget | None, heading: str, default: str, on_done: 
     d.set_response_appearance("ok", Adw.ResponseAppearance.SUGGESTED)
     d.connect("response", lambda _d, r: on_done(value() if r == "ok" else None))
     d.present(parent)
+    # Typing goes to the text, not to a response button (where Space would answer the dialog).
+    d.set_focus(view if multiline else entry)
+    return d
 
 
 def prompt_choice(parent: Gtk.Widget | None, heading: str, options: list[str],

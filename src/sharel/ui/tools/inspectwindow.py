@@ -20,6 +20,7 @@ from gi.repository import Adw, Gtk
 
 from ...core import clipboard
 from ...shell.client import ShellUnavailable, Window, shell
+from ..gtkutil import spin_row_widget
 from ._base import ToolWindow, button, existing, single, spin
 
 EXTENSION_NEEDED = ("Needs the ShareL GNOME Shell extension: on Wayland only GNOME Shell knows other windows' "
@@ -161,10 +162,9 @@ class InspectWindow(ToolWindow):
         acts = Adw.PreferencesGroup(title="Window")
         self.top_most = Adw.SwitchRow(title="Top most", subtitle="Keep the window above others")
         self.top_most.connect("notify::active", lambda *_: self._top_most_changed())
-        self.opacity_row = Adw.SpinRow(title="Opacity (%)", subtitle="100 = opaque",
-                                       adjustment=Gtk.Adjustment(value=100, lower=1, upper=100, step_increment=1,
-                                                                 page_increment=10),
-                                       accessible_role=Gtk.AccessibleRole.LIST_ITEM)  # keep it in the a11y tree
+        self.opacity_row = spin_row_widget(title="Opacity (%)", subtitle="100 = opaque",
+                                           adjustment=Gtk.Adjustment(value=100, lower=1, upper=100,
+                                                                     step_increment=1, page_increment=10))
         self.opacity_row.connect("notify::value", lambda *_: self._opacity_changed())
         acts.add(self.top_most)
         acts.add(self.opacity_row)

@@ -103,6 +103,7 @@ class RegionCaptureSession:
             win.set_application(app)
             mapping = FixedMapping((m.x - ox, m.y - oy), s)
             view = CanvasView(self.manager, mapping, on_result=self._on_result)
+            view.keys_blocked = lambda: self.dialogs.pending > 0
             overlay = Gtk.Overlay(child=view)
             on_this = pointer is not None and m.x <= pointer[0] < m.x + m.width and m.y <= pointer[1] < m.y + m.height
             if show_toolbar and (on_this or (pointer is None and m.primary)) and self.toolbar is None:

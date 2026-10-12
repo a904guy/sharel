@@ -587,17 +587,21 @@ def test_spin_rows_are_in_the_accessibility_tree():
     assert run_app(body)
 
 
-def test_every_spin_row_in_src_sets_an_accessible_role():
-    """No Adw.SpinRow(...) may keep the default "presentation" role (hidden from assistive tech)."""
+def test_every_spin_row_in_src_goes_through_the_shared_helper():
+    """No Adw.SpinRow(...) outside gtkutil.spin_row_widget (which gives it the list-item role instead of the
+    default "presentation", hidden from assistive tech); and the helper really sets it."""
     import ast
     src = Path(__file__).resolve().parents[1] / "src"
-    missing = []
+    direct = []
     for f in src.rglob("*.py"):
         for node in ast.walk(ast.parse(f.read_text())):
-            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "SpinRow" \
-                    and not any(k.arg == "accessible_role" for k in node.keywords):
-                missing.append(f"{f.relative_to(src)}:{node.lineno}")
-    assert missing == [], missing
+            if isinstance(node, ast.Call) and getattr(node.func, "attr", getattr(node.func, "id", "")) == "SpinRow":
+                direct.append(f"{f.relative_to(src)}:{node.lineno}")
+    assert len(direct) == 1 and direct[0].startswith("sharel/ui/gtkutil.py:"), direct
+    from gi.repository import Gtk
+
+    from sharel.ui.gtkutil import spin_row_widget
+    assert spin_row_widget(title="x").get_accessible_role() == Gtk.AccessibleRole.LIST_ITEM
 
 
 def test_generated_form_spin_rows_are_in_the_accessibility_tree():

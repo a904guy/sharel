@@ -210,3 +210,21 @@ def test_readme_matches_the_code():
     assert [j.value for j, _ in parse_args(["-RectangleRegion"]).jobs] == ["RectangleRegion"]
     assert parse_args(["-workflow", "x"]).workflows == ["x"]
     assert parse_args(["-silent"]).silent and parse_args(["-autoclose"]).autoclose
+
+
+def test_feature_map_check_passes_and_catches_missing_tests():
+    """Every row is done or excluded and every cited test node exists (`featuremap.py check`)."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("featuremap_script", ROOT / "scripts" / "featuremap.py")
+    fm = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fm)
+    assert fm.missing_tests("tests/test_packaging_data.py::test_readme_matches_the_code") == []
+    assert fm.missing_tests("tests/test_shorteners.py::test_defunct_shorteners_registered_with_evidence[QRnet]") == []
+    assert fm.missing_tests("tests/test_packaging_data.py::test_no_such_thing") == \
+        ["tests/test_packaging_data.py::test_no_such_thing"]
+    assert fm.missing_tests("tests/nope.py::test_x") == ["tests/nope.py"]
+    assert fm.missing_tests("-") == ["no test cited in '-'"]
+    r = subprocess.run([sys.executable, str(ROOT / "scripts" / "featuremap.py"), "check"], capture_output=True,
+                       text=True, cwd=ROOT)
+    assert r.returncode == 0, r.stdout
+    assert "'open': 0" in r.stdout and "missing test" not in r.stdout

@@ -458,11 +458,7 @@ def prefs_box(*groups: Gtk.Widget) -> Gtk.ScrolledWindow:
 def spin_row(title: str, value: float, lo: float, hi: float, changed: Callable[[float], None],
              step: float = 1, digits: int = 0, subtitle: str = "") -> Adw.SpinRow:
     adj = Gtk.Adjustment(value=value, lower=lo, upper=hi, step_increment=step, page_increment=step * 10)
-    # Adw.SpinRow's own role is "presentation", which drops the row and its spin button from the
-    # accessibility tree (screen readers, RootPilot): give it the list-item role its sibling rows have.
-    # (The spin button is then named after the row's title and subtitle by libadwaita.)
-    row = Adw.SpinRow(title=title, subtitle=subtitle, adjustment=adj, digits=digits,
-                      accessible_role=Gtk.AccessibleRole.LIST_ITEM)
+    row = gtkutil.spin_row_widget(title=title, subtitle=subtitle, adjustment=adj, digits=digits)
     row.connect("notify::value", lambda r, _p: changed(r.get_value()))
     return row
 

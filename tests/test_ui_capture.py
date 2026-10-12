@@ -290,3 +290,107 @@ def test_watch_folder_uploads_new_file(tmp_path):
         assert [Path(p).name for p in up] == ["new.png"]
         return True
     assert run_app(body)
+
+
+def _send_keys(view, names):
+    """Key presses through the canvas's own key controller (what GTK delivers to it)."""
+    from gi.repository import Gdk, Gtk
+    ctl = next(c for c in view.observe_controllers() if isinstance(c, Gtk.EventControllerKey))
+    for name in names:
+        ctl.emit("key-pressed", Gdk.keyval_from_name(name), 0, Gdk.ModifierType(0))
+
+
+def _draw_text_shape(m, x0=100, y0=100, x1=300, y1=160):
+    m.current_tool = ShapeType.DrawingTextBackground
+    m.press(x0, y0)
+    m.motion(x1, y1)
+    m.release(x1, y1)
+
+
+def _assert_dialog_owns_the_keys(dialogs):
+    from gi.repository import Gtk
+    assert dialogs.pending == 1
+    focus = dialogs.text_dialog.get_focus()
+    assert isinstance(focus, Gtk.TextView), focus  # typing goes to the text, not to OK or Cancel
+
+
+def test_region_capture_text_dialog_keeps_the_keys():
+    """Regression: while the text dialog was open, keys reached the overlay (letters switched tools,
+    Return finished the capture), so a user typing quickly lost the capture."""
+    def body(app):
+        cap = Capture(gradient(), (0, 0, 800, 500), 1.0)
+        got = {}
+        app.run_region(RegionCaptureMode.Annotation, app.store.task_settings_for(None), lambda o: got.update(o=o),
+                       capture=cap)
+        yield 0.3
+        s = app.region_session
+        m, view = s.manager, s.views[0]
+        _draw_text_shape(m)
+        yield 0.3
+        _assert_dialog_owns_the_keys(s.dialogs)
+        _send_keys(view, ["a", "space", "b", "Return"])
+        yield 0.2
+        assert m.current_tool == ShapeType.DrawingTextBackground  # "a" did not pick the arrow
+        assert not got and app.region_session is s  # Return did not finish the capture
+        s.dialogs.text_dialog.get_focus().get_buffer().set_text("a b")
+        s.dialogs.text_dialog.emit("response", "ok")
+        yield 0.2
+        assert s.dialogs.pending == 0
+        assert any(getattr(sh, "text", None) == "a b" for sh in m.shapes)
+        _send_keys(view, ["a"])  # the dialog is gone: shortcuts work again
+        assert m.current_tool == ShapeType.DrawingArrow
+        _send_keys(view, ["Escape", "Escape"])
+        yield 0.2
+        return True
+    assert run_app(body)
+
+
+def test_editor_text_dialog_keeps_the_keys():
+    from sharel.ui.windows.editor import open_editor
+
+    def body(app):
+        ed = open_editor(app, Image.new("RGBA", (400, 300), "white"), app.store.task_settings_for(None), None,
+                         task_mode=False)
+        yield 0.5
+        m = ed.manager
+        _draw_text_shape(m, 50, 50, 250, 110)
+        yield 0.3
+        _assert_dialog_owns_the_keys(ed.dialogs)
+        shapes_before = len(m.shapes)
+        _send_keys(ed.canvas, ["a", "space", "b", "Return", "Delete"])
+        yield 0.2
+        assert m.current_tool == ShapeType.DrawingTextBackground and len(m.shapes) == shapes_before
+        assert ed.get_visible()
+        ed.dialogs.text_dialog.emit("response", "cancel")
+        yield 0.2
+        assert ed.dialogs.pending == 0
+        _send_keys(ed.canvas, ["a"])
+        assert m.current_tool == ShapeType.DrawingArrow
+        ed.close()
+        return True
+    assert run_app(body)
+
+
+def test_region_toolbar_separators_are_separators_not_buttons():
+    """The tool list's separator (before the selection tool) was drawn as a toggle button labelled
+    "sep_tools"."""
+    from gi.repository import Gtk
+
+    def body(app):
+        cap = Capture(gradient(), (0, 0, 800, 500), 1.0)
+        app.run_region(RegionCaptureMode.Annotation, app.store.task_settings_for(None), lambda o: None, capture=cap)
+        yield 0.3
+        s = app.region_session
+        assert s.toolbar is not None
+        kids, c = [], s.toolbar.get_first_child()
+        while c is not None:
+            kids.append(c)
+            c = c.get_next_sibling()
+        labels = [k.get_label() or "" for k in kids if isinstance(k, Gtk.Button)]
+        assert not [lb for lb in labels if lb.startswith("sep_")], labels
+        tools = [k for k in kids if isinstance(k, Gtk.ToggleButton)]
+        assert len(tools) > 5 and any(isinstance(k, Gtk.Separator) for k in kids)
+        s.views[0]._finish(s.manager.key("Escape"))
+        yield 0.2
+        return True
+    assert run_app(body)

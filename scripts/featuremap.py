@@ -6,7 +6,7 @@ Each fragment is a markdown table body (no header): one row per ShareX feature,
 ``excluded: <evidence URL>``.
 
     python3 scripts/featuremap.py build    # regenerate FEATURE_MAP.md (and print the counts)
-    python3 scripts/featuremap.py check    # exit 1 if any row is not done/excluded
+    python3 scripts/featuremap.py check    # exit 1 if any row is not done/excluded, or cites a missing test
     python3 scripts/featuremap.py apply    # merge docs/featuremap/_updates_*.md into the fragments
 
 An updates file holds rows ``| fragment | feature | module | mechanism | status | test |``; each
@@ -72,6 +72,28 @@ def status_kind(s: str) -> str:
     return "open"
 
 
+NODE = re.compile(r"(tests/[\w/.-]+\.(?:py|js))(?:::([\w:]+))?(?:\[[^\]]*\])?")
+
+
+def missing_tests(cell: str) -> list[str]:
+    """Cited test nodes (``tests/x.py::name[param]``) whose file or function doesn't exist; a cell that
+    cites no test at all is reported as well."""
+    found = NODE.findall(cell)
+    if not found:
+        return [f"no test cited in {cell!r}"]
+    bad = []
+    for path, node in found:
+        f = ROOT / path
+        if not f.exists():
+            bad.append(path)
+            continue
+        if node:
+            name = node.split("::")[-1]
+            if not re.search(rf"^\s*(?:async\s+)?def {re.escape(name)}\(", f.read_text(), re.M):
+                bad.append(f"{path}::{node}")
+    return bad
+
+
 def build() -> dict[str, int]:
     parts = ["# ShareL feature map\n",
              "Every ShareX feature in the parity target, the module that implements it, the Linux mechanism "
@@ -126,11 +148,16 @@ def main(argv: list[str]) -> int:
     counts = build()
     print(counts)
     if cmd == "check":
+        broken = 0
         for p in sorted(FRAG.glob("*.md")):
             for r in rows(p.read_text()):
                 if status_kind(r[3] if len(r) > 3 else "") == "open":
                     print(f"open: {p.stem}: {r[0]}")
-        return 1 if counts["open"] else 0
+                else:
+                    for m in missing_tests(r[4] if len(r) > 4 else ""):
+                        broken += 1
+                        print(f"missing test: {p.stem}: {r[0]}: {m}")
+        return 1 if counts["open"] or broken else 0
     return 0
 
 

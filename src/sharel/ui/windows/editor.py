@@ -54,6 +54,7 @@ class EditorWindow(Adw.ApplicationWindow):
         self.manager = ShapeManager(img, mode, opts, cb)
         self.mapping = ZoomMapping()
         self.canvas = CanvasView(self.manager, self.mapping, on_result=self._on_result, editor=True)
+        self.canvas.keys_blocked = lambda: self.dialogs.pending > 0
         self.toolbar = Toolbar(self.manager, self.dialogs)
         self.status = Gtk.Label(xalign=0, css_classes=["dim-label", "caption"], margin_start=8, margin_end=8,
                                 margin_top=2, margin_bottom=2)
