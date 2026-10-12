@@ -32,6 +32,15 @@ def folder_images(path: str) -> list[str]:
     return out if path in out else [path, *out]
 
 
+def _icon_button(label: str, cb, icon: str) -> Gtk.Button:
+    """Icon-only header button; ``label`` stays its tooltip and accessible name. (A dozen icon + text
+    buttons made the window wider than a 1920 px screen.)"""
+    b = _base.button("", cb, tooltip=label, icon=icon)
+    b.update_property([Gtk.AccessibleProperty.LABEL], [label])
+    b._label = label  # type: ignore[attr-defined]
+    return b
+
+
 class ImageViewerWindow(_base.ToolWindow):
     def __init__(self, app) -> None:
         super().__init__(app, "Image viewer", 1000, 720)
@@ -41,15 +50,15 @@ class ImageViewerWindow(_base.ToolWindow):
         self.zoom: float | None = None  # None = fit to window
         self.support_wrap = False
 
-        self.prev_button = _base.button("Previous image", lambda: self.navigate(-1), icon="go-previous-symbolic")
-        self.next_button = _base.button("Next image", lambda: self.navigate(1), icon="go-next-symbolic")
-        open_btn = _base.button("Open image", self.open_dialog, icon="document-open-symbolic")
+        self.prev_button = _icon_button("Previous image", lambda: self.navigate(-1), icon="go-previous-symbolic")
+        self.next_button = _icon_button("Next image", lambda: self.navigate(1), icon="go-next-symbolic")
+        open_btn = _icon_button("Open image", self.open_dialog, icon="document-open-symbolic")
         for b in (open_btn, self.prev_button, self.next_button):
             self.header.pack_start(b)
-        self.zoom_out_button = _base.button("Zoom out", lambda: self.step_zoom(-1), icon="zoom-out-symbolic")
-        self.zoom_in_button = _base.button("Zoom in", lambda: self.step_zoom(1), icon="zoom-in-symbolic")
-        self.actual_button = _base.button("Actual size", lambda: self.set_zoom(1.0), icon="zoom-original-symbolic")
-        self.fit_button = _base.button("Fit to window", lambda: self.set_zoom(None), icon="zoom-fit-best-symbolic")
+        self.zoom_out_button = _icon_button("Zoom out", lambda: self.step_zoom(-1), icon="zoom-out-symbolic")
+        self.zoom_in_button = _icon_button("Zoom in", lambda: self.step_zoom(1), icon="zoom-in-symbolic")
+        self.actual_button = _icon_button("Actual size", lambda: self.set_zoom(1.0), icon="zoom-original-symbolic")
+        self.fit_button = _icon_button("Fit to window", lambda: self.set_zoom(None), icon="zoom-fit-best-symbolic")
         menu = Gtk.Box(spacing=0)
         menu.add_css_class("linked")
         for b in (self.zoom_out_button, self.actual_button, self.fit_button, self.zoom_in_button):
@@ -81,11 +90,11 @@ class ImageViewerWindow(_base.ToolWindow):
 
     def _actions_box(self) -> Gtk.Box:
         box = Gtk.Box(spacing=4)
-        self.copy_button = _base.button("Copy image", self.copy, icon="edit-copy-symbolic")
-        self.edit_button = _base.button("Open in image editor", self.edit, icon="document-edit-symbolic")
-        self.pin_button = _base.button("Pin to screen", self.pin, icon="view-pin-symbolic")
-        self.folder_button = _base.button("Show in folder", self.show_in_folder, icon="folder-symbolic")
-        self.fullscreen_button = _base.button("Fullscreen", self.toggle_fullscreen,
+        self.copy_button = _icon_button("Copy image", self.copy, icon="edit-copy-symbolic")
+        self.edit_button = _icon_button("Open in image editor", self.edit, icon="document-edit-symbolic")
+        self.pin_button = _icon_button("Pin to screen", self.pin, icon="view-pin-symbolic")
+        self.folder_button = _icon_button("Show in folder", self.show_in_folder, icon="folder-symbolic")
+        self.fullscreen_button = _icon_button("Fullscreen", self.toggle_fullscreen,
                                               icon="view-fullscreen-symbolic")
         for b in (self.copy_button, self.edit_button, self.pin_button, self.folder_button, self.fullscreen_button):
             box.append(b)
