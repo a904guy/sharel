@@ -163,7 +163,8 @@ class InspectWindow(ToolWindow):
         self.top_most.connect("notify::active", lambda *_: self._top_most_changed())
         self.opacity_row = Adw.SpinRow(title="Opacity (%)", subtitle="100 = opaque",
                                        adjustment=Gtk.Adjustment(value=100, lower=1, upper=100, step_increment=1,
-                                                                 page_increment=10))
+                                                                 page_increment=10),
+                                       accessible_role=Gtk.AccessibleRole.LIST_ITEM)  # keep it in the a11y tree
         self.opacity_row.connect("notify::value", lambda *_: self._opacity_changed())
         acts.add(self.top_most)
         acts.add(self.opacity_row)

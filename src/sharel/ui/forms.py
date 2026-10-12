@@ -188,7 +188,9 @@ class Form:
         lo = -1_000_000 if lo is None else lo
         hi = 1_000_000_000 if hi is None else hi
         adj = Gtk.Adjustment(value=value, lower=lo, upper=hi, step_increment=step, page_increment=step * 10)
-        row = Adw.SpinRow(title=title, subtitle=subtitle, adjustment=adj, digits=2 if is_float else 0)
+        # list-item role: Adw.SpinRow's default "presentation" role hides it from assistive tech
+        row = Adw.SpinRow(title=title, subtitle=subtitle, adjustment=adj, digits=2 if is_float else 0,
+                          accessible_role=Gtk.AccessibleRole.LIST_ITEM)
         row.connect("notify::value", lambda r, _p: self._set(name, float(r.get_value()) if is_float
                                                              else int(r.get_value())))
         return row

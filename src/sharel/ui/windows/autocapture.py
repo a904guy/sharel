@@ -27,7 +27,8 @@ def open_auto_capture(app, ctx) -> Adw.Window:
     page = Adw.PreferencesPage()
     group = Adw.PreferencesGroup(title="Auto capture")
     repeat = Adw.SpinRow(title="Repeat every (seconds)", adjustment=Gtk.Adjustment(
-        value=opts.repeat_time, lower=0.5, upper=86400, step_increment=1, page_increment=10), digits=1)
+        value=opts.repeat_time, lower=0.5, upper=86400, step_increment=1, page_increment=10), digits=1,
+        accessible_role=Gtk.AccessibleRole.LIST_ITEM)  # not "presentation": keep it in the a11y tree
     full = Adw.SwitchRow(title="Capture the whole screen", active=opts.capture_fullscreen)
     region_row = Adw.ActionRow(title="Region", subtitle=_region_text(opts.region))
     pick = Gtk.Button(label="Select region…", valign=Gtk.Align.CENTER)

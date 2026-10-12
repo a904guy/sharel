@@ -585,3 +585,46 @@ def test_spin_rows_are_in_the_accessibility_tree():
         return True
         yield
     assert run_app(body)
+
+
+def test_every_spin_row_in_src_sets_an_accessible_role():
+    """No Adw.SpinRow(...) may keep the default "presentation" role (hidden from assistive tech)."""
+    import ast
+    src = Path(__file__).resolve().parents[1] / "src"
+    missing = []
+    for f in src.rglob("*.py"):
+        for node in ast.walk(ast.parse(f.read_text())):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "SpinRow" \
+                    and not any(k.arg == "accessible_role" for k in node.keywords):
+                missing.append(f"{f.relative_to(src)}:{node.lineno}")
+    assert missing == [], missing
+
+
+def test_generated_form_spin_rows_are_in_the_accessibility_tree():
+    def body(app):
+        from dataclasses import dataclass
+
+        from gi.repository import Adw, Gtk
+        from sharel.ui.forms import Form
+
+        @dataclass
+        class Opts:
+            delay: int = 3
+            scale: float = 1.5
+        group = Form(Opts(), lambda: None).group("Options")
+        rows = []
+        child = group.get_first_child()
+        stack = [child] if child else []
+        while stack:
+            w = stack.pop()
+            if isinstance(w, Adw.SpinRow):
+                rows.append(w)
+            c = w.get_first_child()
+            while c is not None:
+                stack.append(c)
+                c = c.get_next_sibling()
+        assert len(rows) == 2, rows
+        assert all(r.get_accessible_role() == Gtk.AccessibleRole.LIST_ITEM for r in rows)
+        return True
+        yield
+    assert run_app(body)
