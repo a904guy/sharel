@@ -216,7 +216,8 @@ class ShareLApp(AllJobs, Adw.Application):
             a.connect("activate", cb)
             self.add_action(a)
 
-        add("job", lambda _a, p: dispatch(self, HotkeyType[p.unpack()], source="tray"), "s")
+        # shared by the tray menu and the main window's menus
+        add("job", lambda _a, p: dispatch(self, HotkeyType[p.unpack()], source="menu"), "s")
         add("workflow", lambda _a, p: self._run_workflow_index(p.unpack()), "i")
         add("show", lambda *_: self.show_main_window())
         add("quit", lambda *_: self.quit_app())
@@ -302,7 +303,7 @@ class ShareLApp(AllJobs, Adw.Application):
     def _run_workflow_index(self, idx: int) -> None:
         hks = self.store.hotkeys.hotkeys
         if 0 <= idx < len(hks):
-            dispatch(self, hks[idx].job, hks[idx], source="tray")
+            dispatch(self, hks[idx].job, hks[idx], source="menu")
 
     def _open_recent(self, item_id: str) -> None:
         for it in self.history.items():
