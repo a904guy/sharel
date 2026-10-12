@@ -39,6 +39,8 @@ class FakePage:
             self.offset = 0
         elif name == "Page_Down":  # GTK keeps 10 % of the view: 40 px of 400
             self.offset = max(0, min(len(self.page) - self.view, self.offset + self.view - 40))
+        elif name == "Down":  # one line per press
+            self.offset = max(0, min(len(self.page) - self.view, self.offset + 37 * times))
 
 
 def run(method, **kw):
@@ -65,6 +67,19 @@ def test_page_down_method():
     res, page = run(ScrollMethod.PageDown)
     assert np.array_equal(np.asarray(res.image.convert("RGB")), page.page)
     assert any(k[0] == "Page_Down" for k in page.keys)
+
+
+def test_down_arrow_method():
+    res, page = run(ScrollMethod.DownArrow)
+    assert np.array_equal(np.asarray(res.image.convert("RGB")), page.page)
+    assert ("Down", 2) in page.keys  # scroll_amount presses per step
+
+
+def test_scroll_message_method_uses_the_wheel():
+    """ShareX's ScrollMessage (WM_VSCROLL) has no Wayland equivalent: it scrolls with wheel clicks."""
+    res, page = run(ScrollMethod.ScrollMessage)
+    assert np.array_equal(np.asarray(res.image.convert("RGB")), page.page)
+    assert not any(k[0] in ("Down", "Page_Down") for k in page.keys)
 
 
 def test_manual_mode_captures_until_stopped():

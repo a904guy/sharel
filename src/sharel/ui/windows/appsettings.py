@@ -263,6 +263,8 @@ class AppSettingsWindow(SectionedWindow):
 
         def on_lang(r, _p):
             cfg.language = LANGUAGES[r.get_selected()]
+            from ...core import i18n
+            i18n.set_language(cfg.language)  # windows opened from now on
             self.changed()
         lang.connect("notify::selected", on_lang)
         f = self.form(cfg, {"show_tray": {"label": "Show tray icon"},

@@ -37,7 +37,7 @@ The defaults are ShareX's:
 | Print | Capture entire screen |
 | Ctrl+Print | Capture region |
 | Alt+Print | Capture active window |
-| Shift+Print | Screen recording (MP4) |
+| Shift+Print | Screen recording |
 | Ctrl+Shift+Print | Screen recording (GIF) |
 
 GNOME binds Print, Shift+Print and Alt+Print to its own screenshot UI. ShareL never changes that

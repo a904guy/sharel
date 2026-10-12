@@ -7,9 +7,9 @@
 | TaskSettings: Watch folders (auto upload) | core/watchfolders.py, ui/windows/tasksettings.py | Gio.FileMonitor; editor applies app.watchers.apply() | done | tests/test_ui_settings.py::test_watch_folder_editor_uploads_dropped_file |
 | TaskSettings: Tools | core/config.py, ui/windows/tasksettings.py | generated rows grouped per tool | done | tests/test_ui_settings.py::test_default_task_settings_edit_and_save |
 | TaskSettings: Advanced | core/config.py, ui/windows/tasksettings.py | generated rows | done | tests/test_ui_settings.py::test_default_task_settings_edit_and_save |
-| FileExistAction.Ask | core/imaging.py | - | planned | - |
-| FileExistAction.Overwrite | core/imaging.py | - | planned | - |
-| FileExistAction.UniqueName | core/imaging.py | - | planned | - |
-| FileExistAction.Cancel | core/imaging.py | - | planned | - |
-| Upload from clipboard content (image/files/text/URL) | core/jobs.py | clipboard chain | planned | - |
-| Auto capture (repeat every N seconds) | capture/autocapture.py | GLib timer | planned | - |
+| FileExistAction.Ask | src/sharel/core/imaging.py | TaskHost.ask_file_exists | done | tests/test_pipeline_flags.py::test_file_exist_ask_and_overwrite |
+| FileExistAction.Overwrite | src/sharel/core/imaging.py | save over the existing file | done | tests/test_pipeline_flags.py::test_file_exist_ask_and_overwrite |
+| FileExistAction.UniqueName | src/sharel/core/imaging.py | unique_path: name (1).ext | done | tests/test_tasks.py::test_file_exist_actions |
+| FileExistAction.Cancel | src/sharel/core/imaging.py | no file written | done | tests/test_tasks.py::test_file_exist_actions |
+| Upload from clipboard content (image/files/text/URL) | src/sharel/ui/jobs/upload.py | clipboard chain | done | tests/test_ui_jobs.py::test_upload_jobs |
+| Auto capture (repeat every N seconds) | src/sharel/capture/autocapture.py | GLib timer | done | tests/test_ui_jobs.py::test_auto_capture_start_stop; tests/test_ui_capture.py::test_auto_capture_window_runs_captures |

@@ -57,7 +57,7 @@ def test_show_in_folder_asks_the_file_manager(fake_file_manager, tmp_path, monke
     f = tmp_path / "shot.png"
     f.write_bytes(b"x")
     desktop.show_in_folder(str(f))
-    assert fake_file_manager.calls == [("ShowItems", ([f.resolve().as_uri()], ""))]
+    assert [c[1:3] for c in fake_file_manager.calls] == [("ShowItems", ([f.resolve().as_uri()], ""))]
     assert opened == []  # no fallback: the file manager answered
 
 

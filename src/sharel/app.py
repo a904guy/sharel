@@ -76,6 +76,8 @@ class ShareLApp(AllJobs, Adw.Application):
         self.log_path = setup_logging(bool(os.environ.get("SHAREL_DEV")))
         log.info("ShareL %s starting (pid %d)", __version__, os.getpid())
         self.store = ConfigStore()
+        from .core import i18n
+        i18n.set_language(self.store.app.language)
         self.history = HistoryManager(paths.history_path())
         from .ui.host import GtkTaskHost
         self.tasks = TaskManager(self.store, self.history, GtkTaskHost(self))

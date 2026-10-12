@@ -21,11 +21,11 @@
 | Insert image from file | editor/manager.py | insert_image_file -> DrawingImage | done | tests/test_editor_ops.py::test_insert_image_file_and_from_screen |
 | Insert image from screen | editor/manager.py | capture_screen_image callback -> DrawingImage | done | tests/test_editor_ops.py::test_insert_image_file_and_from_screen |
 | Add image effects | editor/manager.py | apply_effects callback replaces the canvas (undoable) | done | tests/test_editor_ops.py::test_add_image_effects_callback |
-| ImageEditorStartMode | editor/manager.py | option exposed in toolbar_model(); window placement is the UI's job | planned | tests/test_editor_manager.py::test_toolbar_lists_tools_per_mode |
-| Save | editor/manager.py | Ctrl+S -> save_image(render_output()) | planned | tests/test_editor_ops.py::test_editor_save_copy_upload_print_shortcuts |
-| Save as | editor/manager.py | Ctrl+Shift+S -> save_image_as(render_output()) | planned | tests/test_editor_ops.py::test_editor_save_copy_upload_print_shortcuts |
-| Copy | editor/manager.py | Ctrl+C -> copy_image(render_output()); auto copy on modify | planned | tests/test_editor_ops.py::test_editor_save_copy_upload_print_shortcuts |
-| Upload | editor/manager.py | Ctrl+U -> upload_image(render_output()) | planned | tests/test_editor_ops.py::test_editor_save_copy_upload_print_shortcuts |
-| Print | editor/manager.py | Ctrl+P -> print_image(render_output()) | planned | tests/test_editor_ops.py::test_editor_save_copy_upload_print_shortcuts |
+| ImageEditorStartMode | src/sharel/ui/windows/editor.py | EditorWindow._apply_start_mode (AutoSize/Normal/Maximized/Fullscreen/PreviousState) | done | tests/test_ui_editor_window.py::test_normal_and_auto_size; tests/test_ui_editor_window.py::test_maximized_and_fullscreen; tests/test_ui_editor_window.py::test_previous_state_restores_the_last_size_and_maximized |
+| Save | editor/manager.py | Ctrl+S -> save_image(render_output()) | done | tests/test_editor_ops.py::test_editor_save_copy_upload_print_shortcuts; tests/test_ui_editor_window.py::test_save_save_as_copy_upload_print_from_the_editor_window |
+| Save as | editor/manager.py | Ctrl+Shift+S -> save_image_as(render_output()) | done | tests/test_editor_ops.py::test_editor_save_copy_upload_print_shortcuts; tests/test_ui_editor_window.py::test_save_save_as_copy_upload_print_from_the_editor_window |
+| Copy | editor/manager.py | Ctrl+C -> copy_image(render_output()); auto copy on modify | done | tests/test_editor_ops.py::test_editor_save_copy_upload_print_shortcuts; tests/test_editor_ops.py::test_editor_auto_copy_on_modify; tests/test_ui_editor_window.py::test_save_save_as_copy_upload_print_from_the_editor_window |
+| Upload | editor/manager.py | Ctrl+U -> upload_image(render_output()) | done | tests/test_editor_ops.py::test_editor_save_copy_upload_print_shortcuts; tests/test_ui_editor_window.py::test_save_save_as_copy_upload_print_from_the_editor_window |
+| Print | editor/manager.py | Ctrl+P -> print_image(render_output()) | done | tests/test_editor_ops.py::test_editor_save_copy_upload_print_shortcuts; tests/test_ui_editor_window.py::test_save_save_as_copy_upload_print_from_the_editor_window |
 | Step: numbers, letters, roman numerals | editor/shapes.py | NumberToLetters / NumberToRomanNumeral ports, StepType | done | tests/test_editor_shapes.py::test_step_labels |
 | Sticker pack bundled | data/stickers/Twemoji, editor/stickers.py | 72 Twemoji 72x72 PNGs (CC-BY 4.0) with LICENSE/ATTRIBUTION | done | tests/test_editor_shapes.py::test_sticker_from_pack |

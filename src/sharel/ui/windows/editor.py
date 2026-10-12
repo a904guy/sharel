@@ -86,7 +86,10 @@ class EditorWindow(Adw.ApplicationWindow):
         self.set_content(tv)
         self.connect("close-request", self._on_close_request)
         self._apply_start_mode(img)
-        GLib.idle_add(self._initial_view)
+        # Zoom/centre once the canvas has its first real size. (An idle that waited for it kept
+        # spinning forever for an editor closed before it was ever allocated.)
+        self._initial_done = False
+        self.canvas.connect("resize", self._on_canvas_resize)
         OPEN_EDITORS.append(self)
         self._changed()
 
@@ -116,9 +119,14 @@ class EditorWindow(Adw.ApplicationWindow):
             h = min(max(500, img.height + 180), int(mh * 0.9))
             self.set_default_size(w, h)
 
+    def _on_canvas_resize(self, _area, width: int, _height: int) -> None:
+        if not self._initial_done and width > 1:
+            self._initial_done = True
+            GLib.idle_add(self._initial_view)  # after this allocation: zooming queues a new one
+
     def _initial_view(self) -> bool:
-        if self.canvas.get_width() <= 1:
-            return True
+        if self._finished:
+            return False
         iw, ih = self.manager.canvas.size
         if self.ts.capture_settings.surface_options.zoom_to_fit_on_open or iw > self.canvas.get_width() or \
                 ih > self.canvas.get_height():

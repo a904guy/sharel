@@ -176,10 +176,8 @@ async def test_s5_annotate_inside_region_capture(app):
              "blur": (540, 20, 660, 120), "text": (20, 180, 260, 240)}
     changed = {k: int((diff[y0:y1, x0:x1] > 30).sum()) for k, (x0, y0, x1, y1) in areas.items()}
     (s.artifacts / "annotate-diff.json").write_text(json.dumps(changed))
-    for k in ("rectangle", "arrow", "step", "text"):
+    for k in ("rectangle", "arrow", "step", "blur", "text"):  # blur: its edge against the desktop changes
         assert changed[k] > 50, changed
-    # blur over a mostly flat desktop: fewer pixels change, but some must
-    assert changed["blur"] >= 0 and diff[20:120, 540:660].sum() >= 0
     assert (diff[250:260, 600:690] <= 30).all()  # outside every annotation: unchanged
 
 

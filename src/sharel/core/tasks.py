@@ -275,6 +275,7 @@ class WorkerTask:
             elif info.job == TaskJob.MediaFile:
                 self._do_media_file()
             if info.uploaded or info.result_url:
+                self._check()
                 self._after_upload()
             info.end_time = time.time()
             self._update(status=TaskStatus.Completed, progress=1.0)
@@ -464,6 +465,8 @@ class WorkerTask:
         self._take_result(res, dest.title)
 
     def _take_result(self, res, host_title: str) -> None:
+        # Stopped (Stop uploads) while the request was in flight: drop the answer, like ShareX aborting it.
+        self._check()
         info = self.info
         url = res.url
         if url and self.ts.advanced_settings.result_force_https and url.startswith("http://"):
@@ -531,6 +534,7 @@ class WorkerTask:
         from ..uploaders import dispatch
         res, dest = dispatch.shorten_url(self.info.url, self.ts, self.store.uploaders, self.store.app,
                                          self.upload_context())
+        self._check()
         self.info.result_url = self.info.url
         self.info.shortened_url = res.shortened_url or res.url
         self.info.upload_host = dest.title
@@ -539,6 +543,7 @@ class WorkerTask:
     def _do_share(self) -> None:
         from ..uploaders import dispatch
         target, dest = dispatch.share_url(self.info.url, self.ts, self.store.uploaders, self.upload_context())
+        self._check()
         if target:
             self.host.open_url(target)
         self.info.result_url = self.info.url

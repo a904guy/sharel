@@ -1,72 +1,72 @@
-| Pixels: extension Shell.Screenshot backend | capture/backends.py, extension | app.sharel.Shell Screenshot (Shell.Screenshot in gnome-shell) | planned | - |
-| Pixels: Mutter ScreenCast backend | capture/backends.py | org.gnome.Mutter.ScreenCast RecordArea/RecordMonitor + one PipeWire frame (GStreamer pipewiresrc) | planned | - |
-| Pixels: Screenshot portal backend | capture/backends.py | org.freedesktop.portal.Screenshot | planned | - |
-| Pixels: gnome-screenshot CLI backend | capture/backends.py | gnome-screenshot -f | planned | - |
+| Pixels: extension Shell.Screenshot backend | capture/backends.py, extension | app.sharel.Shell Screenshot (Shell.Screenshot in gnome-shell) | done | tests/e2e/test_e2e_capture.py::test_s2_region_hotkey_on_monitor_2_and_s3_clipboard; tests/e2e/test_e2e_capture.py::test_s4_fullscreen_monitor_window_custom_last; tests/test_extension.py::test_every_dbus_method_is_implemented |
+| Pixels: Mutter ScreenCast backend | capture/backends.py | org.gnome.Mutter.ScreenCast RecordArea/RecordMonitor + one PipeWire frame (GStreamer pipewiresrc) | done | tests/test_mechanisms_capture.py::test_screencast_backend_area_asks_mutter_for_that_area; tests/test_mechanisms_capture.py::test_screencast_window_is_cropped_from_the_buffer_at_the_stream_top_left |
+| Pixels: Screenshot portal backend | capture/backends.py | org.freedesktop.portal.Screenshot | done | tests/test_mechanisms_capture.py::test_portal_backend_screen_and_area; tests/test_mechanisms_capture.py::test_portal_cancelled_is_an_error_and_the_chain_moves_on |
+| Pixels: gnome-screenshot CLI backend | capture/backends.py | gnome-screenshot -f | done | tests/test_mechanisms_capture.py::test_gnome_screenshot_backend |
 | Backend auto-detect + settings override | capture/backends.py, ui/windows/appsettings.py | probe chain; ApplicationConfig.capture_backend (Advanced), TaskSettings capture_backend wins | done | tests/test_ui_settings.py::test_capture_backend_setting_overrides_auto_detect |
-| Physical vs logical pixels, fractional scaling | capture/screen.py | org.gnome.Mutter.DisplayConfig GetCurrentState scales | planned | - |
-| Window list / geometry / active window | shell/client.py, extension | app.sharel.Shell GetWindows/GetActiveWindow/GetMonitors | planned | - |
-| Pointer position | shell/client.py, extension | app.sharel.Shell GetPointer | planned | - |
-| SetAbove / MoveResize / Borderless / Fullscreen | shell/client.py, extension | Meta.Window make_above/move_resize_frame/set decorations | planned | - |
-| Interactive window pick (CustomWindow) | extension | PickWindow: highlight-on-hover shell actor | planned | - |
-| Clipboard from background app | core/clipboard.py, extension | extension SetClipboard (St.Clipboard) > wl-copy > GTK clipboard | planned | - |
-| Mouse highlighter | extension | MouseHighlighter shell actor following the pointer | planned | - |
-| Global hotkeys | shell/hotkeys.py, extension | GrabAccelerator + AcceleratorActivated; GlobalShortcuts portal; gsettings custom-keybindings | planned | - |
-| Position own windows (pin, toast, toolbar) | extension | PositionWindow(win, x, y) | planned | - |
-| Degraded mode without extension | capture/, shell/ | ScreenCast capture; window capture -> region + notice; portal/gsettings hotkeys | planned | - |
-| Region capture overlay (frozen, one window per monitor) | capture/region.py | Gtk.Window.fullscreen_on_monitor per Gdk.Monitor | planned | - |
-| Region: crosshair + magnifier with pixel grid | capture/region.py | cairo | planned | - |
-| Region: window and child-area snapping | capture/region.py | rects from GetWindows (frame + buffer) | planned | - |
-| Region: info text (position, size, colour) | capture/region.py | cairo/pango | planned | - |
-| Region: keyboard nudge, right-click cancel/remove | capture/region.py | Gtk event controllers | planned | - |
-| Region: annotation toolbar (region capture is the editor) | capture/region.py, editor/ | shared ShapeManager | planned | - |
-| RegionCaptureMode Default/Annotation/ScreenColorPicker/Ruler/OneClick/Editor/TaskEditor | capture/region.py | modes of the overlay | planned | - |
-| RegionCaptureAction mouse-button mapping | capture/region.py | RegionCaptureOptions right/middle/X1/X2 | planned | - |
-| Screen recording: Mutter ScreenCast -> GStreamer encoder | record/recorder.py | RecordArea/RecordWindow/RecordMonitor + pipewiresrc | planned | - |
-| Recording codecs x264/x265/vp8/vp9/AV1 | record/pipeline.py | x264enc/x265enc/vp8enc/vp9enc/svtav1enc/av1enc | planned | - |
-| Recording hardware encoders nvenc/vaapi/qsv | record/pipeline.py | nvh264enc/vah264enc/qsv when present | planned | - |
-| GIF via ffmpeg palettegen/paletteuse | record/gif.py | ffmpeg two-pass | planned | - |
-| Recording audio + source selection | record/pipeline.py | pulsesrc (PipeWire-Pulse) | planned | - |
-| Recording start/stop/pause/abort | record/recorder.py | GStreamer pipeline control | planned | - |
-| Recording countdown, region border, tray indicator | record/, ui/ | overlay window + tray state | planned | - |
-| FFmpeg-style codec options | record/pipeline.py | FFmpegOptions mapped to GStreamer/ffmpeg | planned | - |
-| ScreenCast portal fallback with restore token | record/portal.py | org.freedesktop.portal.ScreenCast persist_mode=2 | planned | - |
-| Scrolling capture: input injection | capture/scrolling.py | org.gnome.Mutter.RemoteDesktop wheel/keys | planned | - |
-| Scrolling capture ScrollMethod MouseWheel/DownArrow/PageDown/ScrollMessage | capture/scrolling.py | RemoteDesktop NotifyPointerAxisDiscrete / keysyms | planned | - |
-| Scrolling capture stitching (row overlap, ignore last N, end detect) | capture/stitch.py | numpy row comparison | planned | - |
-| Scrolling capture manual mode + preview/options window | capture/scrolling.py, ui/ | timer capture; Adw window | planned | - |
-| Tray icon with full menu | ui/tray_helper.py | GTK3 AyatanaAppIndicator3 helper process + GApplication actions | planned | - |
-| TrayClickAction + recording state icon | ui/tray_helper.py | AppIndicator activate / icon swap | planned | - |
-| Toast notifications with image + actions | ui/notify.py | org.freedesktop.Notifications | planned | - |
-| ToastClickAction.CloseNotification | ui/notify.py | notification action | planned | - |
-| ToastClickAction.AnnotateImage | ui/notify.py | notification action | planned | - |
-| ToastClickAction.CopyImageToClipboard | ui/notify.py | notification action | planned | - |
-| ToastClickAction.CopyFile | ui/notify.py | notification action | planned | - |
-| ToastClickAction.CopyFilePath | ui/notify.py | notification action | planned | - |
-| ToastClickAction.CopyUrl | ui/notify.py | notification action | planned | - |
-| ToastClickAction.OpenFile | ui/notify.py | notification action | planned | - |
-| ToastClickAction.OpenFolder | ui/notify.py | notification action | planned | - |
-| ToastClickAction.OpenUrl | ui/notify.py | notification action | planned | - |
-| ToastClickAction.Upload | ui/notify.py | notification action | planned | - |
-| ToastClickAction.PinToScreen | ui/notify.py | notification action | planned | - |
-| ToastClickAction.DeleteFile | ui/notify.py | notification action | planned | - |
-| Sounds Capture/TaskCompleted/ActionCompleted/Error | ui/sounds.py | GStreamer playbin / canberra | planned | - |
-| Pin to screen window (zoom, opacity, move, shadow, close all) | tools/pin.py | undecorated GTK4 window, kept above via extension | planned | - |
-| Pin sources: region, clipboard, file, after-capture | tools/pin.py | - | planned | - |
-| Show in Explorer | core/desktop.py | org.freedesktop.FileManager1.ShowItems | planned | - |
-| Print | ui/printing.py | Gtk.PrintOperation, fallback lp | planned | - |
+| Physical vs logical pixels, fractional scaling | capture/screen.py | org.gnome.Mutter.DisplayConfig GetCurrentState scales | done | tests/test_mechanisms_capture.py::test_display_config_layout_with_fractional_scale; tests/test_mechanisms_capture.py::test_portal_backend_screen_and_area |
+| Window list / geometry / active window | shell/client.py, extension | app.sharel.Shell GetWindows/GetActiveWindow/GetMonitors | done | tests/e2e/test_e2e_capture.py::test_s4_fullscreen_monitor_window_custom_last; tests/test_extension.py::test_python_client_matches_interface; tests/test_extension.py::test_logic_under_gjs |
+| Pointer position | shell/client.py, extension | app.sharel.Shell GetPointer | done | tests/e2e/test_e2e_capture.py::test_s4_fullscreen_monitor_window_custom_last |
+| SetAbove / MoveResize / Borderless / Fullscreen | shell/client.py, extension | Meta.Window make_above/move_resize_frame/set decorations | done | tests/e2e/test_e2e_tools_screen.py::test_window_tools_from_the_menu; tests/test_mechanisms_windows.py::test_own_windows_are_positioned_kept_above_and_activated |
+| Interactive window pick (CustomWindow) | extension | PickWindow: highlight-on-hover shell actor | done | tests/e2e/test_e2e_capture.py::test_s4_fullscreen_monitor_window_custom_last; tests/test_ui_jobs.py::test_capture_jobs |
+| Clipboard from background app | core/clipboard.py, extension | extension SetClipboard (St.Clipboard) > wl-copy > GTK clipboard | done | tests/e2e/test_e2e_capture.py::test_s2_region_hotkey_on_monitor_2_and_s3_clipboard; tests/test_mechanisms_desktop.py::test_clipboard_chain_order; tests/test_mechanisms_desktop.py::test_clipboard_payloads_for_images_and_files |
+| Mouse highlighter | extension | MouseHighlighter shell actor following the pointer | done | tests/e2e/test_e2e_tools_screen.py::test_mouse_highlighter_from_the_menu |
+| Global hotkeys | shell/hotkeys.py, extension | GrabAccelerator + AcceleratorActivated; GlobalShortcuts portal; gsettings custom-keybindings | done | tests/e2e/test_e2e_capture.py::test_s2_region_hotkey_on_monitor_2_and_s3_clipboard; tests/e2e/test_e2e_capture.py::test_s13_workflow_with_own_task_settings; tests/test_hotkeys.py::test_portal_trigger_syntax; tests/test_hotkeys.py::test_gsettings_command_lines |
+| Position own windows (pin, toast, toolbar) | extension | PositionWindow(win, x, y) | done | tests/test_mechanisms_windows.py::test_own_windows_are_positioned_kept_above_and_activated; tests/test_mechanisms_windows.py::test_pin_window_placement_shadow_and_move |
+| Degraded mode without extension | capture/, shell/ | ScreenCast capture; window capture -> region + notice; portal/gsettings hotkeys | done | tests/test_mechanisms_capture.py::test_without_the_extension_window_capture_falls_back_with_a_notice; tests/test_ui_settings.py::test_capture_backend_setting_overrides_auto_detect |
+| Region capture overlay (frozen, one window per monitor) | capture/region.py | Gtk.Window.fullscreen_on_monitor per Gdk.Monitor | done | tests/test_ui_capture.py::test_region_capture_selects_and_crops; tests/e2e/test_e2e_capture.py::test_s2_region_hotkey_on_monitor_2_and_s3_clipboard |
+| Region: crosshair + magnifier with pixel grid | capture/region.py | cairo | done | tests/test_editor_manager.py::test_magnifier_grid; tests/test_editor_manager.py::test_draw_crosshair_and_cursor_info; tests/test_editor_manager.py::test_scroll_down_hides_magnifier_at_minimum |
+| Region: window and child-area snapping | capture/region.py | rects from GetWindows (frame + buffer) | done | tests/test_editor_manager.py::test_snapping_hover_and_click_selects_window; tests/test_editor_manager.py::test_snap_rect_is_clipped_to_screen; tests/test_editor_manager.py::test_no_hover_while_dragging_or_with_freehand |
+| Region: info text (position, size, colour) | capture/region.py | cairo/pango | done | tests/test_editor_manager.py::test_info_text_custom_tokens; tests/test_editor_manager.py::test_editor_info_text_and_area_text; tests/test_editor_manager.py::test_draw_crosshair_and_cursor_info |
+| Region: keyboard nudge, right-click cancel/remove | capture/region.py | Gtk event controllers | done | tests/test_editor_manager.py::test_keyboard_nudge_and_resize; tests/test_editor_manager.py::test_right_click_default_mode_cancels; tests/test_editor_manager.py::test_right_click_annotation_remove_shape_then_cancel |
+| Region: annotation toolbar (region capture is the editor) | capture/region.py, editor/ | shared ShapeManager | done | tests/e2e/test_e2e_capture.py::test_s5_annotate_inside_region_capture; tests/test_editor_manager.py::test_tool_shortcuts_in_annotation_mode; tests/test_editor_manager.py::test_toolbar_lists_tools_per_mode |
+| RegionCaptureMode Default/Annotation/ScreenColorPicker/Ruler/OneClick/Editor/TaskEditor | capture/region.py | modes of the overlay | done | tests/test_editor_manager.py::test_toolbar_lists_tools_per_mode; tests/test_editor_manager.py::test_screen_color_picker_returns_colour; tests/test_editor_manager.py::test_ruler_mode_readout; tests/test_editor_manager.py::test_one_click_returns_point_and_window; tests/test_ui_capture.py::test_annotate_step_runs_through_editor_window |
+| RegionCaptureAction mouse-button mapping | capture/region.py | RegionCaptureOptions right/middle/X1/X2 | done | tests/test_editor_manager.py::test_configurable_click_actions; tests/test_editor_manager.py::test_middle_click_swaps_tool_type |
+| Screen recording: Mutter ScreenCast -> GStreamer encoder | record/recorder.py | RecordArea/RecordWindow/RecordMonitor + pipewiresrc | done | tests/e2e/test_e2e_record.py::test_s10_mp4_and_gif_by_hotkey; tests/test_record_source.py::test_recorder_holds_its_screencast_connection_for_the_whole_recording |
+| Recording codecs x264/x265/vp8/vp9/AV1 | record/pipeline.py | x264enc/x265enc/vp8enc/vp9enc/svtav1enc/av1enc | done | tests/test_record.py::test_plan_maps_sharex_codecs; tests/test_record.py::test_real_recording_each_codec |
+| Recording hardware encoders nvenc/vaapi/qsv | record/pipeline.py | nvh264enc/vah264enc/qsv when present | done | tests/test_record.py::test_hardware_fallback_and_detection |
+| GIF via ffmpeg palettegen/paletteuse | src/sharel/record/pipeline.py | ffmpeg two-pass | done | tests/test_record.py::test_gif_commands_two_pass; tests/test_record.py::test_real_gif_recording |
+| Recording audio + source selection | record/pipeline.py | pulsesrc (PipeWire-Pulse) | done | tests/test_record.py::test_audio_chain_and_launch; tests/test_record.py::test_pause_with_audio_cuts_both_streams |
+| Recording start/stop/pause/abort | record/recorder.py | GStreamer pipeline control | done | tests/test_record.py::test_pause_excludes_paused_time_and_abort_deletes; tests/test_record.py::test_stop_while_paused_finishes_promptly; tests/e2e/test_e2e_record.py::test_s10_pause_and_abort |
+| Recording countdown, region border, tray indicator | record/, ui/ | overlay window + tray state | done | tests/test_mechanisms_desktop.py::test_recording_countdown_border_and_tray_state |
+| FFmpeg-style codec options | record/pipeline.py | FFmpegOptions mapped to GStreamer/ffmpeg | done | tests/test_record.py::test_plan_maps_sharex_codecs; tests/test_record.py::test_ffmpeg_converted_output |
+| ScreenCast portal fallback with restore token | record/portal.py | org.freedesktop.portal.ScreenCast persist_mode=2 | done | tests/test_mechanisms_windows.py::test_screencast_portal_flow_saves_and_reuses_the_restore_token; tests/test_record_source.py::test_portal_monitor_stream_is_accepted_and_cropped_to_the_region; tests/test_record.py::test_portal_crop_runs_and_yields_the_region |
+| Scrolling capture: input injection | capture/scrolling.py | org.gnome.Mutter.RemoteDesktop wheel/keys | done | tests/test_mechanisms_desktop.py::test_remote_input_drives_mutter_remote_desktop |
+| Scrolling capture ScrollMethod MouseWheel/DownArrow/PageDown/ScrollMessage | capture/scrolling.py | RemoteDesktop NotifyPointerAxisDiscrete / keysyms | done | tests/test_scrolling.py::test_mouse_wheel_scrolling_reassembles_page; tests/test_scrolling.py::test_down_arrow_method; tests/test_scrolling.py::test_page_down_method; tests/test_scrolling.py::test_scroll_message_method_uses_the_wheel; tests/test_mechanisms_desktop.py::test_remote_input_drives_mutter_remote_desktop |
+| Scrolling capture stitching (row overlap, ignore last N, end detect) | capture/stitch.py | numpy row comparison | done | tests/test_stitch.py::test_editor_document_with_blank_tail_is_stitched_exactly; tests/test_stitch.py::test_real_gtk_frames_stitch_to_the_document; tests/test_stitch.py::test_noisy_frames_are_stitched_within_the_noise |
+| Scrolling capture manual mode + preview/options window | capture/scrolling.py, ui/ | timer capture; Adw window | done | tests/test_scrolling.py::test_manual_mode_captures_until_stopped; tests/test_ui_capture.py::test_scrolling_window_result_buttons |
+| Tray icon with full menu | ui/tray_helper.py | GTK3 AyatanaAppIndicator3 helper process + GApplication actions | done | tests/e2e/test_e2e_main.py::test_s14_tray_icon_and_menu |
+| TrayClickAction + recording state icon | ui/tray_helper.py | AppIndicator activate / icon swap | done | tests/e2e/test_e2e_main.py::test_s14_tray_icon_and_menu; tests/test_mechanisms_desktop.py::test_recording_countdown_border_and_tray_state |
+| Toast notifications with image + actions | ui/notify.py | org.freedesktop.Notifications | done | tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks; tests/e2e/test_e2e_capture.py::test_s2_region_hotkey_on_monitor_2_and_s3_clipboard |
+| ToastClickAction.CloseNotification | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| ToastClickAction.AnnotateImage | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| ToastClickAction.CopyImageToClipboard | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| ToastClickAction.CopyFile | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| ToastClickAction.CopyFilePath | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| ToastClickAction.CopyUrl | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| ToastClickAction.OpenFile | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| ToastClickAction.OpenFolder | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| ToastClickAction.OpenUrl | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| ToastClickAction.Upload | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| ToastClickAction.PinToScreen | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| ToastClickAction.DeleteFile | ui/notify.py | notification action | done | tests/test_mechanisms_desktop.py::test_every_toast_click_action; tests/test_mechanisms_desktop.py::test_toast_has_image_and_action_buttons_and_reports_clicks |
+| Sounds Capture/TaskCompleted/ActionCompleted/Error | ui/sounds.py | GStreamer playbin / canberra | done | tests/test_mechanisms_desktop.py::test_sounds_for_each_event_custom_and_disabled; tests/test_mechanisms_desktop.py::test_playbin_really_plays_a_file |
+| Pin to screen window (zoom, opacity, move, shadow, close all) | src/sharel/ui/windows/pin.py | undecorated GTK4 window, kept above via extension | done | tests/test_ui_capture.py::test_pin_zoom_opacity_close_all; tests/test_mechanisms_windows.py::test_pin_window_placement_shadow_and_move |
+| Pin sources: region, clipboard, file, after-capture | src/sharel/ui/windows/pin.py | - | done | tests/test_ui_jobs.py::test_tool_and_window_jobs; tests/test_tasks.py::test_annotate_pin_shorten_open |
+| Show in Explorer | core/desktop.py | org.freedesktop.FileManager1.ShowItems | done | tests/test_mechanisms_desktop.py::test_show_in_folder_uses_filemanager1_and_falls_back |
+| Print | ui/printing.py | Gtk.PrintOperation, fallback lp | done | tests/test_mechanisms_desktop.py::test_print_image_renders_the_page_to_a_pdf; tests/test_pipeline_flags.py::test_print_layout_settings |
 | OCR window + language picker | ui/tools/ocr.py | tesseract --list-langs, worker thread, cancel on option change | done | tests/test_ui_tools_ocr.py::test_ocr_window_recognises_text_and_options |
 | Scan/decode QR | ui/tools/qrcode.py | zbarimg from screen/region/file/clipboard | done | tests/test_ui_tools_qrcode.py::test_scan_sources |
 | Encode QR | ui/tools/qrcode.py | qrcode package, live preview, PNG/JPEG/BMP/SVG save | done | tests/test_ui_tools_qrcode.py::test_encode_decode_round_trip_and_actions |
-| Explorer context menu Upload/Edit with ShareL | data/nautilus, data/applications | Nautilus scripts + .desktop actions | planned | - |
+| Explorer context menu Upload/Edit with ShareL | data/nautilus, data/applications | Nautilus scripts + .desktop actions | done | tests/test_packaging_data.py::test_nautilus_scripts_pass_the_selection_to_sharel; tests/test_packaging_data.py::test_desktop_entries_validate_and_point_at_sharel |
 | Windows startup | core/autostart.py, ui/windows/appsettings.py | XDG autostart entry toggled by "Run ShareL when I log in" | done | tests/test_ui_settings.py::test_app_settings_autostart_tray_language |
-| Browser extension native messaging | tools/native_host.py, browser-extension/ | Chrome/Firefox native messaging host manifests | planned | - |
-| NativeMessagingAction.UploadImage | tools/native_host.py | native messaging | planned | - |
-| NativeMessagingAction.UploadVideo | tools/native_host.py | native messaging | planned | - |
-| NativeMessagingAction.UploadAudio | tools/native_host.py | native messaging | planned | - |
-| NativeMessagingAction.UploadText | tools/native_host.py | native messaging | planned | - |
-| NativeMessagingAction.ShortenURL | tools/native_host.py | native messaging | planned | - |
-| Installer (ShareX.Setup) | install.sh, packaging/build-deb.sh | install.sh + .deb | planned | - |
-| ShareX.Steam and auto-update | - | not applicable: updates come from apt | planned | - |
-| Localization | core/i18n.py | gettext scaffolding, English only | planned | - |
-| CLI: -<HotkeyType>, -workflow, -silent, -autoclose, files | cli.py | GApplication command line forwarding | planned | - |
-| Single instance | app.py | Adw.Application app.sharel.ShareL | planned | - |
+| Browser extension native messaging | tools/native_host.py, browser-extension/ | Chrome/Firefox native messaging host manifests | done | tests/test_packaging_data.py::test_native_host_process_reaches_the_running_app; tests/test_packaging_data.py::test_native_host_framing_and_validation; tests/test_packaging.py::test_install_and_uninstall_dev_mode |
+| NativeMessagingAction.UploadImage | tools/native_host.py | native messaging | done | tests/test_mechanisms_desktop.py::test_every_native_messaging_action; tests/test_packaging_data.py::test_native_host_process_reaches_the_running_app |
+| NativeMessagingAction.UploadVideo | tools/native_host.py | native messaging | done | tests/test_mechanisms_desktop.py::test_every_native_messaging_action; tests/test_packaging_data.py::test_native_host_process_reaches_the_running_app |
+| NativeMessagingAction.UploadAudio | tools/native_host.py | native messaging | done | tests/test_mechanisms_desktop.py::test_every_native_messaging_action; tests/test_packaging_data.py::test_native_host_process_reaches_the_running_app |
+| NativeMessagingAction.UploadText | tools/native_host.py | native messaging | done | tests/test_mechanisms_desktop.py::test_every_native_messaging_action; tests/test_packaging_data.py::test_native_host_process_reaches_the_running_app |
+| NativeMessagingAction.ShortenURL | tools/native_host.py | native messaging | done | tests/test_mechanisms_desktop.py::test_every_native_messaging_action; tests/test_packaging_data.py::test_native_host_process_reaches_the_running_app |
+| Installer (ShareX.Setup) | install.sh, packaging/build-deb.sh | install.sh + .deb | done | tests/test_packaging.py::test_install_and_uninstall_dev_mode; tests/test_packaging.py::test_deb_contents |
+| ShareX.Steam and auto-update | install.sh, packaging/build-deb.sh | updates through the package manager (.deb); no self-updater | done | tests/test_packaging.py::test_deb_contents |
+| Localization | core/i18n.py | gettext scaffolding, English only | done | tests/test_mechanisms_desktop.py::test_translations_reach_modules_that_imported_underscore; tests/test_mechanisms_desktop.py::test_pot_lists_the_marked_strings |
+| CLI: -<HotkeyType>, -workflow, -silent, -autoclose, files | cli.py | GApplication command line forwarding | done | tests/test_cli.py::test_jobs_case_insensitive_and_flags; tests/test_cli.py::test_every_hotkey_type_is_a_flag; tests/test_cli.py::test_workflow_files_and_urls; tests/test_mechanisms_windows.py::test_silent_and_autoclose; tests/test_mechanisms_desktop.py::test_second_sharel_forwards_its_command_line_to_the_running_one |
+| Single instance | app.py | Adw.Application app.sharel.ShareL | done | tests/test_mechanisms_desktop.py::test_second_sharel_forwards_its_command_line_to_the_running_one |
