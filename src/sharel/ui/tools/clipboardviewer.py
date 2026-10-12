@@ -59,6 +59,7 @@ class ClipboardViewerWindow(ToolWindow):
         self.picture = Gtk.Picture(can_shrink=True, content_fit=Gtk.ContentFit.CONTAIN, vexpand=True,
                                    hexpand=True)
         self.text, self.text_sw = text_view(editable=False, monospace=True, height=200)
+        self.text.update_property([Gtk.AccessibleProperty.LABEL], ["Clipboard text"])
         self.text.set_tooltip_text("Clipboard text")
         self.file_list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
         self.file_list.add_css_class("boxed-list")
@@ -84,6 +85,7 @@ class ClipboardViewerWindow(ToolWindow):
             self.format_list.connect("row-selected", self._format_selected)
             fl_sw = Gtk.ScrolledWindow(child=self.format_list, min_content_width=220, vexpand=True)
             self.raw_text, raw_sw = text_view(editable=False, monospace=True)
+            self.raw_text.update_property([Gtk.AccessibleProperty.LABEL], ["Format data"])
             self.raw_picture = Gtk.Picture(can_shrink=True, content_fit=Gtk.ContentFit.CONTAIN)
             self.raw_info = Gtk.Label(xalign=0)
             self.raw_info.add_css_class("dim-label")
