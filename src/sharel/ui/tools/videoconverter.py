@@ -172,12 +172,17 @@ class VideoConverterWindow(ToolWindow):
         self.input_row.set_path(path)
 
     def _input_changed(self, path: str) -> None:
-        # ShareX UpdateInputFilePathTextBox: fill the output folder/name when empty
-        if path:
-            if not self.folder_row.path:
-                self.folder_row.set_path(os.path.dirname(os.path.abspath(path)))
-            if not self.name_row.path:
-                self.name_row.set_path(Path(path).stem + "-output")
+        # ShareX UpdateInputFilePathTextBox: fill the output folder/name from the input file. Typing a
+        # path fires this per keystroke, so only an existing file counts, and the fields keep
+        # following the input while they still hold what was filled in (not once the user edits them).
+        if path and os.path.isfile(path):
+            folder, name = os.path.dirname(os.path.abspath(path)), Path(path).stem + "-output"
+            auto = getattr(self, "_auto", {})
+            if not self.folder_row.path or self.folder_row.path == auto.get("folder"):
+                self.folder_row.set_path(folder)
+            if not self.name_row.path or self.name_row.path == auto.get("name"):
+                self.name_row.set_path(name)
+            self._auto = {"folder": folder, "name": name}
         self.update_options()
 
     def _custom_toggled(self) -> None:

@@ -26,6 +26,31 @@ def _reached_100(log):
     return True
 
 
+def test_video_converter_output_follows_a_typed_input(clip, tmp_path):
+    """Typing the input path keystroke by keystroke fills the output from the finished path (not "/"), and
+    follows a new input until the user edits the output fields."""
+    other = tmp_path / "sub" / "second.mp4"
+    other.parent.mkdir()
+    other.write_bytes(clip.read_bytes())
+
+    def body(app):
+        from sharel.ui.tools import videoconverter as vc
+        win = vc.open(app, ctx_for(app, HotkeyType.VideoConverter))
+        typed = ""
+        for ch in str(clip):
+            typed += ch
+            win.input_row.set_path(typed)
+        yield 0.05
+        assert win.folder_row.path == str(tmp_path) and win.name_row.path == "clip-output"
+        win.input_row.set_path(str(other))  # still the filled-in values: they follow
+        assert win.folder_row.path == str(other.parent) and win.name_row.path == "second-output"
+        win.name_row.set_path("mine")  # edited by the user: kept
+        win.input_row.set_path(str(clip))
+        assert win.name_row.path == "mine" and win.folder_row.path == str(tmp_path)
+        win.destroy()
+    run_app(body)
+
+
 def test_video_converter_encodes_with_progress(clip, tmp_path, monkeypatch):
     from sharel.core import desktop
     shown = []
