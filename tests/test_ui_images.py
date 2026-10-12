@@ -118,6 +118,10 @@ def test_image_viewer_navigates_folder_zooms_copies_and_pins(tmp_path, monkeypat
         win.edit_button.emit("clicked")
         assert copied[0].getpixel((0, 0))[:3] == (255, 0, 0)
         assert pinned[0].size == (30, 20) and edited == [str(tmp_path / "0.png")]
+        from gi.repository import Gtk
+        # fits a laptop screen: the header's buttons are icons (named for assistive tech and tooltips)
+        assert win.measure(Gtk.Orientation.HORIZONTAL, -1)[0] <= 1366
+        assert win.zoom_in_button.get_tooltip_text() == "Zoom in" and win.zoom_in_button._label == "Zoom in"
         return True
     assert run_app(body)
 
@@ -563,4 +567,21 @@ def test_every_tool_window_job_opens(tmp_path):
             assert new and all(isinstance(w, Adw.Window) for w in new), job
             assert button_with_label(new[0], "Cancel") is not None or new[0].get_title(), job
         return True
+    assert run_app(body)
+
+
+def test_spin_rows_are_in_the_accessibility_tree():
+    """Adw.SpinRow defaults to the "presentation" role, which hides the row and its spin button from
+    assistive tech (and RootPilot); spin_row gives it the list-item role of the other rows."""
+    def body(app):
+        from gi.repository import Adw, Gtk
+        from sharel.ui.tools import _base
+        assert Adw.SpinRow().get_accessible_role() == Gtk.AccessibleRole.PRESENTATION  # why this is needed
+        got = []
+        row = _base.spin_row("Width", 1280, 0, 20000, got.append)
+        assert row.get_accessible_role() == Gtk.AccessibleRole.LIST_ITEM
+        row.set_value(200)
+        assert got[-1] == 200
+        return True
+        yield
     assert run_app(body)
