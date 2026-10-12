@@ -42,11 +42,13 @@ def test_desktop_entries_validate_and_point_at_sharel():
     # .sxcu files open in ShareL (which imports them): the MIME type its desktop entry claims is defined for *.sxcu
     import xml.etree.ElementTree as ET
     ns = {"m": "http://www.freedesktop.org/standards/shared-mime-info"}
-    mime = ET.parse(DATA / "mime/packages/app.sharel.ShareL.xml").getroot().find("m:mime-type", ns)
-    assert mime.get("type") == "application/x-sharex-custom-uploader"
-    assert [g.get("pattern") for g in mime.findall("m:glob", ns)] == ["*.sxcu"]
-    assert "MimeType=application/x-sharex-custom-uploader;" in main.splitlines()
+    types = {m.get("type"): [g.get("pattern") for g in m.findall("m:glob", ns)]
+             for m in ET.parse(DATA / "mime/packages/app.sharel.ShareL.xml").getroot().findall("m:mime-type", ns)}
+    assert types == {"application/x-sharex-custom-uploader": ["*.sxcu"],
+                     "application/x-sharex-image-effect": ["*.sxie"]}
+    assert "MimeType=application/x-sharex-custom-uploader;application/x-sharex-image-effect;" in main.splitlines()
     assert parse_args(["x.sxcu"]).custom_uploaders == ["x.sxcu"]  # what Exec=sharel %F passes
+    assert parse_args(["x.sxie"]).image_effects == ["x.sxie"]
 
     svg = (DATA / "icons/hicolor/scalable/apps/app.sharel.ShareL.svg").read_text().lstrip()
     assert svg.startswith(("<svg", "<?xml"))

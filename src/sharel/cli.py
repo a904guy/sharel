@@ -8,6 +8,7 @@
     sharel file1.png file2.txt     upload files (URLs are downloaded and uploaded)
     sharel -ImageEditor a.png      tools take the files that follow them
     sharel uploader.sxcu           import a custom uploader (also: -CustomUploader uploader.sxcu)
+    sharel effects.sxie            import an image effect preset (also: -ImageEffect effects.sxie)
 
 Everything is forwarded to the running instance (GApplication command-line handling).
 """
@@ -31,6 +32,7 @@ class CliRequest:
     files: list[str] = field(default_factory=list)
     urls: list[str] = field(default_factory=list)
     custom_uploaders: list[str] = field(default_factory=list)  # .sxcu files to import, never to upload
+    image_effects: list[str] = field(default_factory=list)  # .sxie packages to import, never to upload
     silent: bool = False
     autoclose: bool = False
     dev: bool = False
@@ -40,7 +42,8 @@ class CliRequest:
 
     @property
     def has_work(self) -> bool:
-        return bool(self.jobs or self.workflows or self.files or self.urls or self.custom_uploaders)
+        return bool(self.jobs or self.workflows or self.files or self.urls or self.custom_uploaders
+                    or self.image_effects)
 
 
 def _is_url(s: str) -> bool:
@@ -75,6 +78,12 @@ def parse_args(argv: list[str]) -> CliRequest:
                         req.custom_uploaders.append(args[i + 1])
                     i += 1
                 current_job = None
+            elif name == "imageeffect":  # ShareX's .sxie file association: -ImageEffect "%1"
+                if i + 1 < len(args):
+                    if args[i + 1].lower().endswith(".sxie"):
+                        req.image_effects.append(args[i + 1])
+                    i += 1
+                current_job = None
             elif name in FLAGS:
                 if name == "silent":
                     req.silent = True
@@ -96,6 +105,8 @@ def parse_args(argv: list[str]) -> CliRequest:
                 target.append(a)
             elif a.lower().endswith(".sxcu") and not _is_url(a):
                 req.custom_uploaders.append(a)  # opening a custom uploader file imports it
+            elif a.lower().endswith(".sxie") and not _is_url(a):
+                req.image_effects.append(a)  # and an image effect package
             elif _is_url(a):
                 req.urls.append(a)
             else:

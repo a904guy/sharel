@@ -348,6 +348,7 @@ def text_view(editable: bool = True, monospace: bool = False, height: int = 120)
                                                                                           Gtk.ScrolledWindow]:
     view = Gtk.TextView(editable=editable, monospace=monospace, wrap_mode=Gtk.WrapMode.WORD_CHAR, top_margin=6,
                         bottom_margin=6, left_margin=6, right_margin=6)
+    gtkutil.text_view_no_hyphens(view)  # OCR and QR text, clipboard contents: often URLs and paths
     sw = Gtk.ScrolledWindow(child=view, min_content_height=height, vexpand=True)
     sw.add_css_class("card")
     return view, sw

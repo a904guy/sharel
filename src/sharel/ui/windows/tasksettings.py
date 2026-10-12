@@ -23,6 +23,7 @@ from gi.repository import Adw, Gtk
 from ...core.config import HotkeySettings, TaskSettings, WatchFolder
 from ...core.nameparser import NameParser, NameParserType, WindowInfo
 from ..forms import Form
+from ..gtkutil import no_hyphens
 from ._sectioned import SectionedWindow, WindowRegistry, button_row, group
 
 log = logging.getLogger("sharel.ui.tasksettings")
@@ -413,7 +414,7 @@ class TaskSettingsWindow(SectionedWindow):
         entry = Adw.EntryRow(title=title, text=getattr(up, attr))
         preview_row = Adw.ActionRow(title="Preview")
         preview_row.add_css_class("property")
-        label = Gtk.Label(xalign=0, selectable=True, wrap=True)
+        label = no_hyphens(Gtk.Label(xalign=0, selectable=True))  # a file name or path
         preview_row.add_suffix(label)
 
         def update(*_a):

@@ -192,7 +192,7 @@ def test_status_comes_from_hotkey_manager():
         win.refresh_status()
         assert win.rows[3].state == "failed" and "refused" in win.rows[3].detail
         assert win.rows[4].state == "registered"
-        assert win.rows[4].status_icon.get_icon_name() == "emblem-ok-symbolic"
+        assert win.rows[4].status_icon.get_icon_name() == "object-select-symbolic"
         app.store.app.disable_hotkeys = True
         win.refresh_status()
         assert win.banner.get_revealed()

@@ -41,7 +41,7 @@ class IconConverterWindow(_base.ToolWindow):
             flow.append(cb)
         self.sizes_group.add(flow)
         self.preview_pane = _base.ImagePane("No image", 240, 200)
-        self.status = Gtk.Label(label="", xalign=0, wrap=True, selectable=True)
+        self.status = gtkutil.no_hyphens(Gtk.Label(label="", xalign=0, selectable=True))
         self.convert_button = _base.button("Convert…", self.convert_dialog, suggested=True)
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=12, margin_top=12, margin_bottom=12,
                       margin_start=12, margin_end=12)

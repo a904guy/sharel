@@ -34,6 +34,7 @@ done
 cp -r "$repo/data/stickers" "$pkg/usr/share/sharel/stickers"
 mkdir -p "$pkg/usr/share/sharel/icons"
 cp -r "$repo/data/icons/tray" "$pkg/usr/share/sharel/icons/tray"
+cp -r "$repo/data/icons/actions" "$pkg/usr/share/sharel/icons/actions"
 cp -r "$repo/data/nautilus" "$pkg/usr/share/sharel/nautilus"
 cp -r "$repo/browser-extension" "$pkg/usr/share/sharel/browser-extension"
 install -m 644 "$repo"/data/applications/*.desktop "$pkg/usr/share/applications/"

@@ -17,6 +17,7 @@ from gi.repository import Adw, Gtk
 from PIL import Image
 
 from ...core.jobs import JobContext
+from ..gtkutil import no_hyphens
 from . import _base
 
 
@@ -56,7 +57,7 @@ class BatchImageTool(_base.ToolWindow):
         self.batch = _base.BatchBar()
         self.batch.on_busy = lambda _b: self._sync()
         self.run_button = _base.button(self.RUN_LABEL, self.run, suggested=True)
-        self.status = Gtk.Label(label="", xalign=0, wrap=True, selectable=True)
+        self.status = no_hyphens(Gtk.Label(label="", xalign=0, selectable=True))  # output paths
         bottom = Gtk.Box(spacing=8, margin_top=6, margin_bottom=10, margin_start=10, margin_end=10)
         bottom.append(self.batch)
         bottom.append(self.run_button)

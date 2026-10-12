@@ -475,6 +475,44 @@ def test_a_sxcu_forwarded_to_the_running_sharel_is_imported_not_uploaded(tmp_pat
     assert run_app(body, timeout=40)
 
 
+def test_a_sxie_forwarded_to_the_running_sharel_is_imported_not_uploaded(tmp_path):
+    """A second `sharel x.sxie` (a double-clicked image effect package) reaches the running instance, which adds
+    the preset to image effects; it is never uploaded."""
+    from sharel.effects import sxie
+    from sharel.effects.base import EFFECTS, ImageEffectPreset, load_all
+    load_all()  # the effect classes register on import
+    pkg = sxie.export_sxie(ImageEffectPreset("Forwarded effect", [EFFECTS["Sepia"](value=0.5)]),
+                           tmp_path / "forwarded.sxie")
+
+    def body(app):
+        from sharel.ui.windows.effects import open_windows
+        got = []
+        app.upload_paths = lambda paths, ts: got.append(list(paths))
+        from sharel.core.enums import AfterCaptureTasks
+        ts = app.store.app.default_task_settings
+        ts.image_settings.image_effect_presets = [ImageEffectPreset("Existing", []).to_jsonable()]
+        ts.after_capture_job = AfterCaptureTasks.SaveImageToFile
+        env = {**os.environ, "SHAREL_NO_TRAY": "1", "SHAREL_DISABLE_HOTKEYS": "1", "SHAREL_NO_EXTENSION": "1"}
+        p = subprocess.Popen([sys.executable, "-c", "import sys; from sharel.cli import main; sys.exit(main())",
+                              pkg.name], cwd=tmp_path, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        for _ in range(300):
+            if p.poll() is not None:
+                break
+            yield 0.05
+        assert p.returncode == 0, p.stderr.read()
+        yield 0.3
+        assert got == []
+        assert [d["name"] for d in ts.image_settings.image_effect_presets] == ["Existing", "Forwarded effect"]
+        win = next(w for w in open_windows() if w.tool_mode)
+        assert win.preset.name == "Forwarded effect"
+        win.enable_dialog.emit("response", "no")  # the "enable image effects?" question, as in ShareX
+        yield 0.1
+        assert ts.after_capture_job == AfterCaptureTasks.SaveImageToFile
+        win.close()
+        return True
+    assert run_app(body, timeout=40)
+
+
 # -- native messaging actions ----------------------------------------------------------------------
 
 def test_every_native_messaging_action():

@@ -15,7 +15,7 @@ from ...core import clipboard, desktop, imaging
 from ...core.enums import AFTER_CAPTURE_DESCRIPTIONS
 from ...core.enums import AfterCaptureTasks as ACT
 from ...core.tasks import TaskInfo
-from ..gtkutil import picture, texture_from_pil
+from ..gtkutil import no_hyphens, picture, texture_from_pil
 
 # ShareX's QuickTaskInfo.DefaultPresets
 QUICK_TASKS: list[tuple[str, ACT]] = [
@@ -138,7 +138,7 @@ def open_before_upload(app, info: TaskInfo, ts, done) -> Adw.Window:
     win, box, header = _window(app, "ShareL: before upload", 460, 560)
     if info.file_path and Path(info.file_path).exists() and info.is_image:
         box.append(picture(imaging.load(info.file_path), 400))
-    box.append(Gtk.Label(label=info.file_name, wrap=True))
+    box.append(no_hyphens(Gtk.Label(label=info.file_name)))
     dt = info.data_type
     if dt == EDataType.Image:
         attr, category, enum = "image_destination", "image", ImageDestination

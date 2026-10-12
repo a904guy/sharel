@@ -15,7 +15,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, Gio, GLib, Gtk
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
 from . import __version__
 from .cli import CliRequest, parse_args
@@ -83,6 +83,7 @@ class ShareLApp(AllJobs, Adw.Application):
         self.tasks = TaskManager(self.store, self.history, GtkTaskHost(self))
         self.tasks.add_listener(self._on_task_event)
         self.apply_theme()
+        self._add_icon_path()
         from .uploaders.services import _file_helpers
         _file_helpers.URL_ENCODE_IGNORE_EMOJI = self.store.app.url_encode_ignore_emoji
         self._install_gtk_clipboard()
@@ -121,6 +122,12 @@ class ShareLApp(AllJobs, Adw.Application):
     def do_activate(self) -> None:
         self.show_main_window()
 
+    def _add_icon_path(self) -> None:
+        """ShareL's own symbolic icons (data/icons/actions: drawing tools Adwaita has no icon for)."""
+        display = Gdk.Display.get_default()
+        if display is not None:
+            Gtk.IconTheme.get_for_display(display).add_search_path(str(paths.package_data_dir() / "icons" / "actions"))
+
     def do_command_line(self, cl: Gio.ApplicationCommandLine) -> int:
         argv = cl.get_arguments()[1:]
         req = parse_args(argv)
@@ -156,6 +163,9 @@ class ShareLApp(AllJobs, Adw.Application):
         if req.custom_uploaders:
             from .ui.windows.customuploader import import_custom_uploader_files
             import_custom_uploader_files(self, [absolute(f) for f in req.custom_uploaders])
+        if req.image_effects:
+            from .ui.windows.effects import import_image_effect_files
+            import_image_effect_files(self, [absolute(f) for f in req.image_effects])
         if req.files:
             dispatch(self, HotkeyType.FileUpload, files=[absolute(f) for f in req.files], source="cli")
         for url in req.urls:

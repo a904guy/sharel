@@ -13,8 +13,32 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("Gdk", "4.0")
 gi.require_version("GdkPixbuf", "2.0")
-from gi.repository import Adw, Gdk, GLib, Gtk
+from gi.repository import Adw, Gdk, GLib, Gtk, Pango
 from PIL import Image
+
+
+def no_hyphens(label: Gtk.Label) -> Gtk.Label:
+    """Wrap a label that can hold a URL or a path without Pango's inserted hyphens (which turn
+    ``…/vuVVnFT.png`` into ``vuVVn-FT.png``): break at word boundaries, else between characters."""
+    label.set_wrap(True)
+    label.set_wrap_mode(Pango.WrapMode.WORD_CHAR)
+    attrs = label.get_attributes() or Pango.AttrList()
+    attrs.insert(Pango.attr_insert_hyphens_new(False))
+    label.set_attributes(attrs)
+    return label
+
+
+def text_view_no_hyphens(view: Gtk.TextView) -> Gtk.TextView:
+    """The same for a wrapping text view: a tag with insert-hyphens off covers the whole buffer."""
+    buf = view.get_buffer()
+    tag = buf.create_tag("sharel-no-hyphens", insert_hyphens=False)
+
+    def cover(b) -> None:
+        b.apply_tag(tag, b.get_start_iter(), b.get_end_iter())
+    buf.connect("changed", cover)
+    cover(buf)
+    view.no_hyphens_tag = tag
+    return view
 
 
 def spin_row_widget(**props) -> Adw.SpinRow:
@@ -252,7 +276,7 @@ def prompt_text(parent: Gtk.Widget | None, heading: str, default: str, on_done: 
                 body: str = "", multiline: bool = False) -> Adw.AlertDialog:
     d = Adw.AlertDialog(heading=heading, body=body)
     if multiline:
-        view = Gtk.TextView(wrap_mode=Gtk.WrapMode.WORD_CHAR, monospace=True)
+        view = text_view_no_hyphens(Gtk.TextView(wrap_mode=Gtk.WrapMode.WORD_CHAR, monospace=True))
         view.get_buffer().set_text(default)
         sw = Gtk.ScrolledWindow(min_content_height=200, min_content_width=420, child=view)
         d.set_extra_child(sw)

@@ -510,8 +510,7 @@ class HistoryWindow(HistoryActionsMixin, Adw.Window):
                                           ("tags", "Window / process"))):
             t = Gtk.Label(label=title, xalign=1, yalign=0)
             t.add_css_class("dim-label")
-            v = Gtk.Label(xalign=0, wrap=True, wrap_mode=Pango.WrapMode.CHAR, selectable=True, hexpand=True,
-                          max_width_chars=40)
+            v = gtkutil.no_hyphens(Gtk.Label(xalign=0, selectable=True, hexpand=True, max_width_chars=40))
             self.details_grid.attach(t, 0, i, 1, 1)
             self.details_grid.attach(v, 1, i, 1, 1)
             self.detail_labels[key] = v

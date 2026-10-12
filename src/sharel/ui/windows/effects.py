@@ -718,5 +718,34 @@ def open_effects_tool(app, ts, img: Image.Image | None = None, path: str = "") -
     return win
 
 
+def import_image_effect_files(app, paths: list[str]) -> list[ImageEffectPreset]:
+    """Opening a .sxie package (``sharel x.sxie``, ``sharel -ImageEffect x.sxie``): ShareX's
+    TaskHelpers.ImportImageEffect. Each package is read by the .sxie reader (its images extracted into the image
+    effects folder) and added to the default task settings' presets, shown in the Image effects window. If
+    "Add image effects" isn't an after-capture task, ShareX's question follows: "Would you like to enable image
+    effects?" Yes adds it. Nothing is uploaded. The question is ``win.enable_dialog``."""
+    from ...core.enums import AfterCaptureTasks
+    ts = app.store.app.default_task_settings
+    win = next((w for w in open_windows() if w.tool_mode), None) or open_effects_tool(app, ts)
+    win.present()
+    win.enable_dialog = None
+    presets = [p for p in (win.import_package(path) for path in paths) if p is not None]
+    if not presets:
+        return presets
+    win.save_presets()
+    if AfterCaptureTasks.AddImageEffects in ts.after_capture_job:
+        return presets
+
+    def answered(response: str) -> None:
+        win.enable_dialog = None
+        if response == "yes":
+            ts.after_capture_job = ts.after_capture_job | AfterCaptureTasks.AddImageEffects
+            app.store.save_app()
+            app.settings_changed()
+    win.enable_dialog = gtkutil.ask(win, "ShareL", "Would you like to enable image effects?",
+                                    [("no", "No"), ("yes", "Yes")], answered, default="yes")
+    return presets
+
+
 def open_windows() -> list[ImageEffectsWindow]:
     return _open_windows.live()

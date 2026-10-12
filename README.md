@@ -160,8 +160,9 @@ Hotkey backends, set under Application settings > Advanced:
 
 The command line mirrors ShareX's: `sharel -RectangleRegion`, `sharel -PrintScreen`,
 `sharel -StartScreenRecorder`, `sharel -workflow "<hotkey name>"`, `sharel <files>` (upload),
-`sharel -silent` (start in the tray), `sharel -autoclose`. Opening a ShareX custom uploader file
-(`sharel uploader.sxcu`, or double-clicking it once installed) imports it instead of uploading it.
+`sharel -silent` (start in the tray), `sharel -autoclose`. Opening a ShareX custom uploader
+(`sharel uploader.sxcu`) or image effect package (`sharel effects.sxie`), or double-clicking one
+once installed, imports it instead of uploading it.
 Any HotkeyType name works as `-<Name>`. A second invocation is handed to the running instance.
 
 ## Where things are

@@ -55,7 +55,7 @@ class ScrollingWindow(Adw.ApplicationWindow):
         g = Adw.PreferencesGroup()
         g.add(save_default)
         page.add(g)
-        self.stack.add_titled(page, "options", "Options")
+        self.stack.add_titled_with_icon(page, "options", "Options", "preferences-system-symbolic")
         # progress / result page
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8, margin_top=8, margin_bottom=8,
                       margin_start=8, margin_end=8)
@@ -81,7 +81,7 @@ class ScrollingWindow(Adw.ApplicationWindow):
         for b in (self.stop_btn, self.retry_btn, self.edit_btn, self.save_btn, self.copy_btn, self.upload_btn):
             buttons.append(b)
         box.append(buttons)
-        self.stack.add_titled(box, "result", "Result")
+        self.stack.add_titled_with_icon(box, "result", "Result", "image-x-generic-symbolic")
         self._result_buttons(False)
         switcher = Adw.ViewSwitcher(stack=self.stack, policy=Adw.ViewSwitcherPolicy.WIDE)
         header.set_title_widget(switcher)

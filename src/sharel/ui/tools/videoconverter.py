@@ -21,6 +21,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Gtk
 
 from ...tools import videotools as vt
+from ..gtkutil import no_hyphens
 from ._base import stored_tool_settings
 from ._base import ProgressPanel, ToolWindow, button, dropdown, file_drop_target, set_text, single, spin, text_of, \
     text_view
@@ -144,7 +145,7 @@ class VideoConverterWindow(ToolWindow):
         self.args_view.set_tooltip_text("FFmpeg arguments ($input and $output are replaced)")
         self.args_view.get_buffer().connect("changed", lambda *_: self._args_edited())
         body.append(sw)
-        self.command_label = Gtk.Label(xalign=0, wrap=True, selectable=True)
+        self.command_label = no_hyphens(Gtk.Label(xalign=0, selectable=True))
         self.command_label.add_css_class("monospace")
         self.command_label.add_css_class("dim-label")
         body.append(self.command_label)

@@ -22,13 +22,13 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import Adw, GLib, Gtk, Pango
 from PIL import Image
 
 from ...core import clipboard, desktop
 from ...core.enums import RegionCaptureMode
 from ...tools import qr as qrmod
-from ..gtkutil import IMAGE_PATTERNS, open_files, save_file, texture_from_pil
+from ..gtkutil import IMAGE_PATTERNS, no_hyphens, open_files, save_file, texture_from_pil
 from ._base import ProgressPanel, ToolWindow, button, dropdown, existing, single, spin, text_of, text_view
 
 MAX_BYTES = 2952  # ShareX TaskHelpers.CheckQRCodeContent
@@ -400,12 +400,20 @@ class QRResultsWindow(ToolWindow):
         while (child := self.list.get_first_child()) is not None:
             self.list.remove(child)
         for text in self.results:
-            r = Adw.ActionRow(title=GLib.markup_escape_text(text), title_lines=4, subtitle="URL" if is_url(text)
-                              else "Text")
-            r.set_title_selectable(True)
-            r.add_suffix(button("Copy", lambda t=text: self.copy(t), "Copy this result"))
+            # the decoded text in its own label: an ActionRow title would hyphenate a wrapped URL
+            value = no_hyphens(Gtk.Label(label=text, xalign=0, selectable=True, lines=4,
+                                         ellipsize=Pango.EllipsizeMode.END))
+            kind = Gtk.Label(label="URL" if is_url(text) else "Text", xalign=0, css_classes=["dim-label", "caption"])
+            texts = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2, hexpand=True, valign=Gtk.Align.CENTER)
+            texts.append(value)
+            texts.append(kind)
+            row_box = Gtk.Box(spacing=6, margin_top=8, margin_bottom=8, margin_start=12, margin_end=8)
+            row_box.append(texts)
+            row_box.append(button("Copy", lambda t=text: self.copy(t), "Copy this result"))
             if is_url(text):
-                r.add_suffix(button("Open", lambda t=text: desktop.open_url(t.strip()), "Open this link"))
+                row_box.append(button("Open", lambda t=text: desktop.open_url(t.strip()), "Open this link"))
+            r = Gtk.ListBoxRow(child=row_box, activatable=False)
+            r.value_label = value
             self.list.append(r)
         n = len(self.results)
         self.status.set_label("No QR code or barcode found." if n == 0 else

@@ -634,7 +634,9 @@ async def _region(d: Demo) -> None:
     d.s.sharel("-RectangleRegion")
     await d.overlay(0)
     x, y = w["frame"][0], w["frame"][1]
-    a, b = (x + 555, y + 240), (x + 1070, y + 432)  # the second row: sunset and the code snippet
+    # from above the sunset to inside the weekly-users chart: the moving corner (the pointer) is on the chart's
+    # bars, so the magnifier shows them
+    a, b = (x + 555, y + 240), (x + 1150, y + 380)
 
     async def shoot():
         await asyncio.sleep(4.3)  # the 3 s press, then the pointer has moved to the far corner
@@ -807,7 +809,7 @@ async def _ruler(d: Demo) -> None:
     await d.drag(a, b)
     await d.call("mouse_move", x=a[0] - 150, y=b[1] + 40, restore_pointer=False)  # the magnifier, clear of it
     time.sleep(0.8)
-    await d.grab((a[0] - 200, a[1] - 110, b[0] - a[0] + 460, b[1] - a[1] + 380), "ruler")
+    await d.grab(union(d.frame(w), pad=30), "ruler")  # the whole window: box, readout and magnifier inside it
     await d.key("Escape")
 
 

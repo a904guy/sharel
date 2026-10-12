@@ -33,7 +33,7 @@ MODIFIER_KEYS = {"Shift_L", "Shift_R", "Control_L", "Control_R", "Alt_L", "Alt_R
                  "Shift_Lock", "ISO_Next_Group", "ISO_Prev_Group"}
 
 STATE_ICONS = {
-    "registered": ("emblem-ok-symbolic", "success"),
+    "registered": ("object-select-symbolic", "success"),
     "pending": ("content-loading-symbolic", "dim-label"),
     "failed": ("dialog-error-symbolic", "error"),
     "conflict": ("dialog-warning-symbolic", "warning"),

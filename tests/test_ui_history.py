@@ -291,3 +291,59 @@ def test_open_history_jobs_and_remember_search(tmp_path):
         assert again is not hwin and again.search.get_text() == "dog" and _names(again) == ["dog.jpg"]
         return True
     assert run_app(body)
+
+
+def _no_hyphens(label) -> bool:
+    """The label wraps at word or character boundaries and Pango won't insert hyphens where it breaks."""
+    from gi.repository import Pango
+    attrs = label.get_attributes()
+    off = any(a.klass.type == Pango.AttrType.INSERT_HYPHENS and a.as_int().value == 0
+              for a in (attrs.get_attributes() if attrs else []))
+    return off and label.get_wrap() and label.get_wrap_mode() == Pango.WrapMode.WORD_CHAR
+
+
+def test_history_details_wrap_urls_and_paths_without_hyphens(tmp_path):
+    """Regression: wrapped details read "/…/s-unset.png" and "https://i.example.com/vuVVn-FT.png" (inserted
+    hyphens), so a copied-by-eye URL or path was wrong."""
+    def body(app):
+        _populate(app, tmp_path)
+        from sharel.ui.windows.history import open_history
+        win = open_history(app)
+        yield 0.2
+        win.select_index(_names(win).index("cat.png"))
+        assert set(win.detail_labels) >= {"file_path", "url", "thumbnail_url", "deletion_url", "shortened_url"}
+        bad = [k for k, lbl in win.detail_labels.items() if not _no_hyphens(lbl)]
+        assert not bad, bad
+        assert win.detail_labels["url"].get_label() == "https://i.imgur.com/cat.png"  # the text itself is intact
+        win.close()
+        return True
+    assert run_app(body)
+
+
+def test_url_and_path_views_elsewhere_have_no_hyphens():
+    """The same for the QR scan results and the tools' text views (OCR text, QR text, clipboard contents)."""
+    from sharel.ui.tools import qrcode
+    from sharel.ui.tools._base import text_view
+
+    def body(app):
+        win = qrcode.open_qr_results(app, ["https://i.example.com/a-long/path/to/an/image.png", "plain"], None)
+        yield 0.2
+        rows = []
+        child = win.list.get_first_child()
+        while child is not None:
+            rows.append(child)
+            child = child.get_next_sibling()
+        assert [r.value_label.get_label() for r in rows] == ["https://i.example.com/a-long/path/to/an/image.png",
+                                                              "plain"]
+        assert all(_no_hyphens(r.value_label) for r in rows)
+        win.close()
+        view, _sw = text_view()
+        view.get_buffer().set_text("https://i.example.com/vuVVnFT.png")
+        buf = view.get_buffer()
+        it = buf.get_start_iter()
+        assert view.no_hyphens_tag in it.get_tags() and not view.no_hyphens_tag.props.insert_hyphens
+        it.forward_to_end()
+        it.backward_char()
+        assert view.no_hyphens_tag in it.get_tags()  # the whole text, including what was typed later
+        return True
+    assert run_app(body)

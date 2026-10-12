@@ -93,7 +93,7 @@ sharel_bin=$bin_dir/sharel
 host_bin=$bin_dir/sharel-native-host
 
 # ---- data ---------------------------------------------------------------------------------------
-for f in "$repo"/data/stickers/*/* "$repo"/data/icons/tray/*; do
+for f in "$repo"/data/stickers/*/* "$repo"/data/icons/tray/* "$repo"/data/icons/actions/*; do
     rel=${f#"$repo"/data/}
     put "$f" "$share/$rel"
 done

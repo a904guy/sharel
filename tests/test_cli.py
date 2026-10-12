@@ -32,6 +32,14 @@ def test_sxcu_files_are_imported_not_uploaded():
     assert parse_args(["-CustomUploader", "notes.txt"]).custom_uploaders == []  # ShareX ignores a non-.sxcu
 
 
+def test_sxie_packages_are_imported_not_uploaded():
+    r = parse_args(["a.png", "fx.sxie", "/x/Frame.SXIE", "-ImageEffect", "third.sxie", "-ImageEffects", "b.png"])
+    assert r.image_effects == ["fx.sxie", "/x/Frame.SXIE", "third.sxie"] and r.has_work
+    assert r.files == ["a.png"]
+    assert r.jobs == [(HotkeyType.ImageEffects, ["b.png"])]  # the Image effects tool still takes its image
+    assert parse_args(["-ImageEffect", "notes.txt"]).image_effects == []
+
+
 def test_tools_take_following_files():
     r = parse_args(["-ImageEditor", "a.png", "b.png", "-silent", "c.png"])
     assert r.jobs == [(HotkeyType.ImageEditor, ["a.png", "b.png"])]

@@ -22,7 +22,7 @@ from PIL import Image
 from ...core import clipboard
 from ...tools import videotools as vt
 from ..forms import Form
-from ..gtkutil import texture_from_pil
+from ..gtkutil import no_hyphens, texture_from_pil
 from ._base import stored_tool_settings
 from ._base import ProgressPanel, ToolWindow, button, dropdown, dropdown_value, file_drop_target, select_value, single
 from ._videocommon import OutputActions, PathRow
@@ -88,7 +88,7 @@ class VideoThumbnailerWindow(ToolWindow):
         self.picture.add_css_class("card")
         self.picture.set_tooltip_text("Thumbnail preview")
         right.append(self.picture)
-        self.files_label = Gtk.Label(xalign=0, wrap=True, selectable=True)
+        self.files_label = no_hyphens(Gtk.Label(xalign=0, selectable=True))
         self.files_label.add_css_class("dim-label")
         right.append(self.files_label)
         self.actions = OutputActions(app, lambda: self.ctx.task_settings)

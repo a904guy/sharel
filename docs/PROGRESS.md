@@ -164,6 +164,28 @@ endpoints.
 
     None of them upload, and the plain-path test fails when the CLI routes `.sxcu` to `req.files`
     again. The custom-uploader scene opens its sample this way and answers Yes.
+- Found in review of the screenshots:
+  - The scrolling capture window's view switcher pages had no icons, so they drew the
+    missing-image placeholder. `emblem-ok-symbolic` (hotkey "registered") didn't exist either.
+    The editor's arrow tool used `go-next-symbolic`, a bare chevron, and the line tool used the
+    strikethrough icon. ShareL now ships `sharel-draw-arrow-symbolic` and
+    `sharel-draw-line-symbolic` (data/icons/actions; the app adds the folder to the icon theme;
+    install.sh and the .deb install them). `tests/test_ui_icons.py` resolves every icon name in
+    `src/sharel/ui` and the editor's mapping against the theme, and checks that view-switcher
+    pages have icons.
+  - Wrapped URLs and paths got hyphens inserted by Pango (`s-unset.png`, `vuVVn-FT.png`).
+    `gtkutil.no_hyphens` / `text_view_no_hyphens` turn that off (word or character wrapping) in:
+    - the history details;
+    - QR scan results;
+    - the tools' text views (OCR, QR, clipboard);
+    - file-name, path and command labels.
+
+    Covered by `tests/test_ui_history.py` (fails with the old label).
+  - `.sxie` packages are opened like `.sxcu`: `sharel x.sxie` / `-ImageEffect x.sxie` (also
+    forwarded) import the preset through the existing reader into the default task settings and
+    Image effects. ShareX's "Would you like to enable image effects?" follows: Yes adds
+    AddImageEffects. Nothing is uploaded. A MIME type is added to the same package. Tests: Yes,
+    No, already enabled, forwarded, CLI.
 
 ## Unit sandbox cleanup (2026-10-12)
 - Killed or timed-out runs had left dbus-daemon, weston and their `sharel-unit-*` runtime dirs behind.

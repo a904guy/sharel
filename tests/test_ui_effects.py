@@ -225,3 +225,76 @@ def test_param_editor_kinds_render_rows():
         win.cancel()
         return True
     assert run_app(body)
+
+
+# -- opening a .sxie package (ShareX's TaskHelpers.ImportImageEffect) ---------------------------------
+
+def _sxie_package(tmp_path, name="Red corner"):
+    from sharel.effects import sxie
+    from sharel.effects.base import EFFECTS, ImageEffectPreset, load_all
+    load_all()  # the effect classes register on import
+    logo = tmp_path / "src" / "logo.png"
+    logo.parent.mkdir(parents=True, exist_ok=True)
+    Image.new("RGBA", (6, 4), (255, 0, 0, 255)).save(logo)
+    preset = ImageEffectPreset(name, [EFFECTS["DrawImage"](image_location=str(logo), placement="BottomRight")])
+    pkg = sxie.export_sxie(preset, tmp_path / f"{name}.sxie")
+    logo.unlink()  # only the copy inside the package remains
+    return pkg
+
+
+def _open_sxie(tmp_path, answer, enabled_before=False, argv_of=lambda p: [str(p)]):
+    import json
+
+    from sharel.cli import parse_args
+    from sharel.effects.base import ImageEffectPreset
+    from sharel.effects.common import image_effects_dir
+    from sharel.ui.windows.effects import open_windows
+    ACT = AfterCaptureTasks
+    pkg = _sxie_package(tmp_path)
+
+    def body(app):
+        uploads = []
+        app.upload_paths = lambda paths, ts: uploads.append(list(paths))
+        ts = app.store.app.default_task_settings
+        ts.after_capture_job = ACT.SaveImageToFile | (ACT.AddImageEffects if enabled_before else ACT(0))
+        ts.image_settings.image_effect_presets = [ImageEffectPreset("Existing", []).to_jsonable()]
+        ts.image_settings.selected_image_effect_preset = 0
+        app.handle_request(parse_args(argv_of(pkg)), str(tmp_path))
+        yield 0.3
+        assert uploads == [] and app.tasks.tasks == []  # opened, not uploaded
+        win = next(w for w in open_windows() if w.tool_mode)
+        assert win.get_mapped() and win.preset.name == "Red corner"  # the window shows the imported preset
+        # saved to the default task settings (and to disk), its image extracted and linked
+        assert [p["name"] for p in ts.image_settings.image_effect_presets] == ["Existing", "Red corner"]
+        disk = json.loads((app.store.directory / "ApplicationConfig.json").read_text())
+        assert [p["name"] for p in disk["default_task_settings"]["image_settings"]["image_effect_presets"]] == \
+            ["Existing", "Red corner"]
+        logo = win.preset.effects[0].image_location
+        assert logo.startswith(str(image_effects_dir())) and Path(logo).is_file()
+        if enabled_before:
+            assert win.enable_dialog is None  # nothing to ask
+        else:
+            assert "enable image effects" in win.enable_dialog.get_body()
+            assert ACT.AddImageEffects not in ts.after_capture_job  # not before the answer
+            win.enable_dialog.emit("response", answer)
+            yield 0.2
+            assert (ACT.AddImageEffects in ts.after_capture_job) == (answer == "yes")
+            disk = json.loads((app.store.directory / "ApplicationConfig.json").read_text())
+            assert ("AddImageEffects" in disk["default_task_settings"]["after_capture_job"]) == (answer == "yes")
+        assert ACT.SaveImageToFile in ts.after_capture_job
+        win.close()
+        yield 0.2
+        return True
+    assert run_app(body)
+
+
+def test_opening_a_sxie_imports_the_preset_and_yes_enables_image_effects(tmp_path):
+    _open_sxie(tmp_path, "yes")
+
+
+def test_opening_a_sxie_and_answering_no_keeps_the_after_capture_tasks(tmp_path):
+    _open_sxie(tmp_path, "no", argv_of=lambda p: ["-ImageEffect", p.name])  # relative to the caller's directory
+
+
+def test_opening_a_sxie_when_image_effects_are_on_asks_nothing(tmp_path):
+    _open_sxie(tmp_path, None, enabled_before=True)

@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- ShareX custom uploader files: opening one in ShareL imports it (ShareX registers .sxcu the same way). -->
+<!-- ShareX custom uploaders (.sxcu) and image effect packages (.sxie): opening one in ShareL imports it, as
+     ShareX registers them. -->
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
   <mime-type type="application/x-sharex-custom-uploader">
     <comment>ShareX custom uploader</comment>
     <sub-class-of type="application/json"/>
     <glob pattern="*.sxcu"/>
+  </mime-type>
+  <mime-type type="application/x-sharex-image-effect">
+    <comment>ShareX image effect package</comment>
+    <sub-class-of type="application/zip"/>
+    <glob pattern="*.sxie"/>
   </mime-type>
 </mime-info>

@@ -16,7 +16,7 @@ gi.require_version("Gtk", "4.0")
 from gi.repository import GLib, Gtk
 
 from ...tools import videotools as vt
-from ..gtkutil import VIDEO_PATTERNS, human_size, texture_from_pil
+from ..gtkutil import VIDEO_PATTERNS, human_size, no_hyphens, texture_from_pil
 from ._base import ProgressPanel, ToolWindow, button, dropdown, dropdown_value, file_drop_target, single, spin
 from ._videocommon import OutputActions, PathRow, format_seconds, grab_frame, unique_output
 
@@ -41,7 +41,7 @@ class VideoTrimmerWindow(ToolWindow):
         self.input_row = PathRow("Input file path:", "open", on_changed=self._input_changed,
                                  placeholder="Video file (or drop one here)")
         body.append(self.input_row)
-        self.info_label = Gtk.Label(xalign=0, wrap=True, selectable=True)
+        self.info_label = no_hyphens(Gtk.Label(xalign=0, selectable=True))
         self.info_label.add_css_class("dim-label")
         body.append(self.info_label)
 
