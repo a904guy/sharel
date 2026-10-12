@@ -3,6 +3,12 @@
 Imported by conftest.py before anything loads GTK, so no test can open a window on the human's
 desktop, post a real notification, or talk to their GNOME Shell extension. Both processes die with
 the test run.
+
+The bus has its own config: one private, empty service directory and none of the standard session
+service directories. Otherwise calling a well-known name (org.freedesktop.FileManager1, the
+notification daemon, portals) would D-Bus-activate the real service. The daemon also starts with the
+sandboxed environment, so even a service a test installs in ``SHAREL_UNIT_DBUS_SERVICES`` runs on
+the headless display with the private XDG directories.
 """
 from __future__ import annotations
 
@@ -16,6 +22,23 @@ import time
 
 _procs: list[subprocess.Popen] = []
 _dirs: list[str] = []
+
+
+_BUS_CONFIG = """<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+  <type>session</type>
+  <keep_umask/>
+  <listen>unix:tmpdir={run}</listen>
+  <auth>EXTERNAL</auth>
+  <servicedir>{services}</servicedir>
+  <policy context="default">
+    <allow send_destination="*" eavesdrop="true"/>
+    <allow eavesdrop="true"/>
+    <allow own="*"/>
+  </policy>
+</busconfig>
+"""
 
 
 def _cleanup() -> None:
@@ -44,16 +67,6 @@ def start() -> dict[str, str]:
     os.chmod(run, 0o700)
     _dirs.append(run)
     atexit.register(_cleanup)
-    # Private session bus.
-    if shutil.which("dbus-daemon"):
-        p = subprocess.Popen(["dbus-daemon", "--session", "--nofork", "--print-address=1"],
-                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
-        _procs.append(p)
-        addr = p.stdout.readline().strip()
-        if addr:
-            env["DBUS_SESSION_BUS_ADDRESS"] = addr
-    else:
-        env["DBUS_SESSION_BUS_ADDRESS"] = "disabled:"
     # Headless display.
     if shutil.which("weston"):
         sock = "wl-unit"
@@ -79,6 +92,24 @@ def start() -> dict[str, str]:
     env["GSETTINGS_BACKEND"] = "memory"
     env["NO_AT_BRIDGE"] = "1"
     env["SHAREL_UNIT_SANDBOX"] = "1"
+    # Private session bus, started last: with the sandboxed environment and nothing activatable.
+    if shutil.which("dbus-daemon"):
+        services = os.path.join(run, "dbus-services")
+        os.makedirs(services)
+        conf = os.path.join(run, "session.conf")
+        with open(conf, "w") as fh:
+            fh.write(_BUS_CONFIG.format(run=run, services=services))
+        daemon_env = {k: v for k, v in os.environ.items()
+                      if k not in ("DISPLAY", "WAYLAND_DISPLAY", "DBUS_SESSION_BUS_ADDRESS", "XDG_SESSION_ID")}
+        daemon_env.update(env)
+        p = subprocess.Popen(["dbus-daemon", f"--config-file={conf}", "--nofork", "--print-address=1"],
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, env=daemon_env)
+        _procs.append(p)
+        addr = p.stdout.readline().strip()
+        env["DBUS_SESSION_BUS_ADDRESS"] = addr or "disabled:"
+        env["SHAREL_UNIT_DBUS_SERVICES"] = services
+    else:
+        env["DBUS_SESSION_BUS_ADDRESS"] = "disabled:"
     os.environ.update(env)
     for var in ("DISPLAY", "XDG_SESSION_ID"):
         os.environ.pop(var, None)

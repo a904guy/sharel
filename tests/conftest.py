@@ -32,3 +32,12 @@ def isolated_dirs(tmp_path, monkeypatch):
 def store(tmp_path):
     from sharel.core.config import ConfigStore
     return ConfigStore(Path(os.environ["SHAREL_CONFIG_DIR"]))
+
+
+@pytest.fixture
+def fake_file_manager():
+    """org.freedesktop.FileManager1 on the private bus: the sandbox bus activates nothing real."""
+    from fakebus import FakeFileManager
+    fm = FakeFileManager()
+    yield fm
+    fm.stop()
