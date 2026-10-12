@@ -288,3 +288,83 @@ def test_mutter_vanishing_mid_recording_fails(mutter, tmp_path):
     assert spin(lambda: rec.state == "failed"), rec.state
     assert failures == ["Mutter's ScreenCast service went away"]
     assert rec.pipe is None and not os.path.exists(rec.record_path) and not out.exists()
+
+
+# -- the stream we check against: RecordMonitor and the portal fallback --
+
+def _layout(monkeypatch, scale):
+    from sharel.capture import screen
+    from sharel.shell.client import Monitor
+    monkeypatch.setattr(screen, "current_layout",
+                        lambda: screen.Layout([Monitor(0, 0, 0, 1920, 1080, scale, True)]))
+
+
+def _against(rec, width, height):
+    Gst.init(None)
+    rec.pipe = Gst.parse_launch(f"videotestsrc name=pwsrc is-live=true ! video/x-raw,width={width},height={height}"
+                                " ! fakesink")
+    rec.pipe.set_state(Gst.State.PLAYING)
+    rec._check_source(timeout_s=3)
+
+
+@pytest.mark.parametrize("scale", [1.0, 2.0])
+def test_record_monitor_accepts_the_monitor_at_its_scale(monkeypatch, scale):
+    _layout(monkeypatch, scale)
+    rec = Recorder((0, 0, 1920, 1080), "/nonexistent/x.mp4", FFmpegOptions(), monitor_connector="DP-1")
+    try:
+        _against(rec, int(1920 * scale), int(1080 * scale))
+        assert rec.pipe is not None
+    finally:
+        rec._teardown()
+
+
+@pytest.mark.parametrize("size", [(640, 480), (3840, 2160)])
+def test_record_monitor_refuses_another_size(monkeypatch, size):
+    _layout(monkeypatch, 1.0)  # at scale 1 a 4K stream is not this 1080p monitor either
+    rec = Recorder((0, 0, 1920, 1080), "/nonexistent/x.mp4", FFmpegOptions(), monitor_connector="DP-1")
+    with pytest.raises(RecordingError, match=f"{size[0]}x{size[1]} frames for the 1920x1080 monitor DP-1"):
+        _against(rec, *size)
+    assert rec.pipe is None
+
+
+class _FakePortal:
+    def __init__(self, position, size):
+        self.stream_position, self.stream_size = position, size
+        self.closed = False
+
+    def close(self):
+        self.closed = True
+
+
+def test_portal_monitor_stream_is_accepted_and_cropped_to_the_region(monkeypatch):
+    _layout(monkeypatch, 2.0)
+    rec = Recorder((100, 50, 400, 300), "/nonexistent/x.mp4", FFmpegOptions())
+    rec._portal = _FakePortal((0, 0), (1920, 1080))
+    assert rec._portal_geometry() == (200, 100, 3840 - 200 - 800, 2160 - 100 - 600)
+    try:
+        _against(rec, 3840, 2160)  # the whole monitor, not region-sized: still the right stream
+        assert rec.pipe is not None and rec.note == ""
+    finally:
+        rec.pipe and rec._teardown()
+
+
+def test_portal_monitor_stream_of_another_size_is_refused(monkeypatch):
+    _layout(monkeypatch, 1.0)
+    rec = Recorder((100, 50, 400, 300), "/nonexistent/x.mp4", FFmpegOptions())
+    rec._portal = _FakePortal((0, 0), (1920, 1080))
+    rec._portal_geometry()
+    with pytest.raises(RecordingError, match="640x480 frames for the 1920x1080 monitor stream"):
+        _against(rec, 640, 480)
+
+
+def test_portal_window_stream_is_recorded_whole_with_a_note(monkeypatch):
+    # no geometry (a window share): nothing to size-check; the stall/caps guards still apply
+    _layout(monkeypatch, 1.0)
+    rec = Recorder((100, 50, 400, 300), "/nonexistent/x.mp4", FFmpegOptions())
+    rec._portal = _FakePortal(None, None)
+    assert rec._portal_geometry() is None and rec._expect == "any" and "not the region" in rec.note
+    try:
+        _against(rec, 1234, 777)
+        assert rec.pipe is not None
+    finally:
+        rec._teardown()

@@ -52,6 +52,8 @@ class PortalScreenCast:
         self.conn = conn or Gio.bus_get_sync(Gio.BusType.SESSION, None)
         self.timeout = timeout
         self.session = ""
+        self.stream_position: tuple[int, int] | None = None
+        self.stream_size: tuple[int, int] | None = None
 
     def _token(self) -> str:
         return f"sharel{random.randint(0, 1 << 30)}"
@@ -103,7 +105,10 @@ class PortalScreenCast:
         streams = res.get("streams") or []
         if not streams:
             raise PortalError("the portal returned no stream")
-        node_id = streams[0][0]
+        node_id, props = streams[0][0], streams[0][1]
+        # logical geometry of the chosen monitor (absent for a window)
+        self.stream_position = tuple(props["position"]) if "position" in props else None
+        self.stream_size = tuple(props["size"]) if "size" in props else None
         reply, fds = self.conn.call_with_unix_fd_list_sync(PORTAL, PATH, IFACE, "OpenPipeWireRemote",
                                                             GLib.Variant("(oa{sv})", (self.session, {})), None,
                                                             Gio.DBusCallFlags.NONE, 10000, None, None)

@@ -150,3 +150,58 @@ def test_stop_while_paused_finishes_promptly(tmp_path, via_resume):
     dur = float(probe(out)["format"]["duration"])
     assert 1.0 <= dur <= 2.2, f"{dur:.2f} s: the 2 s pause must not be in the file"
     assert video_stream(probe(out))["width"] == 320
+
+
+def test_portal_crop_math():
+    # region inside a 1920x1080 monitor at (1920, 0), scale 1.5
+    crop, full = P.portal_crop((2020, 100, 400, 300), (1920, 0), (1920, 1080), 1.5)
+    assert full == (2880, 1620)
+    assert crop == (150, 150, 2880 - 150 - 600, 1620 - 150 - 450)
+    assert P.portal_crop((1900, 100, 400, 300), (1920, 0), (1920, 1080), 1.0) is None  # sticks out
+    assert P.portal_crop((0, 0, 10, 10), None, None, 1.0) is None  # a window: no geometry
+
+
+def test_portal_crop_runs_and_yields_the_region(tmp_path):
+    """The crop the portal path inserts, run on a monitor-sized live source: the file is the region."""
+    out = str(tmp_path / "crop.mp4")
+    crop, _full = P.portal_crop((100, 50, 400, 300), (0, 0), (1280, 720), 1.0)
+    ep = P.plan(opts("libx264"))
+    desc = P.build_launch("pipewiresrc name=pwsrc path=1", ep, out, 15, crop=crop)
+    assert "videocrop left=100 top=50 right=780 bottom=370" in desc
+    desc = desc.replace("pipewiresrc name=pwsrc path=1",
+                        "videotestsrc num-buffers=15 ! "
+                        "capsfilter caps=video/x-raw,width=1280,height=720,framerate=15/1")
+    import gi
+    gi.require_version("Gst", "1.0")
+    from gi.repository import Gst
+    Gst.init(None)
+    pipe = Gst.parse_launch(desc)
+    pipe.set_state(Gst.State.PLAYING)
+    msg = pipe.get_bus().timed_pop_filtered(30 * Gst.SECOND, Gst.MessageType.EOS | Gst.MessageType.ERROR)
+    pipe.set_state(Gst.State.NULL)
+    assert msg is not None and msg.type == Gst.MessageType.EOS, msg and msg.parse_error()
+    v = video_stream(probe(out))
+    assert (v["width"], v["height"]) == (400, 300)
+
+
+def test_pause_with_audio_cuts_both_streams(tmp_path):
+    """The audio valve gets the same pause and offset as the video: both streams, no paused time."""
+    out = str(tmp_path / "av.mp4")
+    o = opts("libx264")
+    o.audio_source = "default"
+    rec = Recorder((0, 0, 320, 240), out, o, fps=15, test_pattern=True)
+    rec.start()
+    assert rec.pipe.get_by_name("avalve") is not None
+    time.sleep(1.0)
+    rec.pause()
+    time.sleep(2.0)
+    rec.resume()
+    time.sleep(1.0)
+    rec.stop(timeout=10)
+    info = probe(out)
+    kinds = {st["codec_type"]: st for st in info["streams"]}
+    assert set(kinds) == {"video", "audio"}, kinds.keys()
+    assert kinds["audio"]["codec_name"] == "aac"
+    for kind in ("video", "audio"):
+        d = float(kinds[kind]["duration"])
+        assert 1.5 <= d <= 2.7, f"{kind}: {d:.2f} s, the 2 s pause must not be in it"

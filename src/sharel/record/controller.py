@@ -123,8 +123,9 @@ class RecordingController:
             self.recorder = None
             self.app.message("Screen recording failed", str(e), urgent=True)
             return
-        if self.recorder.ep.fallback_note:
-            self.app.message("Screen recording", self.recorder.ep.fallback_note)
+        for note in (self.recorder.ep.fallback_note, self.recorder.note):
+            if note:
+                self.app.message("Screen recording", note)
         self._show_border(True)
         self._open_controls()
         if ro.screen_record_fixed_duration and ro.screen_record_duration > 0:

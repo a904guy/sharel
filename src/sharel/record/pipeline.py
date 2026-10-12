@@ -155,7 +155,12 @@ def video_source(node_id: int | None = None, fd: int | None = None, test_pattern
     (``pipewiresrc path=<node id> do-timestamp=true keepalive-time=1000 resend-last=true``). If the
     node is gone (its ScreenCast session ended), pipewiresrc connects to the default video source
     instead (a camera): the Recorder keeps the session alive for the whole recording, checks the
-    frame size before recording, and fails if the source ends early."""
+    frame size before recording, and fails if the source ends early. A removed node makes
+    pipewiresrc stall (no error, no EOS): the Recorder watches the session's Closed signal and
+    Mutter's bus name, and as a backstop a stall watchdog that relies on ``keepalive-time`` (a live
+    node then yields a buffer at least every second, even when nothing on screen changes).
+    ``on-disconnect=error`` is not used: with PipeWire 1.6.2 it also fires while pause drops buffers
+    at the valve ("all buffers have been removed"), failing healthy recordings."""
     if test_pattern:
         return "videotestsrc is-live=true pattern=ball"
     parts = ["pipewiresrc name=pwsrc"]
@@ -167,14 +172,38 @@ def video_source(node_id: int | None = None, fd: int | None = None, test_pattern
     return " ".join(parts)
 
 
+def portal_crop(rect: tuple[int, int, int, int], position: tuple[int, int] | None, size: tuple[int, int] | None,
+                scale: float) -> tuple[tuple[int, int, int, int], tuple[int, int]] | None:
+    """The portal streams the monitor the user chose (logical ``position``/``size``), not our region.
+    When the region lies inside it: the videocrop (left, top, right, bottom, in stream pixels) that
+    cuts the region out, and the stream's expected frame size. None when the region isn't inside it
+    or the portal gave no geometry (a window): then the chosen stream is recorded whole."""
+    if not position or not size or size[0] <= 0 or size[1] <= 0:
+        return None
+    x, y, w, h = rect
+    px, py = position
+    sw, sh = size
+    if x < px or y < py or x + w > px + sw or y + h > py + sh:
+        return None
+    fw, fh = round(sw * scale), round(sh * scale)
+    left, top = round((x - px) * scale), round((y - py) * scale)
+    cw, ch = even(round(w * scale)), even(round(h * scale))
+    return (left, top, fw - left - cw, fh - top - ch), (fw, fh)
+
+
+TEST_AUDIO = "<test>"
+
+
 def build_launch(source: str, ep: EncoderPlan, out_path: str, fps: int, *, width: int = 0, height: int = 0,
-                 audio_source: str = "", o: FFmpegOptions | None = None) -> str:
+                 audio_source: str = "", o: FFmpegOptions | None = None,
+                 crop: tuple[int, int, int, int] | None = None) -> str:
     """The gst-launch description for a recording."""
     loc = out_path.replace('"', '\\"')
     if source.startswith("pipewiresrc"):
         # GNOME's screencast caps: a ScreenCast stream has a variable frame rate and refuses a fixed one,
         # so only cap the maximum; the stream's own size is the region's (physical pixels).
-        raw = f"video/x-raw,max-framerate={fps}/1 ! videoconvert ! video/x-raw,format={ep.raw_format}"
+        cut = f"videocrop left={crop[0]} top={crop[1]} right={crop[2]} bottom={crop[3]} ! " if crop else ""
+        raw = f"video/x-raw,max-framerate={fps}/1 ! {cut}videoconvert ! video/x-raw,format={ep.raw_format}"
     else:
         size = f",width={width},height={height}" if width and height else ""
         raw = f"videoconvert ! videoscale ! videorate ! video/x-raw,format={ep.raw_format},framerate={fps}/1{size}"
@@ -187,8 +216,12 @@ def build_launch(source: str, ep: EncoderPlan, out_path: str, fps: int, *, width
     if audio_source and o is not None:
         chain, short = audio_chain(o)
         if audio_fits(ep.mux, short):
-            dev = "" if audio_source == "default" else f' device="{audio_source}"'
-            video += (f" pulsesrc{dev} do-timestamp=true ! queue ! valve name=avalve {valve} ! audioconvert !"
+            if audio_source == TEST_AUDIO:  # the test pattern's sound (no audio server needed)
+                asrc = "audiotestsrc is-live=true wave=ticks"
+            else:
+                dev = "" if audio_source == "default" else f' device="{audio_source}"'
+                asrc = f"pulsesrc{dev} do-timestamp=true"
+            video += (f" {asrc} ! queue ! valve name=avalve {valve} ! audioconvert !"
                       f" audioresample ! {chain} ! queue ! mux.")
     return video
 

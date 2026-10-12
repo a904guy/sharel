@@ -68,8 +68,14 @@ class Recorder:
         self._watchdog_src = 0
         self._last_buffer = 0.0
         self._src_size: tuple[int, int] | None = None
-        # A live ScreenCast node resends its last frame every second (keepalive): this long without
-        # one means the stream is gone (pipewiresrc then neither errors nor ends, it just stalls).
+        # what _check_source expects from the stream: None = the region (at a monitor scale), a size =
+        # the portal's monitor (then cropped), "any" = whatever the user chose in the portal dialog
+        self._expect: tuple[int, int] | str | None = None
+        self.note = ""
+        # pipewiresrc's keepalive-time=1000 (pipeline.video_source) resends the last frame every second
+        # while its node is alive, even when nothing changes on screen: this long without a buffer
+        # means the stream is gone (pipewiresrc then neither errors nor ends, it just stalls). The
+        # buffers are counted upstream of the pause valve, so a long pause is not a stall.
         self.stall_timeout_s = 4.0
         # Called (main loop) when the recording dies on its own: the source vanished or the pipeline failed.
         self.on_failed: Callable[[str], None] | None = None
@@ -177,9 +183,15 @@ class Recorder:
                 node, fd = self._portal.start(cursor=self.cursor)
         src = P.video_source(node, fd, self.test_pattern)
         _x, _y, w, h = self.rect
+        crop = None
+        if self._portal is not None:
+            crop = self._portal_geometry()
         fps = self.gif_fps if self.gif else self.fps
         audio = "" if self.gif else self.opts.audio_source
-        desc = P.build_launch(src, self.ep, self.record_path, fps, width=w, height=h, audio_source=audio, o=self.opts)
+        if audio and self.test_pattern:
+            audio = P.TEST_AUDIO
+        desc = P.build_launch(src, self.ep, self.record_path, fps, width=w, height=h, audio_source=audio, o=self.opts,
+                              crop=crop)
         log.info("recording: %s", desc)
         try:
             self.pipe = Gst.parse_launch(desc)
@@ -235,6 +247,29 @@ class Recorder:
             return True
         self._watchdog_src = GLib.timeout_add(250, watchdog)
 
+    @staticmethod
+    def _scale_at(x: int, y: int) -> float:
+        try:
+            from ..capture.screen import current_layout
+            mon = current_layout().monitor_at(x + 1, y + 1)
+            return mon.scale if mon else 1.0
+        except Exception as e:  # no display info: logical pixels then
+            log.debug("monitor scale unknown (%s)", e)
+            return 1.0
+
+    def _portal_geometry(self) -> tuple[int, int, int, int] | None:
+        """The portal stream is the monitor (or window) chosen in its dialog: crop it to the region
+        when the region is inside it, else record it whole (and say so)."""
+        pos, size = self._portal.stream_position, self._portal.stream_size
+        scale = self._scale_at(*pos) if pos else 1.0
+        geo = P.portal_crop(self.rect, pos, size, scale)
+        if geo is None:
+            self._expect = "any"
+            self.note = "Recording the monitor or window chosen in the screen-sharing dialog (not the region)"
+            return None
+        crop, self._expect = geo
+        return crop
+
     def _check_source(self, timeout_s: float) -> None:
         """Make sure we record the ScreenCast stream we asked for: its frames must be the region's size
         (at the monitor scale). Anything else is another PipeWire node: stop, never record it."""
@@ -260,11 +295,24 @@ class Recorder:
         st = caps.get_structure(0)
         w, h = st.get_value("width"), st.get_value("height")
         self._src_size = (w, h)
-        _x, _y, rw, rh = self.rect
-        ok = any(abs(w - round(rw * s)) <= 2 and abs(h - round(rh * s)) <= 2 for s in (1, 1.25, 1.5, 1.75, 2, 2.5, 3))
-        if not ok and not self.monitor_connector:
+        if self._expect == "any":  # the stream the user chose in the portal dialog
+            return
+        if isinstance(self._expect, tuple):  # the portal's monitor, cropped to the region afterwards
+            ok = abs(w - self._expect[0]) <= 2 and abs(h - self._expect[1]) <= 2
+            what = f"the {self._expect[0]}x{self._expect[1]} monitor stream"
+        else:
+            # RecordArea / RecordMonitor: the region (for a monitor, its logical rect) at the monitor's
+            # scale. A whole-monitor stream is checked too: a camera must not pass for a monitor.
+            rx, ry, rw, rh = self.rect
+            scales = (1, 1.25, 1.5, 1.75, 2, 2.5, 3)
+            if self.monitor_connector:
+                scales = (self._scale_at(rx, ry),)
+            ok = any(abs(w - round(rw * s)) <= 2 and abs(h - round(rh * s)) <= 2 for s in scales)
+            what = f"the {rw}x{rh} monitor {self.monitor_connector}" if self.monitor_connector else \
+                f"a {rw}x{rh} region"
+        if not ok:
             self._teardown()
-            raise RecordingError(f"PipeWire delivered {w}x{h} frames for a {rw}x{rh} region: not the screen "
+            raise RecordingError(f"PipeWire delivered {w}x{h} frames for {what}: not the screen "
                                  "stream, so nothing was recorded")
 
     def _on_error(self, _bus, msg) -> None:
