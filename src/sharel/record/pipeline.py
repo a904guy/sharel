@@ -151,30 +151,45 @@ def audio_fits(mux: str, short: str) -> bool:
 
 
 def video_source(node_id: int | None = None, fd: int | None = None, test_pattern: bool = False) -> str:
+    """The live source. For PipeWire this mirrors GNOME Shell's own screencast service
+    (``pipewiresrc path=<node id> do-timestamp=true keepalive-time=1000 resend-last=true``). If the
+    node is gone (its ScreenCast session ended), pipewiresrc connects to the default video source
+    instead (a camera): the Recorder keeps the session alive for the whole recording, checks the
+    frame size before recording, and fails if the source ends early."""
     if test_pattern:
         return "videotestsrc is-live=true pattern=ball"
-    parts = ["pipewiresrc"]
+    parts = ["pipewiresrc name=pwsrc"]
     if fd is not None:
         parts.append(f"fd={fd}")
     if node_id is not None:
         parts.append(f"path={node_id}")
-    parts += ["do-timestamp=true", "keepalive-time=1000", "always-copy=true"]
+    parts += ["do-timestamp=true", "keepalive-time=1000", "resend-last=true"]
     return " ".join(parts)
 
 
 def build_launch(source: str, ep: EncoderPlan, out_path: str, fps: int, *, width: int = 0, height: int = 0,
                  audio_source: str = "", o: FFmpegOptions | None = None) -> str:
     """The gst-launch description for a recording."""
-    size = f",width={width},height={height}" if width and height else ""
     loc = out_path.replace('"', '\\"')
-    video = (f'{source} ! queue ! videoconvert ! videoscale ! videorate ! '
-             f'video/x-raw,format={ep.raw_format},framerate={fps}/1{size} ! queue ! {ep.gst_video} ! queue ! '
+    if source.startswith("pipewiresrc"):
+        # GNOME's screencast caps: a ScreenCast stream has a variable frame rate and refuses a fixed one,
+        # so only cap the maximum; the stream's own size is the region's (physical pixels).
+        raw = f"video/x-raw,max-framerate={fps}/1 ! videoconvert ! video/x-raw,format={ep.raw_format}"
+    else:
+        size = f",width={width},height={height}" if width and height else ""
+        raw = f"videoconvert ! videoscale ! videorate ! video/x-raw,format={ep.raw_format},framerate={fps}/1{size}"
+    # Pause drops buffers at the valves (a live pipeline must keep PLAYING); the Recorder then
+    # offsets the valves' src pads by the paused time, so the gap is not in the file.
+    # drop-mode forwards sticky events, EOS among them: stopping while paused still finishes the file.
+    valve = "drop=false drop-mode=forward-sticky-events"
+    video = (f'{source} ! {raw} ! queue ! valve name=vvalve {valve} ! {ep.gst_video} ! queue ! '
              f'{ep.mux} name=mux ! filesink location="{loc}"')
     if audio_source and o is not None:
         chain, short = audio_chain(o)
         if audio_fits(ep.mux, short):
             dev = "" if audio_source == "default" else f' device="{audio_source}"'
-            video += f" pulsesrc{dev} do-timestamp=true ! queue ! audioconvert ! audioresample ! {chain} ! queue ! mux."
+            video += (f" pulsesrc{dev} do-timestamp=true ! queue ! valve name=avalve {valve} ! audioconvert !"
+                      f" audioresample ! {chain} ! queue ! mux.")
     return video
 
 

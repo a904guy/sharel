@@ -57,8 +57,8 @@ def test_audio_chain_and_launch():
     ep = P.plan(o)
     launch = P.build_launch(P.video_source(42), ep, "/tmp/x.mp4", 30, width=640, height=480,
                             audio_source=o.audio_source, o=o)
-    assert launch.startswith("pipewiresrc path=42 do-timestamp=true")
-    assert "framerate=30/1,width=640,height=480" in launch
+    assert launch.startswith("pipewiresrc name=pwsrc path=42 do-timestamp=true keepalive-time=1000 resend-last=true")
+    assert "video/x-raw,max-framerate=30/1 ! videoconvert" in launch and "videorate" not in launch
     assert 'pulsesrc device="alsa_input.test"' in launch and "opusenc" in launch and "mux." in launch
     assert P.audio_fits("webmmux", "aac") is False
 
@@ -129,3 +129,24 @@ def test_ffmpeg_converted_output(tmp_path):
     with open(path, "rb") as fh:
         head = fh.read(16)
     assert head[:4] == b"RIFF" and head[8:12] == b"WEBP"
+
+
+@pytest.mark.parametrize("via_resume", [True, False])
+def test_stop_while_paused_finishes_promptly(tmp_path, via_resume):
+    """Pause drops buffers at a valve; stopping while paused must still get EOS through (no hang until
+    the timeout) and leave a valid file of recorded minus paused time."""
+    out = str(tmp_path / "sp.mp4")
+    rec = Recorder((0, 0, 320, 240), out, opts("libx264"), fps=15, test_pattern=True)
+    rec.start()
+    time.sleep(1.5)
+    rec.pause()
+    time.sleep(2.0)
+    if not via_resume:
+        # the valves alone (no resume first) must forward EOS: their drop mode passes sticky events
+        rec.resume = lambda: None
+    t = time.monotonic()
+    assert rec.stop(timeout=10) == out
+    assert time.monotonic() - t < 3.0, "stop() waited for the EOS timeout"
+    dur = float(probe(out)["format"]["duration"])
+    assert 1.0 <= dur <= 2.2, f"{dur:.2f} s: the 2 s pause must not be in the file"
+    assert video_stream(probe(out))["width"] == 320

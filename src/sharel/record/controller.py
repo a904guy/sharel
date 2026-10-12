@@ -115,6 +115,7 @@ class RecordingController:
                                  gif_fps=ro.gif_fps, cursor=ro.screen_record_show_cursor,
                                  restore_token_store=TokenStore(self.app.store),
                                  test_pattern=bool(os.environ.get("SHAREL_RECORD_TEST_PATTERN")))
+        self.recorder.on_failed = lambda err, rec=self.recorder: self._failed(rec, err)
         try:
             self.recorder.start()
         except (RecordingError, GLib.Error) as e:
@@ -261,6 +262,16 @@ class RecordingController:
                 return False
             GLib.idle_add(done)
         threading.Thread(target=finish, daemon=True, name="recording-finish").start()
+
+    def _failed(self, rec: Recorder, err: str) -> None:
+        """The recorder died on its own (source gone): drop the controls and say so."""
+        if self.recorder is not rec:
+            return
+        self._close_controls()
+        self.last_error = err
+        self.recorder = None
+        self._emit()
+        self.app.message("Screen recording failed", err, urgent=True)
 
     def abort(self) -> None:
         if self._countdown_src:
