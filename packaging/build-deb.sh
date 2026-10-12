@@ -65,8 +65,9 @@ Priority: optional
 Architecture: all
 Installed-Size: $size
 Maintainer: Andy Hawkins <andy@hawkins.app>
-Depends: python3 (>= 3.12), python3-gi, python3-gi-cairo, python3-cairo, gir1.2-gtk-4.0, gir1.2-adw-1,
- gir1.2-gtk-3.0, gir1.2-ayatanaappindicator3-0.1, gir1.2-gstreamer-1.0, gir1.2-gst-plugins-base-1.0,
+Depends: python3 (>= 3.12), python3-gi, python3-gi-cairo, python3-cairo, gir1.2-glib-2.0, gir1.2-gtk-4.0,
+ gir1.2-adw-1, gir1.2-pango-1.0, gir1.2-gdkpixbuf-2.0, gir1.2-gtk-3.0, gir1.2-ayatanaappindicator3-0.1,
+ gir1.2-gstreamer-1.0, gir1.2-gst-plugins-base-1.0, xdg-utils, fontconfig,
  gstreamer1.0-pipewire, gstreamer1.0-plugins-good, gstreamer1.0-plugins-bad, gstreamer1.0-plugins-ugly,
  gstreamer1.0-libav, python3-pil, python3-numpy, python3-requests, python3-qrcode, python3-paramiko,
  python3-cryptography, python3-lxml, wl-clipboard, tesseract-ocr, tesseract-ocr-eng, zbar-tools, ffmpeg

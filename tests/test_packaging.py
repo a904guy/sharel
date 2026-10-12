@@ -1,7 +1,10 @@
 """install.sh / uninstall.sh in a throwaway HOME, and the .deb's contents."""
+import ast
 import json
 import os
+import re
 import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -79,3 +82,70 @@ def test_deb_contents(tmp_path):
     # the packaged launcher imports the packaged module
     launcher = subprocess.run(["dpkg-deb", "--fsys-tarfile", str(deb)], capture_output=True, check=True).stdout
     assert b"from sharel.cli import main" in launcher
+
+
+# Every non-stdlib module src imports, and the Ubuntu package that ships it. A new import fails the test below
+# until it is added here and to the deb's Depends (or Recommends, for optional features).
+PY_PACKAGES = {"PIL": "python3-pil", "cairo": "python3-cairo", "cryptography": "python3-cryptography",
+               "gi": "python3-gi", "lxml": "python3-lxml", "numpy": "python3-numpy", "paramiko": "python3-paramiko",
+               "qrcode": "python3-qrcode", "requests": "python3-requests"}
+PY_UNPACKAGED = {"rembg", "onnxruntime"}  # background remover: not in Ubuntu, pip install (build-deb.sh header)
+GI_PACKAGES = {("Adw", "1"): "gir1.2-adw-1", ("AyatanaAppIndicator3", "0.1"): "gir1.2-ayatanaappindicator3-0.1",
+               ("Gdk", "4.0"): "gir1.2-gtk-4.0", ("Gtk", "4.0"): "gir1.2-gtk-4.0", ("Gtk", "3.0"): "gir1.2-gtk-3.0",
+               ("Gdk", "3.0"): "gir1.2-gtk-3.0", ("GdkPixbuf", "2.0"): "gir1.2-gdkpixbuf-2.0",
+               ("Gio", "2.0"): "gir1.2-glib-2.0", ("GLib", "2.0"): "gir1.2-glib-2.0",
+               ("GObject", "2.0"): "gir1.2-glib-2.0", ("Gst", "1.0"): "gir1.2-gstreamer-1.0",
+               ("GstVideo", "1.0"): "gir1.2-gst-plugins-base-1.0", ("GstApp", "1.0"): "gir1.2-gst-plugins-base-1.0",
+               ("GstPbutils", "1.0"): "gir1.2-gst-plugins-base-1.0", ("Pango", "1.0"): "gir1.2-pango-1.0",
+               ("PangoCairo", "1.0"): "gir1.2-pango-1.0", ("Secret", "1"): "gir1.2-secret-1"}
+GI_DEFAULT_VERSION = {"GObject": "2.0", "GLib": "2.0", "Gio": "2.0"}  # imported without require_version
+
+
+def _control_field(name: str) -> set[str]:
+    """Package names in the Depends/Recommends field of the control file build-deb.sh writes."""
+    text = (ROOT / "packaging/build-deb.sh").read_text()
+    control = text.split("<<CONTROL\n", 1)[1].split("\nCONTROL\n", 1)[0]
+    m = re.search(rf"^{name}: (.*(?:\n .*)*)", control, re.M)
+    assert m, name
+    return {d.split("(")[0].strip() for d in m.group(1).replace("\n", " ").split(",") if d.strip()}
+
+
+def _src_imports() -> tuple[set[str], set[tuple[str, str]]]:
+    """(top-level non-stdlib modules, (GI namespace, version) pairs) imported anywhere under src/sharel."""
+    modules, versions, namespaces = set(), set(), set()
+    for path in (ROOT / "src/sharel").rglob("*.py"):
+        for node in ast.walk(ast.parse(path.read_text(), str(path))):
+            if isinstance(node, ast.Import):
+                names = [a.name for a in node.names]
+            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+                names = [node.module]
+                if node.module == "gi.repository":
+                    namespaces |= {a.name for a in node.names}
+            else:
+                if isinstance(node, ast.Call) and getattr(node.func, "attr", None) == "require_version":
+                    versions.add(tuple(a.value for a in node.args))
+                continue
+            modules |= {n.split(".")[0] for n in names}
+    modules -= set(sys.stdlib_module_names) | {"sharel"}
+    pairs = set(versions)
+    for ns in namespaces - {v[0] for v in versions}:
+        assert ns in GI_DEFAULT_VERSION, f"gi.repository.{ns} imported without require_version"
+        pairs.add((ns, GI_DEFAULT_VERSION[ns]))
+    return modules, pairs
+
+
+def test_deb_depends_cover_every_import():
+    """The .deb installs into /usr/lib/python3/dist-packages and runs on the system python3 only, so every
+    module src imports must come from a package the deb depends on (an import missing from Depends works in the
+    uv venv and on a dev machine, then fails on a clean install)."""
+    depends, recommends = _control_field("Depends"), _control_field("Recommends")
+    modules, gi = _src_imports()
+    assert {"PIL", "gi", "qrcode"} <= modules and ("Adw", "1") in gi and ("Pango", "1.0") in gi  # the scan works
+    assert not modules - PY_PACKAGES.keys() - PY_UNPACKAGED, "add to PY_PACKAGES and Depends"
+    assert not gi - GI_PACKAGES.keys(), "add to GI_PACKAGES and Depends"
+    need = {PY_PACKAGES[m] for m in modules - PY_UNPACKAGED} | {GI_PACKAGES[p] for p in gi} | {"python3-gi-cairo"}
+    optional = {"gir1.2-secret-1"}  # keyring: settings fall back to the config file without it
+    assert not need - optional - depends, need - optional - depends
+    assert not optional - depends - recommends
+    # external programs ShareL runs
+    assert {"wl-clipboard", "tesseract-ocr", "zbar-tools", "ffmpeg", "xdg-utils", "fontconfig"} <= depends
