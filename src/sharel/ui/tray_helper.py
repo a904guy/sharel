@@ -45,8 +45,10 @@ def main() -> int:
         ind.set_icon_theme_path(icon_dir)
     ind.set_icon_full("sharel-tray", "ShareL")
     ind.set_title("ShareL")
-    ind.set_status(AI.IndicatorStatus.ACTIVE)
-    state = {"building": False, "menu": None}
+    # Shown once the app's first menu is in place (or after a few seconds without one): the shell then
+    # fetches a finished menu instead of a placeholder that is replaced straight away.
+    ind.set_status(AI.IndicatorStatus.PASSIVE)
+    state = {"building": False, "items": None}
 
     def activate(action: str, target) -> None:
         if not action:
@@ -61,41 +63,84 @@ def main() -> int:
             param = GLib.Variant("s", target)
         actions.activate_action(name, param)
 
-    def build(items, menu: Gtk.Menu) -> None:
-        for it in items:
-            if it.get("separator"):
-                menu.append(Gtk.SeparatorMenuItem())
-                continue
-            if it.get("check") is not None:
-                mi = Gtk.CheckMenuItem(label=it.get("label", ""))
-                mi.set_active(bool(it.get("checked")))
-                mi.connect("toggled", lambda m, it=it: (not state["building"]) and
-                           activate(it.get("action", ""), it.get("target")))
+    def kind(it: dict) -> str:
+        if it.get("separator"):
+            return "separator"
+        if it.get("check") is not None:
+            return "check"
+        return "submenu" if it.get("children") else "item"
+
+    def new_item(it: dict) -> Gtk.MenuItem:
+        k = kind(it)
+        if k == "separator":
+            mi = Gtk.SeparatorMenuItem()
+        elif k == "check":
+            mi = Gtk.CheckMenuItem(label=it.get("label", ""))
+            mi.connect("toggled", lambda m: (not state["building"]) and
+                       activate(m.sharel_item.get("action", ""), m.sharel_item.get("target")))
+        else:
+            mi = Gtk.MenuItem(label=it.get("label", ""))
+            if k == "submenu":
+                mi.set_submenu(Gtk.Menu())
             else:
-                mi = Gtk.MenuItem(label=it.get("label", ""))
-                if it.get("children"):
-                    sub = Gtk.Menu()
-                    build(it["children"], sub)
-                    mi.set_submenu(sub)
-                else:
-                    mi.connect("activate", lambda _m, it=it: activate(it.get("action", ""), it.get("target")))
-            mi.set_sensitive(it.get("sensitive", True))
-            menu.append(mi)
+                mi.connect("activate", lambda m: activate(m.sharel_item.get("action", ""),
+                                                          m.sharel_item.get("target")))
+        mi.sharel_kind = k
+        mi.show()
+        return mi
+
+    def sync(menu: Gtk.Menu, items, keep: int = 0) -> None:
+        """Make ``menu`` show ``items``, changing the existing GtkMenuItems in place. Each GtkMenuItem is one
+        dbusmenu id, so ids stay the same across updates: the shell's appindicator extension fetches labels
+        separately from the layout, and replacing every id on each update could leave it with a layout
+        whose labels never arrived (the tray menu with no text). ``keep``: trailing children left alone."""
+        children = menu.get_children()
+        if keep:
+            children = children[:-keep]
+        for pos, it in enumerate(items):
+            mi = children[pos] if pos < len(children) else None
+            if mi is None or getattr(mi, "sharel_kind", None) != kind(it):
+                if mi is not None:
+                    menu.remove(mi)
+                mi = new_item(it)
+                menu.insert(mi, pos)
+            mi.sharel_item = it
+            if mi.sharel_kind != "separator":
+                if mi.get_label() != it.get("label", ""):
+                    mi.set_label(it.get("label", ""))
+                if mi.sharel_kind == "check" and mi.get_active() != bool(it.get("checked")):
+                    mi.set_active(bool(it.get("checked")))
+                if mi.sharel_kind == "submenu":
+                    sync(mi.get_submenu(), it["children"])
+            if mi.get_sensitive() != it.get("sensitive", True):
+                mi.set_sensitive(it.get("sensitive", True))
+        for mi in children[len(items):]:
+            menu.remove(mi)
+
+    root = Gtk.Menu()
+    # Middle click: AppIndicator's secondary activate target (hidden item running the action).
+    middle = Gtk.MenuItem(label="Middle click action")
+    middle.connect("activate", lambda *_: activate("app.tray-click", "middle"))
+    root.append(middle)
+    ind.set_menu(root)
+    ind.set_secondary_activate_target(middle)
+
+    def show() -> bool:
+        ind.set_status(AI.IndicatorStatus.ACTIVE)
+        return False
 
     def set_menu(items) -> None:
+        if items == state["items"]:
+            return
+        first = state["items"] is None
         state["building"] = True
-        menu = Gtk.Menu()
-        build(items, menu)
-        # Middle click: AppIndicator's secondary activate target (hidden item running the action).
-        middle = Gtk.MenuItem(label="Middle click action")
-        middle.connect("activate", lambda *_: activate("app.tray-click", "middle"))
-        menu.append(middle)
-        menu.show_all()
-        middle.hide()
-        ind.set_menu(menu)
-        ind.set_secondary_activate_target(middle)
-        state["menu"] = menu
-        state["building"] = False
+        try:
+            sync(root, items, keep=1)
+        finally:
+            state["building"] = False
+        state["items"] = items
+        if first:
+            show()
 
     def on_line(source, _cond) -> bool:
         line = source.readline()
@@ -121,7 +166,7 @@ def main() -> int:
 
     stdin = os.fdopen(sys.stdin.fileno(), "r", buffering=1)
     GLib.io_add_watch(stdin, GLib.PRIORITY_DEFAULT, GLib.IOCondition.IN | GLib.IOCondition.HUP, on_line)
-    set_menu([{"label": "ShareL", "sensitive": False}])
+    GLib.timeout_add_seconds(5, show)
     Gtk.main()
     return 0
 

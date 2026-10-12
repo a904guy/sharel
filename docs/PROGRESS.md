@@ -193,3 +193,17 @@ endpoints.
   process is gone. `test_a_killed_run_leaves_no_daemon_and_no_directory` SIGKILLs an inner pytest with
   its own fresh sandbox and fails without either mechanism. The leftovers (19 processes, 27 dirs, all
   sandbox-only) were removed, with a check that no test run was active.
+
+## System-wide install and the blank tray menu (2026-10-12)
+- The .deb's Depends now names every GI typelib (glib, pango, gdkpixbuf) and helper program (xdg-utils,
+  fontconfig) directly. `test_deb_depends_cover_every_import` maps every import and `require_version` in
+  src to a package. A plain import check of sharel.cli, app and annotate had passed even though the system
+  python3 lacked qrcode and paramiko, because both are imported lazily.
+- The tray menu on a real session showed submenu arrows and separators with no text. ubuntu-appindicators
+  gets the layout with only `type`/`children-display` and fetches labels later with GetGroupProperties on
+  the ids it holds. sharel-tray rebuilt the whole GtkMenu, with new dbusmenu ids, three times at startup
+  and after every task (`send_state` always re-sent the menu). The extension could end up holding ids
+  whose labels never arrived. The helper now keeps one menu and updates the items in place, so ids are
+  stable. The app only sends a menu that changed, and the icon appears once the real menu is in place.
+  `tests/test_tray_dbusmenu.py` runs the real helper on the sandbox bus: the ids must survive updates,
+  and GetGroupProperties on them must return every label. The old code fails it (ids 219… become 1075…).

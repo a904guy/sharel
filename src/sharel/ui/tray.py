@@ -121,6 +121,7 @@ class TrayClient:
         self.proc: subprocess.Popen | None = None
         self._sub = 0
         self._last_state = None
+        self._last_menu = None
 
     def start(self) -> None:
         if os.environ.get("SHAREL_NO_TRAY"):
@@ -132,6 +133,7 @@ class TrayClient:
             log.warning("tray helper failed to start: %s", e)
             self.proc = None
             return
+        self._last_menu = None  # a new helper has no menu yet
         self.send_menu()
         self.send_state()
         self._hook_extension()
@@ -175,7 +177,10 @@ class TrayClient:
             self.app.message("ShareL", "Opening the tray menu needs the ShareL GNOME Shell extension.")
 
     def send_menu(self) -> None:
-        self._write({"cmd": "menu", "menu": build_menu(self.app)})
+        # send_state runs after every task; the menu rarely changes, so only changes go to the helper
+        menu = build_menu(self.app)
+        if menu != self._last_menu and self._write({"cmd": "menu", "menu": menu}):
+            self._last_menu = menu
 
     def send_recent(self, _history) -> None:
         self.send_menu()
