@@ -394,3 +394,42 @@ def test_region_toolbar_separators_are_separators_not_buttons():
         yield 0.2
         return True
     assert run_app(body)
+
+
+def test_magnifier_goes_away_when_the_pointer_leaves_the_canvas():
+    """Regression: the canvas had no leave handler, so the magnifier (and crosshair) stayed painted where the
+    pointer last was after it moved off the canvas, e.g. onto the editor's toolbar."""
+    import cairo
+    from gi.repository import Gtk
+
+    from sharel.ui.windows.editor import open_editor
+
+    def render(m) -> bytes:
+        surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, 400, 300)
+        m.draw(cairo.Context(surf), 1.0, (0, 0), time_s=0.0, view_size=(400, 300))
+        surf.flush()
+        return bytes(surf.get_data())
+
+    def body(app):
+        ed = open_editor(app, gradient(400, 300), app.store.task_settings_for(None), None, task_mode=False)
+        yield 0.5
+        m = ed.manager
+        motion = next(c for c in ed.canvas.observe_controllers() if isinstance(c, Gtk.EventControllerMotion))
+        m.pointer = None
+        bare = render(m)
+        mp = ed.canvas.mapping
+
+        def at(ix, iy):  # image px -> canvas widget px
+            return ix * mp.zoom + mp.pan[0], iy * mp.zoom + mp.pan[1]
+        motion.emit("motion", *at(200, 150))
+        assert m.pointer is not None
+        assert render(m) != bare  # the magnifier is drawn at the pointer
+        motion.emit("leave")
+        assert m.pointer is not None  # still known (paste and nudges use the last position)
+        assert render(m) == bare  # but nothing is drawn for it any more
+        motion.emit("motion", *at(210, 150))
+        assert render(m) != bare  # back on the canvas: drawn again
+        ed.close()
+        yield 0.2
+        return True
+    assert run_app(body)

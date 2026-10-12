@@ -153,6 +153,9 @@ class ShareLApp(AllJobs, Adw.Application):
                 self.message("Workflow not found", f"No workflow named \"{name}\".", urgent=True)
                 continue
             dispatch(self, wf.job, wf, source="cli")
+        if req.custom_uploaders:
+            from .ui.windows.customuploader import import_custom_uploader_files
+            import_custom_uploader_files(self, [absolute(f) for f in req.custom_uploaders])
         if req.files:
             dispatch(self, HotkeyType.FileUpload, files=[absolute(f) for f in req.files], source="cli")
         for url in req.urls:

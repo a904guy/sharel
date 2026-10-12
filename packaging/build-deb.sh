@@ -37,6 +37,8 @@ cp -r "$repo/data/icons/tray" "$pkg/usr/share/sharel/icons/tray"
 cp -r "$repo/data/nautilus" "$pkg/usr/share/sharel/nautilus"
 cp -r "$repo/browser-extension" "$pkg/usr/share/sharel/browser-extension"
 install -m 644 "$repo"/data/applications/*.desktop "$pkg/usr/share/applications/"
+mkdir -p "$pkg/usr/share/mime/packages"
+install -m 644 "$repo/data/mime/packages/app.sharel.ShareL.xml" "$pkg/usr/share/mime/packages/"
 install -D -m 644 "$repo/data/icons/hicolor/scalable/apps/app.sharel.ShareL.svg" \
     "$pkg/usr/share/icons/hicolor/scalable/apps/app.sharel.ShareL.svg"
 install -D -m 644 "$repo/data/icons/hicolor/symbolic/apps/app.sharel.ShareL-symbolic.svg" \

@@ -352,3 +352,76 @@ def test_dispatch_to_custom_uploaders_for_every_destination_type():
         assert dest.name == "CustomURLSharingService" and shared == ""
         assert seen[-1]["path"].startswith("/s?u=https%3A%2F%2Flong.example%2Fy")
         assert len(seen) == 5
+
+
+# -- opening a .sxcu file (ShareX's TaskHelpers.ImportCustomUploader) ------------------------------------
+
+def _sxcu_file(tmp_path, url):
+    p = tmp_path / "opened.sxcu"
+    p.write_text(json.dumps({"Version": "18.0.0", "Name": "Opened host",
+                             "DestinationType": "ImageUploader, FileUploader",
+                             "RequestMethod": "POST", "RequestURL": f"{url}/up", "Body": "MultipartFormData",
+                             "FileFormName": "file", "URL": "{json:data.link}"}))
+    return p
+
+
+def _open_sxcu(answer, tmp_path, argv_of):
+    from sharel.cli import parse_args
+    from sharel.core.enums import FileDestination, ImageDestination, TextDestination
+    from sharel.ui.windows.customuploader import _windows
+
+    with local_server() as (url, seen):
+        path = _sxcu_file(tmp_path, url)
+
+        def body(app):
+            uploads = []
+            app.upload_paths = lambda paths, ts: uploads.append(list(paths))
+            messages = []
+            app.message = lambda summary, body="", urgent=False: messages.append((summary, body))
+            ts = app.store.app.default_task_settings
+            ts.image_destination, ts.file_destination = ImageDestination.Imgur, FileDestination.Dropbox
+            ts.text_destination = TextDestination.Pastebin
+            cfg = app.store.uploaders
+            cfg.custom_uploaders = [CustomUploaderItem(name="Existing", destination_type=["ImageUploader"])]
+            cfg.custom_image_uploader_selected = cfg.custom_file_uploader_selected = 0
+            app.handle_request(parse_args(argv_of(path)), str(tmp_path))
+            yield 0.3
+            assert uploads == [], uploads  # opened, not uploaded
+            win = _windows[id(app)]
+            assert win.get_mapped()  # Custom uploader settings shows it
+            assert [it.name for it in cfg.custom_uploader_items()] == ["Existing", "Opened host"]
+            d = win.activate_dialog
+            assert d is not None and "Opened host" in d.get_body() and "images/files" in d.get_body()
+            # nothing switched while the question is open
+            assert ts.image_destination == ImageDestination.Imgur and cfg.custom_image_uploader_selected == 0
+            d.emit("response", answer)
+            yield 0.3
+            if answer == "yes":
+                assert cfg.custom_image_uploader_selected == 1 and cfg.custom_file_uploader_selected == 1
+                assert ts.image_destination == ImageDestination.CustomImageUploader
+                assert ts.file_destination == FileDestination.CustomFileUploader
+                assert win.selected_item().name == "Opened host"
+                assert "active custom uploader for images/files" in messages[-1][1]
+            else:
+                assert cfg.custom_image_uploader_selected == 0 and cfg.custom_file_uploader_selected == 0
+                assert ts.image_destination == ImageDestination.Imgur
+                assert ts.file_destination == FileDestination.Dropbox
+                assert messages and "active" not in messages[-1][1]
+            assert ts.text_destination == TextDestination.Pastebin  # a type it doesn't declare: untouched
+            # the import is on disk, whatever the answer
+            disk = json.loads((app.store.directory / "UploadersConfig.json").read_text())
+            assert [u["name"] for u in disk["custom_uploaders"]] == ["Existing", "Opened host"]
+            assert uploads == [] and app.tasks.tasks == []
+            win.close()
+            yield 0.2
+            return True
+        assert run_app(body)
+        assert seen == []  # the .sxcu's host never got a request
+
+
+def test_opening_a_sxcu_imports_it_and_yes_makes_it_active(tmp_path):
+    _open_sxcu("yes", tmp_path, lambda p: [str(p)])
+
+
+def test_opening_a_sxcu_and_answering_no_adds_it_without_switching(tmp_path):
+    _open_sxcu("no", tmp_path, lambda p: ["-CustomUploader", p.name])  # relative to the caller's directory

@@ -10,6 +10,7 @@ Terminal=false
 StartupNotify=true
 StartupWMClass=app.sharel.ShareL
 Categories=Utility;GTK;GNOME;
+MimeType=application/x-sharex-custom-uploader;
 Keywords=screenshot;screen capture;recording;upload;share;ocr;annotate;sharex;
 Actions=capture-region;capture-screen;capture-window;screen-recorder;screen-recorder-gif;upload-clipboard;image-editor;history;
 

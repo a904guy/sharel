@@ -24,6 +24,7 @@ def test_install_and_uninstall_dev_mode(tmp_path):
     expect = [
         home / ".local/bin/sharel", home / ".local/bin/sharel-native-host",
         share / "applications/app.sharel.ShareL.desktop",
+        share / "mime/packages/app.sharel.ShareL.xml",
         share / "icons/hicolor/scalable/apps/app.sharel.ShareL.svg",
         share / "glib-2.0/schemas/gschemas.compiled",
         share / "gnome-shell/extensions/sharel@hawkins.app/extension.js",
@@ -64,6 +65,7 @@ def test_deb_contents(tmp_path):
     for path in ("./usr/bin/sharel", "./usr/lib/python3/dist-packages/sharel/app.py",
                  "./usr/share/gnome-shell/extensions/sharel@hawkins.app/extension.js",
                  "./usr/share/applications/app.sharel.ShareL.desktop",
+                 "./usr/share/mime/packages/app.sharel.ShareL.xml",
                  "./usr/share/glib-2.0/schemas/app.sharel.ShareL.gschema.xml",
                  "./usr/share/sharel/stickers/Twemoji/",
                  "./usr/lib/mozilla/native-messaging-hosts/app.sharel.sharel.json",

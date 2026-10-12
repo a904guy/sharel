@@ -39,6 +39,15 @@ def test_desktop_entries_validate_and_point_at_sharel():
     for cmd in actions:
         parsed = parse_args(cmd.split()[1:])
         assert parsed.jobs, cmd
+    # .sxcu files open in ShareL (which imports them): the MIME type its desktop entry claims is defined for *.sxcu
+    import xml.etree.ElementTree as ET
+    ns = {"m": "http://www.freedesktop.org/standards/shared-mime-info"}
+    mime = ET.parse(DATA / "mime/packages/app.sharel.ShareL.xml").getroot().find("m:mime-type", ns)
+    assert mime.get("type") == "application/x-sharex-custom-uploader"
+    assert [g.get("pattern") for g in mime.findall("m:glob", ns)] == ["*.sxcu"]
+    assert "MimeType=application/x-sharex-custom-uploader;" in main.splitlines()
+    assert parse_args(["x.sxcu"]).custom_uploaders == ["x.sxcu"]  # what Exec=sharel %F passes
+
     svg = (DATA / "icons/hicolor/scalable/apps/app.sharel.ShareL.svg").read_text().lstrip()
     assert svg.startswith(("<svg", "<?xml"))
     assert (DATA / "icons/hicolor/symbolic/apps/app.sharel.ShareL-symbolic.svg").exists()
@@ -178,8 +187,14 @@ def test_readme_matches_the_code():
     readme = (ROOT / "README.md").read_text()
     # Every script and file it names exists.
     for rel in ("install.sh", "uninstall.sh", "packaging/build-deb.sh", "scripts/featuremap.py", "LICENSE",
-                "docs/FEATURE_MAP.md", "docs/PROGRESS.md", "tests/e2e/shell.sh", "tests/js/test_logic.js"):
+                "docs/FEATURE_MAP.md", "docs/PROGRESS.md", "tests/e2e/shell.sh", "tests/js/test_logic.js",
+                "scripts/screenshots.py"):
         assert rel in readme and (ROOT / rel).exists(), rel
+    # Every screenshot it shows exists and has alt text (scripts/screenshots.py makes them).
+    shots = re.findall(r"!\[([^\]]*)\]\((docs/screenshots/[^)]+\.png)\)", readme)
+    assert len(shots) >= 10
+    for alt, rel in shots:
+        assert alt.strip() and (ROOT / rel).is_file(), rel
     # The installer flags it documents are the installer's.
     for flag, script in (("--deps", "install.sh"), ("--dev", "install.sh"), ("--purge", "uninstall.sh")):
         assert f"{flag})" in (ROOT / script).read_text() and flag in readme, flag

@@ -326,6 +326,7 @@ class ShapeManager:
         self.monitors: list[tuple[int, int, int, int]] = []
         self.hover_shape: S.Shape | None = None
         self.pointer: tuple[float, float] | None = None
+        self.pointer_inside = True  # False once the pointer has left the view: no magnifier or crosshair then
         self.mods = Mod.NONE
         self.view_scale = 1.0
         self.result: CaptureResult | None = None
@@ -1053,6 +1054,12 @@ class ShapeManager:
 
     def _set_pointer(self, x: float, y: float) -> None:
         self.pointer = (x, y)
+        self.pointer_inside = True
+
+    def pointer_left(self) -> None:
+        """The pointer left the view. ``pointer`` keeps the last position (paste and nudges use it); only
+        the cursor graphics stop, so the magnifier isn't left painted where the pointer last was."""
+        self.pointer_inside = False
 
     def release(self, x: float, y: float, button: int = BUTTON_LEFT, mods: int = Mod.NONE) -> CaptureResult | None:
         """Mouse button released."""
@@ -2180,9 +2187,10 @@ class ShapeManager:
         self._draw_buttons(cr, sc)
         cr.restore()
 
-        if self.pointer is not None and (o.show_magnifier or o.show_info) and self.result is None:
+        cursor = self.pointer is not None and self.pointer_inside
+        if cursor and (o.show_magnifier or o.show_info) and self.result is None:
             self._draw_cursor_graphics(cr, sc, view_offset, view_size)
-        if o.show_crosshair and self.pointer is not None:
+        if o.show_crosshair and cursor:
             self._draw_crosshair(cr, sc, view_offset, view_size, dash_offset)
 
     def _snap_end(self, start: S.Point, cur: S.Point, size: Size) -> S.Point:

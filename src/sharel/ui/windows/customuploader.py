@@ -69,6 +69,60 @@ def open_custom_uploaders(app) -> CustomUploadersWindow:
     return win
 
 
+def _active_destination(dest_type: str):
+    """(TaskSettings field, value) that makes ``dest_type``'s custom uploader the destination."""
+    from ...core.enums import FileDestination, ImageDestination, TextDestination, URLSharingServices, UrlShortenerType
+    return {"ImageUploader": ("image_destination", ImageDestination.CustomImageUploader),
+            "TextUploader": ("text_destination", TextDestination.CustomTextUploader),
+            "FileUploader": ("file_destination", FileDestination.CustomFileUploader),
+            "URLShortener": ("url_shortener_destination", UrlShortenerType.CustomURLShortener),
+            "URLSharingService": ("url_sharing_service_destination", URLSharingServices.CustomURLSharingService),
+            }[dest_type]
+
+
+_DEST_WORDS = {"ImageUploader": "images", "TextUploader": "texts", "FileUploader": "files", "URLShortener": "urls",
+               "URLSharingService": "urls"}
+
+
+def import_custom_uploader_files(app, paths: list[str]) -> list[CustomUploaderItem]:
+    """Opening a .sxcu file (``sharel x.sxcu``, ``sharel -CustomUploader x.sxcu``): ShareX's
+    TaskHelpers.ImportCustomUploader. Each uploader is added through the .sxcu reader and Custom uploader settings
+    shows it. For the destination types it declares, ShareX asks "set as the active custom uploader?": Yes makes it
+    the selected custom uploader for those types and their destination in the default task settings; No leaves
+    it added but changes neither. Nothing is uploaded. The question is ``win.activate_dialog``."""
+    win = open_custom_uploaders(app)
+    first = len(win.items)
+    items = win.import_paths(paths)
+    for index, item in enumerate(items, first):
+        words = list(dict.fromkeys(_DEST_WORDS[t] for t in item.destination_type))
+        if not words:
+            app.message("Custom uploader added", f'"{item.display_name}"')
+            continue
+
+        def answered(response: str, index=index, item=item, words=words) -> None:
+            win.activate_dialog = None
+            if response != "yes":
+                app.message("Custom uploader added", f'"{item.display_name}"')
+                return
+            ts = app.store.app.default_task_settings
+            for dest_type in item.destination_type:
+                setattr(win.cfg, SELECTED_ATTR[dest_type], index)
+                attr, value = _active_destination(dest_type)
+                setattr(ts, attr, value)
+            win.refresh_list(index)
+            win.save_now()
+            app.store.save_app()
+            app.settings_changed()
+            app.message("Custom uploader added",
+                        f'"{item.display_name}" is now the active custom uploader for {"/".join(words)}.')
+
+        win.activate_dialog = gtkutil.ask(
+            win, "Custom uploader confirmation",
+            f'Would you like to set "{item.display_name}" as the active custom uploader for {"/".join(words)}?',
+            [("no", "No"), ("yes", "Yes")], answered, default="yes")
+    return items
+
+
 class KeyValueTable(Gtk.Box):
     """Rows of (name, value) entries with add/remove — ShareX's parameter/header/argument grids."""
 
@@ -153,6 +207,7 @@ class CustomUploadersWindow(Adw.Window):
         self.items: list[CustomUploaderItem] = self.cfg.custom_uploader_items()
         self._loading = False
         self._save_source = 0
+        self.activate_dialog: Adw.AlertDialog | None = None  # an opened .sxcu's "set as active?" question
         self.busy = 0
         self.last_response = None
         self.last_editable: Gtk.Editable | None = None

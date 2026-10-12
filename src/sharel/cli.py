@@ -7,6 +7,7 @@
     sharel -autoclose              exit after the jobs on this command line finish
     sharel file1.png file2.txt     upload files (URLs are downloaded and uploaded)
     sharel -ImageEditor a.png      tools take the files that follow them
+    sharel uploader.sxcu           import a custom uploader (also: -CustomUploader uploader.sxcu)
 
 Everything is forwarded to the running instance (GApplication command-line handling).
 """
@@ -29,6 +30,7 @@ class CliRequest:
     workflows: list[str] = field(default_factory=list)
     files: list[str] = field(default_factory=list)
     urls: list[str] = field(default_factory=list)
+    custom_uploaders: list[str] = field(default_factory=list)  # .sxcu files to import, never to upload
     silent: bool = False
     autoclose: bool = False
     dev: bool = False
@@ -38,7 +40,7 @@ class CliRequest:
 
     @property
     def has_work(self) -> bool:
-        return bool(self.jobs or self.workflows or self.files or self.urls)
+        return bool(self.jobs or self.workflows or self.files or self.urls or self.custom_uploaders)
 
 
 def _is_url(s: str) -> bool:
@@ -67,6 +69,12 @@ def parse_args(argv: list[str]) -> CliRequest:
                 else:
                     req.errors.append(f"{a} needs a workflow name")
                 current_job = None
+            elif name == "customuploader":  # ShareX's .sxcu file association: -CustomUploader "%1"
+                if i + 1 < len(args):
+                    if args[i + 1].lower().endswith(".sxcu"):
+                        req.custom_uploaders.append(args[i + 1])
+                    i += 1
+                current_job = None
             elif name in FLAGS:
                 if name == "silent":
                     req.silent = True
@@ -86,6 +94,8 @@ def parse_args(argv: list[str]) -> CliRequest:
             target = current_job[1] if current_job is not None and current_job[0].value in FILE_TOOLS else None
             if target is not None:
                 target.append(a)
+            elif a.lower().endswith(".sxcu") and not _is_url(a):
+                req.custom_uploaders.append(a)  # opening a custom uploader file imports it
             elif _is_url(a):
                 req.urls.append(a)
             else:

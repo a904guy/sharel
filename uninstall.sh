@@ -46,6 +46,9 @@ if [ -d "$data_home/glib-2.0/schemas" ] && command -v glib-compile-schemas >/dev
     glib-compile-schemas "$data_home/glib-2.0/schemas" 2>/dev/null || true
 fi
 command -v update-desktop-database >/dev/null && update-desktop-database -q "$data_home/applications" 2>/dev/null || true
+if [ -d "$data_home/mime/packages" ] && command -v update-mime-database >/dev/null; then
+    update-mime-database "$data_home/mime" 2>/dev/null || true
+fi
 rm -f "$config_home/autostart/app.sharel.ShareL.desktop"
 
 if [ "$purge" = 1 ]; then

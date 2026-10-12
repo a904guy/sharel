@@ -9,6 +9,103 @@ settings, file-name tokens, image editor and effects, uploaders and custom uploa
 and the same config shape. `docs/FEATURE_MAP.md` maps every ShareX feature to ShareL's module,
 mechanism and proving test.
 
+![ShareL's main window: the sidebar with Capture, Upload, Workflows and Tools, and eight finished uploads shown as thumbnails](docs/screenshots/main.png)
+
+## Screenshots
+
+Every screenshot comes from `scripts/screenshots.py`. It runs ShareL in the isolated headless
+GNOME Shell of the end-to-end tests, with made-up demo images. The upload URLs come from a local
+stand-in host that answers with `example.com` links; nothing was uploaded anywhere.
+
+**Task list.** The list view shows each upload's status and URL. The Capture menu is open.
+
+![The main window in list view: eight completed uploads with example.com URLs, and the Capture menu open with Capture region, Screen recording, Scrolling capture and more](docs/screenshots/main-capture-menu.png)
+
+**Region capture**, mid-selection: the selection's position and size, the magnifier with the
+pointer's coordinates, and the annotation toolbar across the top.
+
+![Region capture overlay over the desktop: a dashed selection labelled with X, Y, W and H, a magnifier next to the pointer, the screen outside the selection dimmed](docs/screenshots/region-capture.png)
+
+**Image editor** with a highlight, a rectangle, a pixelated area, an arrow, a text label and
+step numbers.
+
+![The image editor on a mock web page: a yellow highlight on the headline, a red rectangle around the sign-up button, pixelated contact details, an arrow, a "Start here" label and numbered steps 1 to 3](docs/screenshots/editor.png)
+
+**Screen recording** of a region in progress: a red border marks the recorded area, and the
+controls show the elapsed time, pause, stop and abort.
+
+![A region recording over the main window: a red border around the thumbnails and a small control bar showing 00:04 with pause, stop and abort buttons](docs/screenshots/recording.png)
+
+**After capture tasks.** The checked tasks run after every capture, here "Save image to file"
+and "Upload image to host".
+
+![The main window's After capture tasks menu, with Save image to file and Upload image to host checked](docs/screenshots/after-capture-tasks.png)
+
+**Task settings**, Capture page.
+
+![Task settings window on its Capture page: show cursor, capture shadow, screenshot delay, capture backend and region capture options](docs/screenshots/task-settings.png)
+
+**Destination settings.** Every uploader has its own settings page; Imgur is shown here.
+
+![Destination settings: a searchable list of image, text and file uploaders on the left, and Imgur's settings on the right](docs/screenshots/destinations.png)
+
+**Hotkey settings** with ShareX's default hotkeys. Keys that GNOME also binds are flagged as
+possible conflicts. The demo session runs with hotkeys switched off, so the others read "Disabled".
+
+![Hotkey settings listing Ctrl+Print capture region, Print capture entire screen, Alt+Print capture active window, Shift+Print screen recording and Shift+Ctrl+Print GIF recording](docs/screenshots/hotkeys.png)
+
+**Custom uploader editor** after opening a sample `.sxcu` (`sharel example-host.sxcu`) and
+answering Yes to "set as the active custom uploader". The host is made up, on
+`upload.example.com`.
+
+![Custom uploader settings: the "Example image host" uploader with image and file uploader types, POST to https://upload.example.com/api/v1/images and an Authorization header](docs/screenshots/custom-uploader.png)
+
+**History**, with the selected entry's details and preview.
+
+![History window: eight image uploads with date, file name, host and example.com URL, and the details of sunset.png on the right](docs/screenshots/history.png)
+
+**Image history**
+
+![Image history: thumbnails of the uploaded demo images](docs/screenshots/image-history.png)
+
+### Tools
+
+**Color picker**
+
+![Color picker with an orange standard colour selected, its HSB, RGB and CMYK values, and hex FF6A00](docs/screenshots/color-picker.png)
+
+**Ruler** over a thumbnail: position, width, height, area, perimeter, distance and angle.
+
+![Ruler overlay measuring one thumbnail, with its position, size, area, distance and angle readout above the measured box](docs/screenshots/ruler.png)
+
+**QR code.** A URL is encoded on the left, and "Scan screen" decodes it back on the right.
+
+![QR code window encoding https://i.example.com/KeY39pW.png, and the QR code scan window showing the same URL decoded from the screen](docs/screenshots/qr-code.png)
+
+**OCR** of a region over a text editor.
+
+![A text editor with a release checklist, and the OCR window showing the recognised text of the selected region](docs/screenshots/ocr.png)
+
+**Image combiner** with three images, stacked vertically in the preview.
+
+![Image combiner with sunset.png, weekly-users.png and autumn-palette.png listed, the orientation options and a vertical preview of the combined image](docs/screenshots/image-combiner.png)
+
+**Hash checker**: the SHA-256 of a file.
+
+![Hash checker showing the SHA256 of sunset.png](docs/screenshots/hash-check.png)
+
+**Scrolling capture** of a long document in a text editor, stitched into one image.
+
+![Scrolling capture result: the frames of a long document of numbered lines stitched into one tall image, with the frame count and size above it](docs/screenshots/scrolling-capture.png)
+
+**Tray menu** in the top bar.
+
+![ShareL's tray menu: Capture, Upload, Workflows, Tools, the task and settings entries, History, Show main window and Exit](docs/screenshots/tray-menu.png)
+
+**Dark style**: the main window with Theme set to Dark.
+
+![The main window in libadwaita's dark style with the same eight thumbnails](docs/screenshots/main-dark.png)
+
 ## Install
 
 ```sh
@@ -63,8 +160,9 @@ Hotkey backends, set under Application settings > Advanced:
 
 The command line mirrors ShareX's: `sharel -RectangleRegion`, `sharel -PrintScreen`,
 `sharel -StartScreenRecorder`, `sharel -workflow "<hotkey name>"`, `sharel <files>` (upload),
-`sharel -silent` (start in the tray), `sharel -autoclose`. Any HotkeyType name works as `-<Name>`.
-A second invocation is handed to the running instance.
+`sharel -silent` (start in the tray), `sharel -autoclose`. Opening a ShareX custom uploader file
+(`sharel uploader.sxcu`, or double-clicking it once installed) imports it instead of uploading it.
+Any HotkeyType name works as `-<Name>`. A second invocation is handed to the running instance.
 
 ## Where things are
 
@@ -98,6 +196,14 @@ Each module starts its own private shell: its own runtime dir, D-Bus and dconf, 
 RootPilot extensions, and Print unbound in the private dconf. A watchdog and a memory-capped
 systemd scope make sure the shell never outlives the run. Run one e2e module at a time. Evidence
 (screenshots, ffprobe output, OCR results) goes to `tests/e2e/artifacts/`.
+
+The README's screenshots are made the same way, from made-up demo content. They never touch your
+session. Regenerate them with:
+
+```sh
+uv run python scripts/screenshots.py            # every scene into docs/screenshots/
+uv run python scripts/screenshots.py --only editor,qr-code
+```
 
 Progress notes are in `docs/PROGRESS.md`. The feature map is generated:
 `python3 scripts/featuremap.py build` (and `check`).

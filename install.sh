@@ -112,6 +112,9 @@ put "$repo/data/icons/hicolor/symbolic/apps/app.sharel.ShareL-symbolic.svg" \
 command -v gtk-update-icon-cache >/dev/null && \
     gtk-update-icon-cache -q -t -f "$data_home/icons/hicolor" 2>/dev/null || true
 command -v update-desktop-database >/dev/null && update-desktop-database -q "$data_home/applications" || true
+# .sxcu files open in ShareL, which imports them as custom uploaders
+put "$repo/data/mime/packages/app.sharel.ShareL.xml" "$data_home/mime/packages/app.sharel.ShareL.xml"
+command -v update-mime-database >/dev/null && update-mime-database "$data_home/mime" 2>/dev/null || true
 
 put "$repo/data/glib-2.0/schemas/app.sharel.ShareL.gschema.xml" \
     "$data_home/glib-2.0/schemas/app.sharel.ShareL.gschema.xml"

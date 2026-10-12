@@ -440,6 +440,41 @@ def test_second_sharel_forwards_its_command_line_to_the_running_one(tmp_path):
     assert run_app(body, timeout=40)
 
 
+def test_a_sxcu_forwarded_to_the_running_sharel_is_imported_not_uploaded(tmp_path):
+    """A second `sharel x.sxcu` (a double-clicked custom uploader file) reaches the running instance, which imports
+    it and asks whether to make it active, like ShareX; it is never uploaded."""
+    f = tmp_path / "forwarded.sxcu"
+    f.write_text(json.dumps({"Version": "18.0.0", "Name": "Forwarded host", "DestinationType": "TextUploader",
+                             "RequestMethod": "POST", "RequestURL": "http://127.0.0.1:9/up",
+                             "Body": "MultipartFormData",
+                             "FileFormName": "file", "URL": "{response}"}))
+
+    def body(app):
+        from sharel.ui.windows.customuploader import _windows
+        got = []
+        app.upload_paths = lambda paths, ts: got.append(list(paths))
+        env = {**os.environ, "SHAREL_NO_TRAY": "1", "SHAREL_DISABLE_HOTKEYS": "1", "SHAREL_NO_EXTENSION": "1"}
+        p = subprocess.Popen([sys.executable, "-c", "import sys; from sharel.cli import main; sys.exit(main())",
+                              f.name], cwd=tmp_path, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        for _ in range(300):
+            if p.poll() is not None:
+                break
+            yield 0.05
+        assert p.returncode == 0, p.stderr.read()
+        yield 0.3
+        assert got == []
+        assert [it.name for it in app.store.uploaders.custom_uploader_items()] == ["Forwarded host"]
+        win = _windows[id(app)]
+        assert "texts" in win.activate_dialog.get_body()
+        win.activate_dialog.emit("response", "yes")
+        yield 0.2
+        from sharel.core.enums import TextDestination
+        assert app.store.app.default_task_settings.text_destination == TextDestination.CustomTextUploader
+        win.close()
+        return True
+    assert run_app(body, timeout=40)
+
+
 # -- native messaging actions ----------------------------------------------------------------------
 
 def test_every_native_messaging_action():

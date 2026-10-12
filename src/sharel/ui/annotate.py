@@ -118,6 +118,7 @@ class CanvasView(Gtk.DrawingArea):
         self.add_controller(click)
         motion = Gtk.EventControllerMotion()
         motion.connect("motion", self._motion)
+        motion.connect("leave", self._leave)
         self.add_controller(motion)
         key = Gtk.EventControllerKey()
         key.connect("key-pressed", self._key)
@@ -188,6 +189,10 @@ class CanvasView(Gtk.DrawingArea):
             return
         ix, iy = self._img(x, y)
         self.manager.motion(ix, iy, gdk_mods(ctl.get_current_event_state()))
+        self.redraw_all()
+
+    def _leave(self, _ctl) -> None:
+        self.manager.pointer_left()
         self.redraw_all()
 
     def _key(self, ctl, keyval, _code, state) -> bool:

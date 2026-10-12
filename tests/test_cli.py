@@ -24,6 +24,14 @@ def test_workflow_files_and_urls():
     assert r.urls == ["https://example.com/x.png"]
 
 
+def test_sxcu_files_are_imported_not_uploaded():
+    r = parse_args(["a.png", "host.sxcu", "/x/Other.SXCU", "-CustomUploader", "third.sxcu", "-FileUpload", "up.sxcu"])
+    assert r.custom_uploaders == ["host.sxcu", "/x/Other.SXCU", "third.sxcu"] and r.has_work
+    assert r.files == ["a.png"]
+    assert r.jobs == [(HotkeyType.FileUpload, ["up.sxcu"])]  # an explicit upload of the file stays one
+    assert parse_args(["-CustomUploader", "notes.txt"]).custom_uploaders == []  # ShareX ignores a non-.sxcu
+
+
 def test_tools_take_following_files():
     r = parse_args(["-ImageEditor", "a.png", "b.png", "-silent", "c.png"])
     assert r.jobs == [(HotkeyType.ImageEditor, ["a.png", "b.png"])]

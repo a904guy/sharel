@@ -2,7 +2,7 @@
 
 ## Status (2026-10-12)
 
-- Feature map: 506 rows, 497 done, 9 excluded (defunct services, each with dated evidence), 0 open.
+- Feature map: 507 rows, 498 done, 9 excluded (defunct services, each with dated evidence), 0 open.
   `python3 scripts/featuremap.py check` also fails if a row cites a test node that doesn't exist.
 - Unit suite: `uv run pytest -q`: 1450 passed, 41 deselected (the e2e tests). `uv run ruff check src tests`
   is clean.
@@ -133,6 +133,37 @@ endpoints.
 5. **Feature map:** `python3 scripts/featuremap.py check` prints `{'done': 497, 'excluded': 9, 'open': 0}`
    and exits 0. It also fails on a cited test node that doesn't exist
    (`tests/test_packaging_data.py::test_feature_map_check_passes_and_catches_missing_tests`).
+
+## README screenshots (2026-10-12)
+- `scripts/screenshots.py` makes `docs/screenshots/*.png` (21 scenes) in the e2e headless shell,
+  driven through RootPilot. It uses throwaway dirs under `/tmp/sharel-demo`, in-memory GSettings,
+  hotkeys off and no keyring. Content is made-up demo images, plus a local stand-in upload host that
+  answers with `example.com` URLs. Nothing is uploaded. `--only`, `--list` and `--hold` support
+  iteration; `--lock` serializes it with the e2e runs. ShareL restarts before each scene, so no
+  window carries over.
+- PNGs are lossless unless PIL's 256-colour palette keeps every solid colour within 12 levels
+  (oxipng and pngquant aren't installed).
+- `test_readme_matches_the_code` checks that every screenshot the README shows exists and has alt
+  text.
+- Found while making them:
+  - The canvas had no pointer-leave handler, so the editor's magnifier stayed painted where the
+    pointer had left the canvas. Fixed (`ShapeManager.pointer_left`), with
+    `tests/test_ui_capture.py::test_magnifier_goes_away_when_the_pointer_leaves_the_canvas` (fails
+    without the fix).
+  - `sharel x.sxcu` uploaded the file. ShareX imports it (`-CustomUploader x.sxcu`, its file
+    association). Now both forms import it through the `.sxcu` reader, including when forwarded to
+    the running instance, and open Custom uploader settings. ShareX's question follows: "set as the
+    active custom uploader for images/files?" Yes switches the selected custom uploader and the
+    default destination for each declared type; No only adds it.
+  - A shared-mime-info package registers `*.sxcu`, and the desktop entry claims it. It is installed
+    by `install.sh` and the `.deb`, and `uninstall.sh` removes it.
+  - Tests:
+    - `tests/test_ui_customuploader.py`: the Yes and No answers;
+    - `tests/test_mechanisms_desktop.py::test_a_sxcu_forwarded_to_the_running_sharel_is_imported_not_uploaded`;
+    - `tests/test_cli.py::test_sxcu_files_are_imported_not_uploaded`.
+
+    None of them upload, and the plain-path test fails when the CLI routes `.sxcu` to `req.files`
+    again. The custom-uploader scene opens its sample this way and answers Yes.
 
 ## Unit sandbox cleanup (2026-10-12)
 - Killed or timed-out runs had left dbus-daemon, weston and their `sharel-unit-*` runtime dirs behind.

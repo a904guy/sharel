@@ -234,7 +234,7 @@ def alert(parent: Gtk.Widget | None, heading: str, body: str = "", on_done: Call
 
 
 def ask(parent: Gtk.Widget | None, heading: str, body: str, responses: list[tuple[str, str]],
-        on_done: Callable[[str], None], default: str = "", destructive: str = "") -> None:
+        on_done: Callable[[str], None], default: str = "", destructive: str = "") -> Adw.AlertDialog:
     d = Adw.AlertDialog(heading=heading, body=body)
     for rid, label in responses:
         d.add_response(rid, label)
@@ -245,6 +245,7 @@ def ask(parent: Gtk.Widget | None, heading: str, body: str, responses: list[tupl
         d.set_response_appearance(destructive, Adw.ResponseAppearance.DESTRUCTIVE)
     d.connect("response", lambda _d, r: on_done(r))
     d.present(parent)
+    return d
 
 
 def prompt_text(parent: Gtk.Widget | None, heading: str, default: str, on_done: Callable[[str | None], None],
