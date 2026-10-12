@@ -80,6 +80,8 @@ def start() -> dict[str, str]:
                 break
             time.sleep(0.05)
         env["WAYLAND_DISPLAY"] = sock
+    else:
+        os.environ.pop("WAYLAND_DISPLAY", None)  # no headless display: never fall back to the real one
     env["XDG_RUNTIME_DIR"] = run
     # XDG config/data too: e.g. autostart.sync() must never touch the real ~/.config/autostart.
     home = tempfile.mkdtemp(prefix="sharel-unit-home-")
