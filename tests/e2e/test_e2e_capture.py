@@ -9,20 +9,12 @@ import time
 
 import numpy as np
 import pytest
-from conftest import found
+from conftest import found, wait_for
 from PIL import Image
 
 pytestmark = [pytest.mark.e2e, pytest.mark.anyio]
 
 
-def wait_for(fn, timeout=20.0, interval=0.25, what="condition"):
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        v = fn()
-        if v:
-            return v
-        time.sleep(interval)
-    raise TimeoutError(f"timed out waiting for {what}")
 
 
 def new_files(session, before):
@@ -51,7 +43,9 @@ async def test_s2_region_hotkey_on_monitor_2_and_s3_clipboard(app):
         assert len(files) == 1
         with Image.open(files[0]) as im:
             size = im.size
+            alpha = im.convert("RGBA").getchannel("A").getextrema()
         assert size in ((400, 300), (401, 301)), size
+        assert alpha == (255, 255), f"a screen capture must be opaque, alpha range {alpha}"
         # the task is in history and the toast was posted
         hist = wait_for(lambda: [h for h in s.history() if h["file_path"] == str(files[0])], what="history")
         assert hist[0]["type"] == "Image"
@@ -135,20 +129,26 @@ async def test_s5_annotate_inside_region_capture(app):
         call = s.call(client)
         await call("key", combo="ctrl+Print", restore_focus=False)
         wait_for(lambda: len([w for w in s.windows() if "region capture" in w["title"]]) == 2, what="overlays")
+        s.focus_overlay(0)
         await call("mouse_move", x=300, y=300, restore_pointer=False, restore_focus=False)
         # rectangle
+        s.focus_overlay(0)
         await call("key", combo="r", restore_focus=False)
         await call("mouse_drag", from_x=120, from_y=120, to_x=260, to_y=220, restore_focus=False)
         # arrow
+        s.focus_overlay(0)
         await call("key", combo="a", restore_focus=False)
         await call("mouse_drag", from_x=320, from_y=140, to_x=460, to_y=240, restore_focus=False)
         # step number
+        s.focus_overlay(0)
         await call("key", combo="i", restore_focus=False)
         await call("mouse_click", x=560, y=180, restore_focus=False)
         # blur
+        s.focus_overlay(0)
         await call("key", combo="b", restore_focus=False)
         await call("mouse_drag", from_x=640, from_y=120, to_x=760, to_y=220, restore_focus=False)
         # text (asks for the text in a dialog)
+        s.focus_overlay(0)
         await call("key", combo="t", restore_focus=False)
         await call("mouse_drag", from_x=120, from_y=280, to_x=360, to_y=340, restore_focus=False)
         time.sleep(0.8)
@@ -157,6 +157,7 @@ async def test_s5_annotate_inside_region_capture(app):
         await call("click", text="OK", restore_focus=False)
         time.sleep(0.5)
         # back to the region tool and select the whole annotated area
+        s.focus_overlay(0)
         await call("key", combo="Tab", restore_focus=False)
         await call("mouse_drag", from_x=100, from_y=100, to_x=800, to_y=360, restore_focus=False)
         files = wait_for(lambda: new_files(s, before), what="annotated capture")
@@ -207,3 +208,25 @@ async def test_s13_workflow_with_own_task_settings(app, tmp_path):
     assert f.name.startswith("workflow_")
     with Image.open(f) as im:
         assert im.size == (1920, 1080)
+
+
+async def test_overlay_takes_focus_on_its_own_and_escape_cancels(app):
+    """No focus_overlay here: a user presses Ctrl+Print and immediately R or Esc."""
+    s = app
+
+    def overlay_focused():
+        return any(w["focus"] for w in s.windows() if "region capture" in w["title"])
+
+    async with s.rootpilot() as client:
+        call = s.call(client)
+        for how in ("cli", "hotkey"):
+            if how == "cli":
+                s.sharel("-RectangleRegion")
+            else:
+                await call("key", combo="ctrl+Print", restore_focus=False)
+            t0 = time.monotonic()
+            wait_for(overlay_focused, timeout=3.0, interval=0.05, what=f"overlay focus ({how})")
+            elapsed = time.monotonic() - t0
+            assert elapsed < 1.5, f"{how}: overlay took {elapsed:.2f}s to get keyboard focus"
+            await call("key", combo="Escape", restore_focus=False)
+            s.wait_window("region capture", gone=True, timeout=3.0)

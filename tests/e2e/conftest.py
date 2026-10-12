@@ -77,6 +77,21 @@ SEED_APP = {
 }
 
 
+CURRENT: list = []  # the running Session, for wait_for's diagnostics
+
+
+def wait_for(fn, timeout=20.0, interval=0.25, what="condition"):
+    """Poll ``fn`` until it returns something truthy; on timeout, show ShareL's recent log."""
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        v = fn()
+        if v:
+            return v
+        time.sleep(interval)
+    tail = CURRENT[-1].log_tail(30) if CURRENT else ""
+    raise TimeoutError(f"timed out waiting for {what}\n--- ShareL log ---\n{tail}")
+
+
 class Session:
     """One headless shell + ShareL + helpers."""
 
@@ -140,7 +155,9 @@ class Session:
         logs = sorted((self.data_dir / "Logs").glob("*.txt"))
         text = logs[-1].read_text() if logs else ""
         out = (self.state / "sharel.log").read_text() if (self.state / "sharel.log").exists() else ""
-        return "\n".join((text + "\n" + out).splitlines()[-n:])
+        lines = [ln for ln in (text + "\n" + out).splitlines()
+                 if " PIL." not in ln and "Gtk-CRITICAL" not in ln and ln.strip()]
+        return "\n".join(lines[-n:])
 
     def history(self) -> list[dict]:
         p = self.data_dir / "History.json"
@@ -186,6 +203,20 @@ class Session:
             time.sleep(0.2)
         raise TimeoutError(f"window {'still there' if gone else 'not found'}: {title_part!r}: "
                            f"{[w['title'] for w in self.windows()]}\n{self.log_tail()}")
+
+    def focus_overlay(self, monitor: int = 0, timeout: float = 10.0) -> dict:
+        """Give keyboard focus to the region-capture overlay on ``monitor`` (RootPilot's window list
+        doesn't include the overlays, so its keyboard targeting can't do it) and wait until it has it."""
+        ov = wait_for(lambda: next((w for w in self.windows() if "region capture" in w["title"]
+                                    and w["monitor"] == monitor), None), timeout, what="region overlay")
+        for _ in range(int(timeout / 0.1)):
+            self.ext("Activate", f"uint64 {ov['id']}")
+            time.sleep(0.1)
+            cur = next((w for w in self.windows() if w["id"] == ov["id"]), None)
+            if cur and cur["focus"]:
+                time.sleep(0.3)  # the freshly mapped overlay is ready for input
+                return cur
+        raise TimeoutError("the region overlay never got keyboard focus")
 
     def clipboard(self, mime: str) -> bytes:
         """The compositor's clipboard selection for ``mime`` (read through the shell, as other apps see it)."""
@@ -305,6 +336,7 @@ def session(request, tmp_path_factory):
     atexit.register(_stop_shell, state)
     name = Path(request.fspath).stem
     s = Session(state, name)
+    CURRENT.append(s)
     s.seed_config()
     try:
         yield s

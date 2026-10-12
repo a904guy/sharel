@@ -76,11 +76,18 @@ def ocr_image(img: Image.Image, language: str = "eng", scale_factor: float = 2.0
     with tempfile.TemporaryDirectory(prefix="sharel-ocr-") as tmp:
         path = os.path.join(tmp, "in.png")
         im.save(path, "PNG")
-        argv = [exe, path, "stdout", "-l", lang, "--psm", "7" if single_line else "3"]
-        proc = run_cancelable(argv, cancel, timeout=timeout, env=_ENV)
-    if proc.returncode != 0:
-        raise ToolError(f"tesseract failed ({proc.returncode}): {proc.stderr.decode('utf-8', 'replace').strip()}")
-    text = proc.stdout.decode("utf-8", "replace").replace("\f", "")
+        # Automatic page segmentation first (ShareX's default). It can find nothing at all in a short
+        # strip of screen text (e.g. one editor line upscaled 2x), so fall back to "one uniform block".
+        modes = ["7"] if single_line else ["3", "6"]
+        text = ""
+        for psm in modes:
+            proc = run_cancelable([exe, path, "stdout", "-l", lang, "--psm", psm], cancel, timeout=timeout, env=_ENV)
+            if proc.returncode != 0:
+                raise ToolError(f"tesseract failed ({proc.returncode}): "
+                                f"{proc.stderr.decode('utf-8', 'replace').strip()}")
+            text = proc.stdout.decode("utf-8", "replace").replace("\f", "")
+            if text.strip():
+                break
     lines = [ln.rstrip() for ln in text.splitlines()]
     while lines and not lines[-1]:
         lines.pop()

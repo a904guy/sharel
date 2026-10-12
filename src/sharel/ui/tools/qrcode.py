@@ -104,6 +104,7 @@ class QRCodeWindow(ToolWindow):
         left.append(Gtk.Label(label="Text to encode:", xalign=0))
         self.text, sw = text_view(height=160)
         self.text.set_tooltip_text("Input text to encode")
+        self.text.update_property([Gtk.AccessibleProperty.LABEL], ["Text to encode"])
         self.text.get_buffer().connect("changed", lambda *_: self.schedule_regenerate())
         left.append(sw)
         self.limit_label = Gtk.Label(xalign=0)

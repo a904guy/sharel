@@ -52,3 +52,15 @@ def test_cancel_and_bad_language():
         ocr_image(render(["x"]), cancel=ev)
     with pytest.raises(ToolError, match="tesseract"):
         ocr_image(render(["abc"]), language="zzz_not_installed")
+
+
+def test_short_screen_strip_falls_back_to_block_segmentation():
+    """A real capture of one gnome-text-editor line: tesseract's automatic segmentation finds nothing
+    at 2x, the fallback reads it."""
+    from pathlib import Path
+
+    from PIL import Image
+
+    from sharel.tools.ocr import ocr_image
+    img = Image.open(Path(__file__).parent / "data" / "ocr_editor_line.png")
+    assert ocr_image(img, "eng", 2.0) == "ShareL recognises 12345 words"

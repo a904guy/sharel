@@ -160,16 +160,22 @@ class ExtensionBackend(Backend):
             raise CaptureError(str(e)) from e
         return _load(path), res
 
+    # The stage read back keeps the alpha of translucent client surfaces (GTK 4 windows): a picture of
+    # the screen has none, so screen/monitor/area captures are made opaque (window captures keep theirs).
+
     def area(self, rect, cursor: bool) -> Capture:
         img, res = self._shoot("area", rect=rect, cursor=cursor)
+        img.putalpha(255)
         return Capture(img, tuple(res["area"]), res.get("scale", 1.0), backend=self.name)
 
     def monitor(self, index: int, layout: Layout, cursor: bool) -> Capture:
         img, res = self._shoot("monitor", target=index, cursor=cursor)
+        img.putalpha(255)
         return Capture(img, tuple(res["area"]), res.get("scale", 1.0), backend=self.name)
 
     def screen(self, layout: Layout, cursor: bool) -> Capture:
         img, res = self._shoot("screen", cursor=cursor)
+        img.putalpha(255)
         return Capture(img, tuple(res["area"]), res.get("scale", 1.0), backend=self.name)
 
     def window(self, win: Window, cursor: bool, transparent: bool, shadow: bool) -> Capture:

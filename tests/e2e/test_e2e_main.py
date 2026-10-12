@@ -6,19 +6,11 @@ import json
 import time
 
 import pytest
-from conftest import found
+from conftest import found, wait_for
 
 pytestmark = [pytest.mark.e2e, pytest.mark.anyio]
 
 
-def wait_for(fn, timeout=20.0, interval=0.25, what="condition"):
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        v = fn()
-        if v:
-            return v
-        time.sleep(interval)
-    raise TimeoutError(f"timed out waiting for {what}")
 
 
 @pytest.fixture(scope="module")
