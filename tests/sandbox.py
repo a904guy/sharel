@@ -2,7 +2,9 @@
 
 Imported by conftest.py before anything loads GTK, so no test can open a window on the human's
 desktop, post a real notification, or talk to their GNOME Shell extension. Both processes die with
-the test run.
+the test run, even when it is SIGKILLed or times out: they are started with PR_SET_PDEATHSIG, and a
+detached watchdog removes the sandbox's directories once the test process is gone (atexit does it on a
+normal exit).
 
 The bus has its own config: one private, empty service directory and none of the standard session
 service directories. Otherwise calling a well-known name (org.freedesktop.FileManager1, the
@@ -13,6 +15,7 @@ the headless display with the private XDG directories.
 from __future__ import annotations
 
 import atexit
+import ctypes
 import os
 import shutil
 import signal
@@ -22,6 +25,40 @@ import time
 
 _procs: list[subprocess.Popen] = []
 _dirs: list[str] = []
+
+_PR_SET_PDEATHSIG = 1
+
+
+def _die_with_parent() -> None:
+    """preexec_fn: the kernel SIGKILLs the child when the test process exits, however it exits."""
+    ctypes.CDLL(None, use_errno=True).prctl(_PR_SET_PDEATHSIG, signal.SIGKILL, 0, 0, 0)
+    if os.getppid() == 1:  # the parent already died between fork and prctl
+        os._exit(1)
+
+
+_WATCHDOG = """
+import os, shutil, sys, time
+pid = int(sys.argv[1])
+while True:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        break
+    except PermissionError:
+        pass
+    time.sleep(0.3)
+time.sleep(0.5)  # let the kernel finish the pdeath kills, so nothing recreates files
+for d in sys.argv[2:]:
+    shutil.rmtree(d, ignore_errors=True)
+"""
+
+
+def _start_watchdog(dirs: list[str]) -> None:
+    """Removes ``dirs`` when this process is gone (SIGKILL included: atexit doesn't run then)."""
+    import sys
+    subprocess.Popen([sys.executable, "-c", _WATCHDOG, str(os.getpid()), *dirs], start_new_session=True,
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                     close_fds=True)
 
 
 _BUS_CONFIG = """<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
@@ -73,7 +110,7 @@ def start() -> dict[str, str]:
         w = subprocess.Popen(["weston", "--backend=headless", f"--socket={sock}", "--width=1600", "--height=1000",
                               "--no-config", "--idle-time=0"],
                              env={**os.environ, "XDG_RUNTIME_DIR": run}, stdout=subprocess.DEVNULL,
-                             stderr=subprocess.DEVNULL)
+                             stderr=subprocess.DEVNULL, preexec_fn=_die_with_parent)
         _procs.append(w)
         for _ in range(100):
             if os.path.exists(os.path.join(run, sock)):
@@ -86,6 +123,7 @@ def start() -> dict[str, str]:
     # XDG config/data too: e.g. autostart.sync() must never touch the real ~/.config/autostart.
     home = tempfile.mkdtemp(prefix="sharel-unit-home-")
     _dirs.append(home)
+    _start_watchdog([run, home])
     for var, sub in (("XDG_CONFIG_HOME", "config"), ("XDG_DATA_HOME", "data"), ("XDG_CACHE_HOME", "cache"),
                      ("XDG_STATE_HOME", "state")):
         os.makedirs(os.path.join(home, sub), exist_ok=True)
@@ -105,7 +143,8 @@ def start() -> dict[str, str]:
                       if k not in ("DISPLAY", "WAYLAND_DISPLAY", "DBUS_SESSION_BUS_ADDRESS", "XDG_SESSION_ID")}
         daemon_env.update(env)
         p = subprocess.Popen(["dbus-daemon", f"--config-file={conf}", "--nofork", "--print-address=1"],
-                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, env=daemon_env)
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True, env=daemon_env,
+                             preexec_fn=_die_with_parent)
         _procs.append(p)
         addr = p.stdout.readline().strip()
         env["DBUS_SESSION_BUS_ADDRESS"] = addr or "disabled:"
