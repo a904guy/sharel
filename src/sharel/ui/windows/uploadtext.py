@@ -8,12 +8,13 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, Gtk
 
 from ...core import clipboard
+from ..gtkutil import live
 
 _open: dict = {}
 
 
 def open_upload_text(app, ctx) -> Adw.Window:
-    if _open.get("win") is not None:
+    if live(_open.get("win")):
         _open["win"].present()
         return _open["win"]
     win = Adw.Window(application=app, title="ShareL: upload text", default_width=640, default_height=480)

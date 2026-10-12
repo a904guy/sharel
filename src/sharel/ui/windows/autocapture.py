@@ -10,6 +10,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gtk
 
 from ...capture.autocapture import AUTO
+from ..gtkutil import live
 from ...core.config import Rect
 from ...core.enums import RegionCaptureMode
 
@@ -17,7 +18,7 @@ _state: dict = {}
 
 
 def open_auto_capture(app, ctx) -> Adw.Window:
-    if _state.get("win") is not None:
+    if live(_state.get("win")):
         _state["win"].present()
         return _state["win"]
     opts = ctx.task_settings.capture_settings.auto_capture

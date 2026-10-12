@@ -9,11 +9,13 @@ gi.require_version("Adw", "1")
 gi.require_version("Gdk", "4.0")
 from gi.repository import Adw, Gdk, GObject, Gtk
 
+from ..gtkutil import live
+
 _open: dict = {}
 
 
 def open_drop_window(app, ctx) -> Gtk.Window:
-    if _open.get("win") is not None:
+    if live(_open.get("win")):
         _open["win"].present()
         return _open["win"]
     from ..placement import keep_above, unique_title

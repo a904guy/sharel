@@ -245,14 +245,17 @@ class RecordingController:
                 path, err = "", str(e)
 
             def done():
+                # publish the result before anyone waiting on "finishing" can look at it
+                if err:
+                    self.last_error = err
+                else:
+                    self.last_output = path
                 self.recorder = None
                 self._finishing.clear()
                 self._emit()
                 if err:
-                    self.last_error = err
                     app.message("Screen recording failed", err, urgent=True)
                     return False
-                self.last_output = path
                 log.info("recording saved: %s (%.1f s)", path, rec.elapsed)
                 app.tasks.run_media_file(path, ctx.task_settings)
                 return False

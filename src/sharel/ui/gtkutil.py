@@ -76,6 +76,12 @@ def call_main_async(start: Callable[[Callable[[Any], None]], None], timeout: flo
     return box.get("v")
 
 
+def live(win) -> bool:
+    """A window still in use. GTK 4 only emits "destroy" once the last reference is gone, so a destroyed
+    window that Python still holds is recognised by having lost its application."""
+    return win is not None and win.get_application() is not None
+
+
 # ---- images ---------------------------------------------------------------------------------
 
 def texture_from_pil(img: Image.Image) -> Gdk.Texture:

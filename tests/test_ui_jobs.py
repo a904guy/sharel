@@ -187,6 +187,7 @@ def test_recording_jobs(fake_desktop, monkeypatch):
             if not CONTROLLER.active and not CONTROLLER._finishing.is_set():
                 return
             yield 0.05
+        raise AssertionError("the recording did not finish within 20 s")
 
     def body(app):
         ts = app.store.app.default_task_settings

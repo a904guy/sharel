@@ -64,6 +64,8 @@ class Recorder:
         self._paused_total = 0.0
         self._paused_at = 0.0
         self.state = "idle"  # idle | recording | paused | finishing | done | aborted | failed
+        self._watching = False
+        self._stopped_at = 0.0
         self.error = ""
 
     # -- elapsed --
@@ -72,7 +74,7 @@ class Recorder:
     def elapsed(self) -> float:
         if not self.started_at:
             return 0.0
-        now = self._paused_at if self.state == "paused" else time.monotonic()
+        now = self._paused_at if self.state == "paused" else (self._stopped_at or time.monotonic())
         return max(0.0, now - self.started_at - self._paused_total)
 
     # -- session --
@@ -150,6 +152,7 @@ class Recorder:
             raise RecordingError(f"bad recording pipeline: {e.message}") from e
         bus = self.pipe.get_bus()
         bus.add_signal_watch()
+        self._watching = True
         bus.connect("message::error", self._on_error)
         ret = self.pipe.set_state(Gst.State.PLAYING)
         if ret == Gst.StateChangeReturn.FAILURE:
@@ -178,7 +181,9 @@ class Recorder:
 
     def _teardown(self) -> None:
         if self.pipe is not None:
-            self.pipe.get_bus().remove_signal_watch()
+            if self._watching:
+                self.pipe.get_bus().remove_signal_watch()
+                self._watching = False
             self.pipe.set_state(Gst.State.NULL)
             self.pipe = None
         self._stop_screencast()
@@ -190,6 +195,11 @@ class Recorder:
         if self.state == "paused":
             self.resume()
         self.state = "finishing"
+        self._stopped_at = time.monotonic()
+        # The bus signal watch (dispatched by the app's main loop) would consume the EOS message
+        # before timed_pop_filtered sees it: stop watching first, then wait for EOS here.
+        self.pipe.get_bus().remove_signal_watch()
+        self._watching = False
         self.pipe.send_event(Gst.Event.new_eos())
         msg = self.pipe.get_bus().timed_pop_filtered(int(timeout * Gst.SECOND),
                                                     Gst.MessageType.EOS | Gst.MessageType.ERROR)

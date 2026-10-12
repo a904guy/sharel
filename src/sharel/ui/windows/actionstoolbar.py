@@ -10,6 +10,7 @@ gi.require_version("Gdk", "4.0")
 from gi.repository import Adw, Gdk, Gio, Gtk
 
 from ...core.enums import HOTKEY_DESCRIPTIONS, HOTKEY_GROUPS, HotkeyType
+from ..gtkutil import live
 from ...core.jobs import dispatch
 
 JOB_ICONS = {
@@ -120,7 +121,7 @@ class ActionsToolbar(Adw.Window):
 
 def toggle_actions_toolbar(app) -> ActionsToolbar | None:
     win = _state.get("win")
-    if win is not None:
+    if live(win):
         win.close()
         _state.pop("win", None)
         return None
