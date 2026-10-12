@@ -84,6 +84,7 @@ class KeyValueTable(Gtk.Box):
         lbl.add_css_class("heading")
         head.append(lbl)
         add = Gtk.Button(icon_name="list-add-symbolic", tooltip_text=f"Add {title.lower()} row")
+        add.update_property([Gtk.AccessibleProperty.LABEL], [f"Add {title.lower()} row"])
         add.add_css_class("flat")
         add.connect("clicked", lambda *_: self.add_row("", "", focus=True))
         head.append(add)
@@ -106,6 +107,7 @@ class KeyValueTable(Gtk.Box):
         k = Gtk.Entry(text=key, placeholder_text="Name", hexpand=True, tooltip_text=f"{self.title} name")
         v = Gtk.Entry(text=value, placeholder_text="Value", hexpand=True, tooltip_text=f"{self.title} value")
         rm = Gtk.Button(icon_name="list-remove-symbolic", tooltip_text=f"Remove {self.title.lower()} row")
+        rm.update_property([Gtk.AccessibleProperty.LABEL], [f"Remove {self.title.lower()} row"])
         rm.add_css_class("flat")
         for e in (k, v):
             e.connect("changed", lambda *_: self._emit())
@@ -198,6 +200,7 @@ class CustomUploadersWindow(Adw.Window):
                                 ("Move up", "go-up-symbolic", lambda: self.move_selected(-1)),
                                 ("Move down", "go-down-symbolic", lambda: self.move_selected(1))):
             b = Gtk.Button(icon_name=icon, tooltip_text=label)
+            b.update_property([Gtk.AccessibleProperty.LABEL], [label])
             b.connect("clicked", lambda *_a, cb=cb: cb())
             bar.append(b)
             self.buttons[label] = b

@@ -615,3 +615,12 @@ def test_imported_legacy_uploader_works_end_to_end(ctx):
     assert responses.calls[0].request.url == "https://old.example/up.php?key=K"
     parts = parse_multipart(body_of(responses.calls[0]), responses.calls[0].request.headers["Content-Type"])
     assert parts[0][1] == b"s.png" and 'name="img"' in parts[1][0]["Content-Disposition"]
+
+
+def test_custom_destination_titles_follow_sharex():
+    from sharel.uploaders.dispatch import Destination
+    assert Destination("image", "CustomImageUploader").title == "Custom image uploader"
+    assert Destination("text", "CustomTextUploader").title == "Custom text uploader"
+    assert Destination("file", "CustomFileUploader").title == "Custom file uploader"
+    assert Destination("shortener", "CustomURLShortener").title == "Custom URL shortener"
+    assert Destination("sharing", "CustomURLSharingService").title == "Custom URL sharing service"

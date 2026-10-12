@@ -15,6 +15,10 @@ from .config import UploadersConfig, resolve_secrets
 CUSTOM_NAMES = {"CustomImageUploader": "ImageUploader", "CustomTextUploader": "TextUploader",
                 "CustomFileUploader": "FileUploader", "CustomURLShortener": "URLShortener",
                 "CustomURLSharingService": "URLSharingService"}
+# ShareX's enum descriptions: what history and notifications call these destinations
+CUSTOM_TITLES = {"CustomImageUploader": "Custom image uploader", "CustomTextUploader": "Custom text uploader",
+                 "CustomFileUploader": "Custom file uploader", "CustomURLShortener": "Custom URL shortener",
+                 "CustomURLSharingService": "Custom URL sharing service"}
 
 
 @dataclass
@@ -24,8 +28,8 @@ class Destination:
 
     @property
     def title(self) -> str:
-        if self.name in CUSTOM_NAMES:
-            return "Custom uploader"
+        if self.name in CUSTOM_TITLES:
+            return CUSTOM_TITLES[self.name]
         info = registry.get(self.category, self.name)
         return info.title if info else self.name
 
