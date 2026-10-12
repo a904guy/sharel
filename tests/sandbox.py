@@ -30,6 +30,22 @@ def _cleanup() -> None:
         shutil.rmtree(d, ignore_errors=True)
 
 
+BUS_CONFIG = """<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+  <type>session</type>
+  <keep_umask/>
+  <listen>unix:dir={dir}</listen>
+  <auth>EXTERNAL</auth>
+  <policy context="default">
+    <allow send_destination="*" eavesdrop="true"/>
+    <allow eavesdrop="true"/>
+    <allow own="*"/>
+  </policy>
+</busconfig>
+"""
+
+
 def start() -> dict[str, str]:
     if os.environ.get("SHAREL_UNIT_SANDBOX") == "1":
         return {}
@@ -44,9 +60,14 @@ def start() -> dict[str, str]:
     os.chmod(run, 0o700)
     _dirs.append(run)
     atexit.register(_cleanup)
-    # Private session bus.
+    # Private session bus, with NO service directories: nothing on it is D-Bus-activated. With the
+    # standard session config, a call to e.g. org.freedesktop.FileManager1 started the real Nautilus,
+    # with the real desktop's WAYLAND_DISPLAY in its environment. Tests bring their own fake services.
     if shutil.which("dbus-daemon"):
-        p = subprocess.Popen(["dbus-daemon", "--session", "--nofork", "--print-address=1"],
+        conf = os.path.join(run, "bus.conf")
+        with open(conf, "w") as fh:
+            fh.write(BUS_CONFIG.format(dir=run))
+        p = subprocess.Popen(["dbus-daemon", f"--config-file={conf}", "--nofork", "--print-address=1"],
                              stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
         _procs.append(p)
         addr = p.stdout.readline().strip()

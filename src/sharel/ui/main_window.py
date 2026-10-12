@@ -116,6 +116,7 @@ class MainWindow(Adw.ApplicationWindow):
             self.maximize()
         self.app = app
         self.items: dict[str, TaskItem] = {}
+        self._watches: dict = {}
         self.store_model = Gio.ListStore.new(TaskItem)
         self._install_actions()
 
@@ -281,12 +282,16 @@ class MainWindow(Adw.ApplicationWindow):
                                     ("Speed", "speed", False), ("Elapsed", "elapsed", False), ("URL", "url", True)):
             f = Gtk.SignalListItemFactory()
             f.connect("setup", lambda _f, li: li.set_child(Gtk.Label(xalign=0, ellipsize=Pango.EllipsizeMode.END)))
-            f.connect("bind", lambda _f, li, p=prop: li.get_child().set_label(li.get_item().get_property(p)))
+            f.connect("bind", lambda _f, li, p=prop: self._watch(
+                li, lambda: li.get_child().set_label(li.get_item().get_property(p))))
+            f.connect("unbind", self._unwatch)
             col = Gtk.ColumnViewColumn(title=title, factory=f, expand=expand, resizable=True)
             cv.append_column(col)
         progress_f = Gtk.SignalListItemFactory()
         progress_f.connect("setup", lambda _f, li: li.set_child(Gtk.ProgressBar(valign=Gtk.Align.CENTER)))
-        progress_f.connect("bind", lambda _f, li: li.get_child().set_fraction(li.get_item().info.progress))
+        progress_f.connect("bind", lambda _f, li: self._watch(
+            li, lambda: li.get_child().set_fraction(li.get_item().info.progress)))
+        progress_f.connect("unbind", self._unwatch)
         cv.insert_column(2, Gtk.ColumnViewColumn(title="Progress", factory=progress_f, fixed_width=110))
         cv.connect("activate", lambda _cv, pos: self._activate_item(self.store_model.get_item(pos)))
         self.column_view = cv
@@ -294,7 +299,8 @@ class MainWindow(Adw.ApplicationWindow):
 
         gf = Gtk.SignalListItemFactory()
         gf.connect("setup", self._grid_setup)
-        gf.connect("bind", self._grid_bind)
+        gf.connect("bind", lambda _f, li: self._watch(li, lambda: self._grid_bind(_f, li)))
+        gf.connect("unbind", self._unwatch)
         size = self.app.store.app.thumbnail_size
         grid = Gtk.GridView(model=self.selection, factory=gf, max_columns=12, min_columns=1)
         grid.connect("activate", lambda _g, pos: self._activate_item(self.store_model.get_item(pos)))
@@ -310,6 +316,17 @@ class MainWindow(Adw.ApplicationWindow):
         self.stack.add_named(Gtk.ScrolledWindow(child=cv), "list")
         self.stack.add_named(Gtk.ScrolledWindow(child=grid), "grid")
         return self.stack
+
+    def _watch(self, li, refresh) -> None:
+        """Rows are bound once: keep a bound row in step with its task (progress, status, speed...)."""
+        refresh()
+        item = li.get_item()
+        self._watches[li] = (item, item.connect("notify", lambda *_a: li.get_item() is item and refresh()))
+
+    def _unwatch(self, _f, li) -> None:
+        w = self._watches.pop(li, None)
+        if w is not None:
+            w[0].disconnect(w[1])
 
     def _grid_setup(self, _f, li) -> None:
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, margin_top=6, margin_bottom=6,
@@ -491,9 +508,7 @@ class MainWindow(Adw.ApplicationWindow):
             self.store_model.insert(0, item)
         else:
             item.thumb = None if event == "finished" else item.thumb
-            ok, pos = self.store_model.find(item)
-            if ok:
-                self.store_model.items_changed(pos, 1, 1)
+            item.notify("status")  # bound rows refresh (see _watch)
         self._show_view()
         if event == "finished" and info.status == TaskStatus.Failed and self.get_visible():
             self.toast_overlay.add_toast(Adw.Toast(title=f"Task failed: {info.errors[0] if info.errors else ''}"[:120],

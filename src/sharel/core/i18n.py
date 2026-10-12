@@ -23,18 +23,26 @@ def locale_dir() -> str:
 
 _translation = gettext.translation(DOMAIN, localedir=locale_dir(), fallback=True,
                                    languages=[os.environ["SHAREL_LANG"]] if os.environ.get("SHAREL_LANG") else None)
-_ = _translation.gettext
-ngettext = _translation.ngettext
+
+
+# Functions, not bound methods: modules that ``from ..core.i18n import _`` follow set_language().
+def _(message: str) -> str:
+    return _translation.gettext(message)
+
+
+def ngettext(singular: str, plural: str, n: int) -> str:
+    return _translation.ngettext(singular, plural, n)
 
 
 def N_(message: str) -> str:
     return message
 
 
+CODES = {"English": "en"}  # ShareX SupportedLanguage names -> gettext language codes
+
+
 def set_language(lang: str | None) -> None:
-    """Switch catalogs at runtime ("Automatic"/None follows the environment)."""
-    global _translation, _, ngettext
-    langs = None if not lang or lang == "Automatic" else [lang]
+    """Switch catalogs ("Automatic"/None follows the environment). Windows built afterwards use it."""
+    global _translation
+    langs = None if not lang or lang == "Automatic" else [CODES.get(lang, lang)]
     _translation = gettext.translation(DOMAIN, localedir=locale_dir(), fallback=True, languages=langs)
-    _ = _translation.gettext
-    ngettext = _translation.ngettext

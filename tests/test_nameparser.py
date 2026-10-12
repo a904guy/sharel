@@ -3,7 +3,7 @@ import random
 import re
 import string
 
-from sharel.core.nameparser import ANIMALS, NON_AMBIGUOUS, NameParser, NameParserType, WindowInfo
+from sharel.core.nameparser import ADJECTIVES, ANIMALS, EMOJIS, NON_AMBIGUOUS, NameParser, NameParserType, WindowInfo
 
 T = dt.datetime(2026, 3, 7, 15, 4, 9, 123456)
 
@@ -53,10 +53,13 @@ def test_random_tokens_and_repeat():
     assert all(c in NON_AMBIGUOUS for c in p.parse("%rna{30}"))
     assert re.fullmatch(r"[0-9A-F]{8}", p.parse("%rx{8}"))
     assert len(p.parse("%ra")) == 1
-    assert re.fullmatch(r"[0-9A-F-]{36}", p.parse("%guid"))
+    g = p.parse("%guid")
+    assert re.fullmatch(r"[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}", g) and g != p.parse("%guid")
     assert p.parse("%ranimal") in ANIMALS
-    assert p.parse("%radjective")[0] in string.ascii_uppercase
-    assert len(p.parse("%remoji{3}")) == 3
+    adj = p.parse("%radjective")
+    assert adj[0] in string.ascii_uppercase and adj.lower() in ADJECTIVES
+    emo = p.parse("%remoji{3}")
+    assert len(emo) == 3 and all(c in EMOJIS for c in emo)
 
 
 def test_auto_increment_variants():
@@ -75,6 +78,19 @@ def test_image_and_system_tokens():
     p = np(image_width=640, image_height=480)
     assert p.parse("%widthx%height") == "640x480"
     assert p.parse("%uln") and p.parse("%cn") and p.parse("%un")
+
+
+def test_user_and_computer_tokens_exact(monkeypatch):
+    import os
+    import platform
+    import pwd
+    me = pwd.getpwuid(os.getuid())
+    full = me.pw_gecos.split(",")[0] or me.pw_name
+    assert np().parse("%un") == full  # user name (full name, else login)
+    assert np().parse("%uln") == me.pw_name  # user login name
+    assert np().parse("%cn") == platform.node()  # computer name
+    monkeypatch.setattr(platform, "node", lambda: "testhost")
+    assert np().parse("%cn-%uln") == f"testhost-{me.pw_name}"
 
 
 def test_newline_and_filename_sanitizing():

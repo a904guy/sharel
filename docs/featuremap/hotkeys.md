@@ -1,43 +1,43 @@
-| FileUpload | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| FolderUpload | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ClipboardUpload | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
+| FileUpload | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_upload_jobs |
+| FolderUpload | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_upload_jobs |
+| ClipboardUpload | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_upload_jobs |
 | ClipboardUploadWithContentViewer | ui/jobs/upload.py + ui/tools/clipboardviewer.py | ClipboardUploadForm: image/text/files preview, Upload → app.clipboard_upload, Cancel, don't show again | done | tests/test_ui_tools_clipboardviewer.py::test_upload_viewer_shows_text_and_uploads |
-| UploadText | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| UploadURL | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| DragDropUpload | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ShortenURL | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| StopUploads | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| PrintScreen | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ActiveWindow | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| CustomWindow | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ActiveMonitor | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| RectangleRegion | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| CustomRegion | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| LastRegion | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ScrollingCapture | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| AutoCapture | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| StartAutoCapture | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| StopAutoCapture | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ScreenRecorder | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ScreenRecorderActiveWindow | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ScreenRecorderCustomRegion | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| StartScreenRecorder | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ScreenRecorderGIF | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ScreenRecorderGIFActiveWindow | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ScreenRecorderGIFCustomRegion | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| StartScreenRecorderGIF | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| StopScreenRecording | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| PauseScreenRecording | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| AbortScreenRecording | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
+| UploadText | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_upload_jobs |
+| UploadURL | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_url_jobs_prompt_and_run |
+| DragDropUpload | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_upload_jobs |
+| ShortenURL | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_url_jobs_prompt_and_run |
+| StopUploads | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs_more.py::test_stop_uploads_stops_running_and_queued_tasks |
+| PrintScreen | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_capture_jobs |
+| ActiveWindow | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_capture_jobs |
+| CustomWindow | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_capture_jobs |
+| ActiveMonitor | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_capture_jobs |
+| RectangleRegion | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_capture_jobs |
+| CustomRegion | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_capture_jobs |
+| LastRegion | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_capture_jobs |
+| ScrollingCapture | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs_more.py::test_scrolling_capture_job_opens_the_capture_window_for_the_selection; tests/test_scrolling.py::test_mouse_wheel_scrolling_reassembles_page |
+| AutoCapture | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_auto_capture_start_stop |
+| StartAutoCapture | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_auto_capture_start_stop |
+| StopAutoCapture | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_auto_capture_start_stop |
+| ScreenRecorder | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_recording_jobs |
+| ScreenRecorderActiveWindow | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_recording_jobs |
+| ScreenRecorderCustomRegion | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs_more.py::test_custom_region_recording_and_abort |
+| StartScreenRecorder | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_recording_jobs |
+| ScreenRecorderGIF | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_recording_jobs |
+| ScreenRecorderGIFActiveWindow | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_recording_jobs |
+| ScreenRecorderGIFCustomRegion | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_recording_jobs |
+| StartScreenRecorderGIF | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_recording_jobs |
+| StopScreenRecording | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_recording_jobs |
+| PauseScreenRecording | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_recording_jobs; tests/test_record.py::test_pause_excludes_paused_time_and_abort_deletes |
+| AbortScreenRecording | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs_more.py::test_custom_region_recording_and_abort |
 | ColorPicker | ui/tools/colorpicker.py | ColorPickerForm: box/slider (6 draw styles), RGB/HSB/CMYK/hex/decimal sync, recent/standard palette, screen + clipboard pick, copy menu | done | tests/test_ui_tools_colorpicker.py::test_fields_sync_and_copy_formats |
-| ScreenColorPicker | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| Ruler | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| PinToScreen | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| PinToScreenFromScreen | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| PinToScreenFromClipboard | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| PinToScreenFromFile | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| PinToScreenCloseAll | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ImageEditor | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
+| ScreenColorPicker | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
+| Ruler | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs_more.py::test_ruler_job_opens_the_ruler_overlay |
+| PinToScreen | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs_more.py::test_pin_to_screen_offers_the_sources_and_pins_the_choice |
+| PinToScreenFromScreen | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
+| PinToScreenFromClipboard | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
+| PinToScreenFromFile | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
+| PinToScreenCloseAll | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
+| ImageEditor | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
 | ImageBeautifier | src/sharel/ui/tools/beautifier.py | Adw window: generated option rows, debounced threaded preview of effects.beautifier, copy/save/save as/upload, Set as default | done | tests/test_ui_images.py::test_beautifier_preview_save_copy_upload_and_set_default |
 | ImageEffects | src/sharel/ui/tools/effects.py, src/sharel/ui/windows/effects.py | Image Effects window in tool mode: load file/clipboard, save/copy/upload, presets saved on close | done | tests/test_ui_effects.py::test_effects_tool_mode_loads_ctx_file_saves_copies_and_stores_presets_on_close |
 | ImageViewer | src/sharel/ui/tools/imageviewer.py | folder browsing, prev/next (keys, wheel), zoom/fit, fullscreen, copy, open in editor, pin | done | tests/test_ui_images.py::test_image_viewer_navigates_folder_zooms_copies_and_pins |
@@ -55,8 +55,8 @@
 | IndexFolder | ui/tools/indexer.py | DirectoryIndexerForm: folder, IndexerSettings form, preview, Upload (tasks.upload_data), Save as, Copy | done | tests/test_ui_tools_indexer.py::test_index_preview_and_upload |
 | ClipboardViewer | ui/tools/clipboardviewer.py | ClipboardViewerForm: content preview + clipboard formats list with raw data, Refresh | done | tests/test_ui_tools_clipboardviewer.py::test_viewer_image_files_and_formats |
 | BorderlessWindow | ui/tools/borderless.py | ShareL extension MakeBorderless + MoveResize to monitor rect (X11) / fullscreen (Wayland); window list + filter + title search | done | tests/test_ui_tools_borderless.py::test_make_borderless_fills_monitor_and_restores |
-| ActiveWindowBorderless | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ActiveWindowTopMost | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
+| ActiveWindowBorderless | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
+| ActiveWindowTopMost | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
 | InspectWindow | ui/tools/inspectwindow.py | extension PickWindow (worker) / window list + GetWindowDetails; SetAbove, SetOpacity, MoveResize | done | tests/test_ui_tools_inspectwindow.py::test_pick_shows_details_and_actions |
 | MonitorTest | ui/tools/monitortest.py | fullscreen_on_monitor + cairo; tools.monitortest patterns, motion_frame strip animated by frame clock | done | tests/test_ui_tools_monitortest.py::test_cycle_patterns_render_and_exit |
 | BackgroundRemover | src/sharel/ui/tools/bgremove.py | rembg on a thread with cancel, model choice, alpha matting, source/result panes, save/save as/copy, models folder | done | tests/test_ui_images.py::test_background_remover_with_stubbed_model |
@@ -70,12 +70,12 @@
 | Metadata | src/sharel/ui/tools/metadata.py | tools.metadata.read_metadata rows grouped, search, copy all/row, strip in place after confirm | done | tests/test_ui_images.py::test_metadata_viewer_rows_search_copy_and_strip |
 | StripMetadata | src/sharel/ui/tools/stripmetadata.py | batch tools.metadata.strip_metadata (overwrite after confirm or copies), keep ICC, per-file report | done | tests/test_ui_images.py::test_strip_metadata_overwrites_after_confirmation_and_reports |
 | NetworkMonitor | ui/tools/networkmonitor.py | tools.network.NetworkMonitor sampled every 1 s, cairo history graph, interface picker | done | tests/test_ui_tools_networkmonitor.py::test_two_samples_rates_and_totals |
-| MouseHighlighter | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
+| MouseHighlighter | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
 | DisableHotkeys | ui/jobs/other.py, app.py | job toggles ApplicationConfig.disable_hotkeys; grabs stay, on_hotkey ignores every other activation | done | tests/test_ui_hotkeys.py::test_disable_hotkeys_job_toggles_and_on_hotkey_ignores |
-| OpenMainWindow | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| OpenScreenshotsFolder | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
+| OpenMainWindow | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
+| OpenScreenshotsFolder | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
 | OpenHistory | core/jobs.py + ui/windows/history.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_history.py::test_open_history_jobs_and_remember_search |
 | OpenImageHistory | core/jobs.py + ui/windows/history.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_history.py::test_open_history_jobs_and_remember_search |
-| ToggleActionsToolbar | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ToggleTrayMenu | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
-| ExitShareX | core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | planned | - |
+| ToggleActionsToolbar | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
+| ToggleTrayMenu | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs.py::test_tool_and_window_jobs |
+| ExitShareX | src/sharel/core/jobs.py | job dispatch (hotkey/CLI/tray/menu) | done | tests/test_ui_jobs_more.py::test_exit_sharex_quits_the_app |
