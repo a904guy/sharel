@@ -110,7 +110,9 @@ class EditorWindow(Adw.ApplicationWindow):
             layout = current_layout()
             mon = layout.primary
             mw, mh = (mon.width, mon.height) if mon else (1600, 1000)
-            w = min(max(700, img.width + 80), int(mw * 0.9))
+            # wide enough for the whole toolbar (ShareX's editor toolbar never scrolls on open)
+            _min, toolbar_w, _b1, _b2 = self.toolbar.measure(Gtk.Orientation.HORIZONTAL, -1)
+            w = min(max(700, img.width + 80, toolbar_w + 40), int(mw * 0.95))
             h = min(max(500, img.height + 180), int(mh * 0.9))
             self.set_default_size(w, h)
 

@@ -95,7 +95,9 @@ class ZoomMapping:
 class CanvasView(Gtk.DrawingArea):
     def __init__(self, manager: ShapeManager, mapping, *, on_result: Callable | None = None,
                  editor: bool = False) -> None:
-        super().__init__(hexpand=True, vexpand=True, focusable=True, can_focus=True)
+        # an explicit role so assistive tech (and end-to-end tests) see the canvas and its bounds
+        super().__init__(hexpand=True, vexpand=True, focusable=True, can_focus=True,
+                         accessible_role=Gtk.AccessibleRole.IMG)
         self.manager = manager
         self.mapping = mapping
         self.on_result = on_result
@@ -104,6 +106,7 @@ class CanvasView(Gtk.DrawingArea):
         self._panning: tuple[float, float, float, float] | None = None
         self.peers: list[CanvasView] = []  # other monitors' views of the same manager
         self.set_draw_func(self._draw)
+        self.update_property([Gtk.AccessibleProperty.LABEL], ["Image canvas" if editor else "Region capture"])
         self.set_cursor(Gdk.Cursor.new_from_name("crosshair" if not editor else "default"))
 
         click = Gtk.GestureClick(button=0)
@@ -261,6 +264,7 @@ def _icon_button(item, toggle: bool = False) -> Gtk.Button:
     else:
         b.set_label(item.label.split(" (")[0][:12] or item.id)
     b.set_tooltip_text(item.label)
+    b.update_property([Gtk.AccessibleProperty.LABEL], [item.label])
     b.add_css_class("flat")
     b.set_sensitive(item.enabled)
     return b
@@ -350,6 +354,7 @@ class Toolbar(Gtk.Box):
     def _color_button(self, item) -> Gtk.Widget:
         from .forms import hex_from_rgba, rgba_from_hex
         btn = Gtk.ColorDialogButton(dialog=Gtk.ColorDialog(with_alpha=True), tooltip_text=item.label)
+        btn.update_property([Gtk.AccessibleProperty.LABEL], [item.label.rstrip(".")])
         if item.value:
             btn.set_rgba(rgba_from_hex(item.value))
         btn.connect("notify::rgba", lambda b, _p, it=item: (not self._building and it.setter
@@ -358,6 +363,7 @@ class Toolbar(Gtk.Box):
 
     def _menu_button(self, title: str, icon: str, items) -> Gtk.MenuButton:
         mb = Gtk.MenuButton(icon_name=icon, tooltip_text=title)
+        mb.update_property([Gtk.AccessibleProperty.LABEL], [title])
         mb.add_css_class("flat")
         pop = Gtk.Popover()
         box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, margin_top=6, margin_bottom=6,

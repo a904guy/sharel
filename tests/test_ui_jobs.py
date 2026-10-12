@@ -375,9 +375,11 @@ def test_tool_and_window_jobs(fake_desktop, tmp_path, monkeypatch):
         s.manager.motion(300, 200)
         res = s.manager.press(300, 200) or s.manager.release(300, 200)
         s.views[0]._finish(res)
-        r, g, _b, _a = DESK.getpixel((300, 200))
-        assert any(f"{r:02X}{g:02X}00" in t.upper().replace("#", "") or f"{r:02x}{g:02x}00" in t
-                   for t in fake_desktop.copied["text"]), fake_desktop.copied["text"]
+        r, g, b, _a = DESK.getpixel((300, 200))
+        from sharel.tools.color import Color, format_pixel_info
+        expected = format_pixel_info(app.store.app.default_task_settings.tool_settings.screen_color_picker_format,
+                                     Color(r, g, b), 300, 200)
+        assert fake_desktop.copied["text"][-1] == expected, (fake_desktop.copied["text"], expected)
         # ruler opens and closes with Escape
         dispatch(app, H.Ruler)
         yield 0.2

@@ -49,9 +49,9 @@ class ToolJobs:
         def outcome(o):
             if o.result.result == RegionResult.Close or not o.color:
                 return
-            from ...tools.color import Color, format_pixel_info
+            from ...tools.color import format_pixel_info, parse
             fmt = ctx.task_settings.tool_settings.screen_color_picker_format
-            c = Color.parse(o.color) if hasattr(Color, "parse") else None
+            c = parse(o.color)  # the manager reports "#AARRGGBB"
             x, y = o.point_logical or (0, 0)
             text = format_pixel_info(fmt, c, x, y) if c is not None else o.color
             clipboard.set_text(text)
