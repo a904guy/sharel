@@ -2,7 +2,8 @@
 
 How it works (per new frame, exactly as ShareX):
 
-1. *End detection* — if the new frame is pixel-identical to the previous frame the page did not scroll any more:
+1. *End detection* — if the new frame equals the previous frame (within ``PIXEL_TOLERANCE``) the page did
+   not scroll any more:
    status ``End`` (when ``auto_detect_scroll_end``), the frame is not added.
 2. *Bottom edge* — ``ignore_bottom = max(50, h/10)`` rows at the bottom of the combined image are not used for
    matching and are replaced by the new frame's rows. With ``auto_ignore_bottom_edge`` the rows that are
@@ -12,7 +13,23 @@ How it works (per new frame, exactly as ShareX):
 3. *Overlap search* — rows are compared byte-exactly, ignoring ``max(50, w/20)`` (≤ ``w/3``) columns on each side
    (scroll bars, shadows). For every candidate row ``cy`` of the new frame (bottom → top) count how many
    consecutive rows going up equal the combined image's rows going up from its last non-ignored row; the
-   longest run wins, the search stops once a run reaches ``h/2``.
+   longest run wins, the search stops once a run reaches ``h/2``. Unlike ShareX, a run made only of one
+   repeated row (blank space, e.g. an editor's scroll-past-end area) is not a match: it fits any offset, and
+   taking it lost the rows of a short last scroll. To tell the true offset among blank ones, a run is followed
+   up past ``h/2`` and must reach rows with content.
+
+   Small overlaps: ShareX never compares the bottom ``ignore_bottom`` rows (at least ``max(50, h/10)``), so
+   frames overlapping by less (GTK's Page Down keeps 10 % of the view) never matched, and the search settled
+   for a short run between look-alike rows. ShareL also searches down to the detected footer only, accepting
+   just a run that covers the new frame from its top row (that is the overlap) with content and at least
+   ``MIN_TOP_RUN`` rows, and prefers it when at least as long. The minimum overlap is therefore
+   ``MIN_TOP_RUN`` rows that include content, above any sticky footer (about 20 px for text: a thinner
+   overlap can be all blank; then the best guess is used and the status says so).
+
+   Inexact rows: GTK scrolls by fractional offsets, so the same text is antialiased a level or two
+   differently from frame to frame and no row is byte-identical; ShareX's search then finds nothing. When it
+   finds no full-strength overlap, ShareL also looks for the shift at which the frames agree within
+   ``PIXEL_TOLERANCE`` on every pixel of an overlap with content, and takes it when that overlap is longer.
 4. *Combine* — combined[: H - ignore_bottom] + frame[match_index + 1 :]. The new frame's bottom edge (footer)
    therefore appears once, at the very bottom of the result; a sticky header stays only at the top, because
    only rows below the matched overlap are appended; a short last scroll appends just the new rows.
@@ -92,6 +109,72 @@ def _row_ids(a: np.ndarray, b: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return ids[: a.shape[0]], ids[a.shape[0]:]
 
 
+MIN_TOP_RUN = 8  # rows a from-the-top match needs (the small-overlap retry)
+# Largest channel difference that still counts as the same pixel. Toolkits that scroll by fractional
+# offsets (GTK: a wheel step of ~121.5 px) antialias the same text a level or two differently per frame,
+# so rows are rarely byte-identical.
+PIXEL_TOLERANCE = 6
+
+
+def _same(a: np.ndarray, b: np.ndarray) -> bool:
+    return a.shape == b.shape and int(np.abs(a.astype(np.int16) - b).max()) <= PIXEL_TOLERANCE
+
+
+def _tolerant_shift(prev: np.ndarray, cur: np.ndarray, side: int, footer: int) -> int | None:
+    """The scroll distance ``d`` (prev row ``d + r`` shows what cur row ``r`` shows) when rows only match
+    within PIXEL_TOLERANCE. Shifts are shortlisted on per-row profiles (means of 4-px column groups), then
+    verified on every pixel; the overlap must hold content (a blank overlap fits any shift)."""
+    h, w = cur.shape[:2]
+    n = h - footer
+    x1 = w - side if w - side > side else w
+    p = prev[:n, side:x1, :3].astype(np.int16)
+    c = cur[:n, side:x1, :3].astype(np.int16)
+    cols = p.shape[1] // 4 * 4
+    if n <= MIN_TOP_RUN or cols == 0:
+        return None
+    pp = p[:, :cols].reshape(n, cols // 4, 4, 3).mean(axis=(2, 3))
+    cp = c[:, :cols].reshape(n, cols // 4, 4, 3).mean(axis=(2, 3))
+    cands = []
+    for d in range(1, n - MIN_TOP_RUN + 1):
+        ov = pp[d:]
+        if float((ov.max(axis=0) - ov.min(axis=0)).max()) <= PIXEL_TOLERANCE:
+            continue  # nothing but blank rows in the overlap
+        cands.append((float(np.abs(ov - cp[:n - d]).max()), d))
+    cands.sort()
+    for err, d in cands[:4]:
+        if err > PIXEL_TOLERANCE:
+            break
+        if int(np.abs(p[d:] - c[:n - d]).max()) <= PIXEL_TOLERANCE:
+            return d
+    return None
+
+
+def _search(res_ids: np.ndarray, cur_ids: np.ndarray, rect_bottom: int, match_limit: int,
+            from_top: bool = False) -> tuple[int, int]:
+    """(match_count, match_index): the longest run of rows, going up, where the new frame's rows ending at
+    ``match_index`` equal the result's rows ending at ``rect_bottom`` (tail coordinates)."""
+    h = len(cur_ids)
+    match_count = match_index = 0
+    cy = h - 1
+    while cy >= 0 and match_count < match_limit:
+        k = min(cy + 1, rect_bottom + 1)
+        if k > 0:
+            a = res_ids[rect_bottom - k + 1: rect_bottom + 1]
+            b = cur_ids[cy - k + 1: cy + 1]
+            eq = (a == b)[::-1]  # from the bottom row going up
+            full = k if eq.all() else int(np.argmin(eq))
+            run = min(full, match_limit)  # scored as ShareX: up to h/2 rows
+            ok = run > match_count and len(np.unique(a[k - full:])) > 1
+            if ok and from_top:
+                ok = full == cy + 1 and full >= MIN_TOP_RUN
+            # A run of one repeated row (blank page space) fits any offset and says nothing about the
+            # scroll distance: only a run that reaches real content (followed past h/2) is a match.
+            if ok:
+                match_count, match_index = run, cy
+        cy -= 1
+    return match_count, match_index
+
+
 class Stitcher:
     def __init__(self, options: ScrollingCaptureOptions | None = None, *, append_without_match: bool = False) -> None:
         self.options = options or ScrollingCaptureOptions()
@@ -127,7 +210,7 @@ class Stitcher:
                              f"{self._previous.shape[1]}x{self._previous.shape[0]}")
         if self.finished:
             return self.last.status
-        if self.options.auto_detect_scroll_end and np.array_equal(cur, self._previous):
+        if self.options.auto_detect_scroll_end and _same(cur, self._previous):
             self.finished = True
             return self._set(StitchInfo(StitchStatus.End))
         max_scrolls = self.options.max_scroll_count
@@ -163,33 +246,36 @@ class Stitcher:
 
         match_limit = h // 2
         ignore_max = h // 3
-        ignore_bottom = max(50, h // 10)
-        if self.options.ignore_last_rows > 0:
-            ignore_bottom = max(ignore_bottom, int(self.options.ignore_last_rows))
+        footer = 0  # identical rows at the very bottom of both images = sticky footer
         if self.options.auto_ignore_bottom_edge:
-            # identical rows at the very bottom of both images = sticky footer
             for i in range(ignore_max + 1):
                 if res_ids[h - 1 - i] != cur_ids[h - 1 - i]:
-                    ignore_bottom += i
+                    footer = i
                     break
+        floor = max(50, h // 10)
+        if self.options.ignore_last_rows > 0:
+            floor = max(floor, int(self.options.ignore_last_rows))
+        ignore_bottom = floor + footer
+        if self.options.auto_ignore_bottom_edge:
             ignore_bottom = max(ignore_bottom, self._best_ignore_bottom)
         ignore_bottom = min(ignore_bottom, ignore_max)
-
-        rect_bottom = h - ignore_bottom - 1  # last compared row of the result, in tail coordinates
-        match_count = 0
-        match_index = 0
-        cy = h - 1
-        while cy >= 0 and match_count < match_limit:
-            k = min(cy + 1, match_limit, rect_bottom + 1)
-            if k > 0:
-                a = res_ids[rect_bottom - k + 1: rect_bottom + 1]
-                b = cur_ids[cy - k + 1: cy + 1]
-                eq = (a == b)[::-1]  # from the bottom row going up
-                run = k if eq.all() else int(np.argmin(eq))
-                if run > match_count:
-                    match_count = run
-                    match_index = cy
-            cy -= 1
+        match_count, match_index = _search(res_ids, cur_ids, h - ignore_bottom - 1, match_limit)
+        if match_count < match_limit:
+            # A small overlap (GTK's Page Down keeps only 10 % of the view) lies within the rows ShareX never
+            # compares, and its search then settles for a short run between look-alike rows (the tops of two
+            # text lines). Also search down to the detected footer, strictly: the run must cover the new
+            # frame from its top row, so it is the overlap itself. At the true offset it is at least as long.
+            small = min(footer + (int(self.options.ignore_last_rows) if self.options.ignore_last_rows > 0 else 0),
+                        ignore_max)
+            top_count, top_index = _search(res_ids, cur_ids, h - small - 1, match_limit, from_top=True)
+            if top_count and top_count >= match_count:
+                match_count, match_index, ignore_bottom = top_count, top_index, small
+        if match_count < match_limit and self._previous is not None:
+            # No full-strength byte-exact overlap: rows may match only within PIXEL_TOLERANCE.
+            d = _tolerant_shift(self._previous, cur, side, footer)
+            if d is not None and h - footer - d > match_count:
+                match_count = min(h - footer - d, match_limit)
+                match_index, ignore_bottom = h - 1 - d - footer, footer
 
         best_guess = False
         if match_count == 0 and self._best_match_count > 0:

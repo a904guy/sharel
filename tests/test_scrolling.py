@@ -37,8 +37,8 @@ class FakePage:
         self.keys.append((name, times))
         if name == "Home":
             self.offset = 0
-        elif name == "Page_Down":
-            self.offset = max(0, min(len(self.page) - self.view, self.offset + self.view - 120))
+        elif name == "Page_Down":  # GTK keeps 10 % of the view: 40 px of 400
+            self.offset = max(0, min(len(self.page) - self.view, self.offset + self.view - 40))
 
 
 def run(method, **kw):
