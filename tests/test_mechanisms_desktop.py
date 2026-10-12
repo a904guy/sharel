@@ -373,8 +373,7 @@ printing.print_image(app, Image.new("RGBA", (300, 200), "red"), PrintSettings(sh
 
 
 def test_print_image_renders_the_page_to_a_pdf(tmp_path):
-    """The GTK print operation exported to a file: one page with the image on it. (Its own process: GTK's
-    synchronous export can block after other windows lived in the same test process.)"""
+    """The GTK print operation exported to a file, in a fresh process: one page with the image on it."""
     out = tmp_path / "print.pdf"
     r = subprocess.run([sys.executable, "-c", PRINT_SCRIPT, str(out)], capture_output=True, text=True, timeout=60)
     assert r.returncode == 0 and "MESSAGE" not in r.stdout, r.stdout + r.stderr
@@ -523,3 +522,84 @@ def test_recording_countdown_border_and_tray_state(monkeypatch):
         assert states[-1] == "" and any(c[0] == "hide_border" for c in shell.calls)
         return True
     assert run_app(body, timeout=40)
+
+
+def _assert_one_red_page(pdf: Path, tmp_path: Path) -> None:
+    import re
+
+    import numpy as np
+    info = subprocess.run(["pdfinfo", str(pdf)], capture_output=True, text=True, check=True).stdout
+    assert re.search(r"^Pages:\s+1$", info, re.M), info
+    subprocess.run(["pdftoppm", "-r", "30", "-png", "-singlefile", str(pdf), str(tmp_path / "page")], check=True)
+    page = np.asarray(Image.open(tmp_path / "page.png").convert("RGB")).astype(int)
+    assert (((page[..., 0] > 200) & (page[..., 1] < 60) & (page[..., 2] < 60)).mean() > 0.05)
+
+
+def _settle(timeout: float = 3.0) -> bool:
+    """Dispatch what is ready on the main context; True once nothing is left ready to run. An idle that
+    never finishes (always ready) keeps it busy for good."""
+    ctx = GLib.MainContext.default()
+    deadline = time.monotonic() + timeout
+    while ctx.pending() and time.monotonic() < deadline:
+        ctx.iteration(False)
+    return not ctx.pending()
+
+
+def test_editor_closed_before_layout_leaves_nothing_spinning():
+    """Regression: an editor closed before its first allocation kept an always-ready idle (polling for a
+    canvas size that never came), which busy-looped the CPU and starved GTK's lower-priority idles."""
+    def body(app):
+        from sharel.ui.windows.editor import open_editor
+        assert _settle(), "the main loop is busy before the test starts"
+        ed = open_editor(app, Image.new("RGBA", (100, 50), "white"), app.store.task_settings_for(None), None,
+                         task_mode=False)
+        ed.close()  # before the main loop ever lays it out
+        assert _settle(), "something stays ready on the main loop after the editor closed"
+        yield 0.2
+        assert _settle()
+        return True
+    assert run_app(body)
+
+
+def test_print_after_an_editor_and_a_pin_closed_in_the_same_process(tmp_path, monkeypatch):
+    """GTK's synchronous print renders pages from an idle below default-idle priority inside a nested
+    loop, so any always-ready idle in the app froze "Print image" for good. Here: close an editor before
+    layout and a pin, then print (exported to a PDF) in this process, with a hard deadline."""
+    import faulthandler
+
+    from gi.repository import Gtk
+
+    from sharel.core.config import PrintSettings
+    from sharel.ui import printing
+    out = tmp_path / "print.pdf"
+    orig_run = Gtk.PrintOperation.run
+
+    def run(op, action, parent):  # the user's "Print to File", without the dialog
+        op.set_export_filename(str(out))
+        return orig_run(op, Gtk.PrintOperationAction.EXPORT, parent)
+    monkeypatch.setattr(Gtk.PrintOperation, "run", run)
+
+    def body(app):
+        from sharel.ui.windows.editor import open_editor
+        from sharel.ui.windows.pin import pin_image
+        app.store.app.dont_show_print_settings_dialog = True
+        ed = open_editor(app, Image.new("RGBA", (100, 50), "white"), app.store.task_settings_for(None), None,
+                         task_mode=False)
+        ed.close()
+        pin = pin_image(app, Image.new("RGBA", (120, 80), "blue"))
+        yield 0.5
+        pin.close()
+        yield 0.3
+        messages = []
+        app.message = lambda *a, **k: messages.append(a)
+        faulthandler.dump_traceback_later(20, exit=True)  # a hang can't be interrupted from Python
+        t = time.monotonic()
+        try:
+            printing.print_image(app, Image.new("RGBA", (300, 200), "red"), PrintSettings(show_print_dialog=False,
+                                                                                        margin=10))
+        finally:
+            faulthandler.cancel_dump_traceback_later()
+        assert time.monotonic() - t < 5 and not messages
+        return True
+    assert run_app(body)
+    _assert_one_red_page(out, tmp_path)
